@@ -13,7 +13,7 @@ Build-Depends:
  libjson-glib-dev,
  libpixman-1-dev,
  libwayland-dev,
- libxkbcommon-dev,
+ libxkbcommon-dev (>= 1.8.0),
  meson (>= 0.54.0),
  pkgconf,
  wayland-protocols,
