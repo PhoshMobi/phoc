@@ -469,7 +469,7 @@ phoc_input_method_relay_init (PhocSeat *seat, PhocInputMethodRelay *relay)
   wl_signal_add (&desktop->text_input->events.new_text_input, &relay->text_input_new);
 
   relay->input_method_new.notify = relay_handle_new_input_method;
-  wl_signal_add (&desktop->input_method->events.input_method, &relay->input_method_new);
+  wl_signal_add (&desktop->input_method->events.new_input_method, &relay->input_method_new);
 }
 
 
