@@ -116,7 +116,6 @@ typedef gboolean (*PhocDesktopViewIter)(PhocDesktop *self, PhocView *view, gpoin
 
 PhocDesktop *           phoc_desktop_new (void);
 
-GQueue *                phoc_desktop_get_views                    (PhocDesktop *self);
 void                    phoc_desktop_move_view_to_top             (PhocDesktop *self,
                                                                    PhocView    *view);
 void                    phoc_desktop_insert_view                  (PhocDesktop *self,

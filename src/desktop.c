@@ -88,8 +88,6 @@ static GParamSpec *props[PROP_LAST_PROP];
 
 
 typedef struct _PhocDesktopPrivate {
-  GQueue                *views;
-
   PhocIdleInhibit       *idle_inhibit;
 
   gboolean               enable_animations;
@@ -739,8 +737,6 @@ phoc_desktop_finalize (GObject *object)
   PhocDesktop *self = PHOC_DESKTOP (object);
   PhocDesktopPrivate *priv = phoc_desktop_get_instance_private (self);
 
-  g_clear_pointer (&priv->views, g_queue_free);
-
   wl_list_remove (&priv->gamma_control_set_gamma.link);
   wl_list_remove (&self->layout_change.link);
   wl_list_remove (&self->xdg_shell_toplevel.link);
@@ -832,7 +828,6 @@ phoc_desktop_init (PhocDesktop *self)
   wl_list_init (&self->outputs);
 
   priv = phoc_desktop_get_instance_private (self);
-  priv->views = g_queue_new ();
   priv->enable_animations = TRUE;
 
   self->input_output_map = g_hash_table_new_full (g_str_hash,
@@ -1234,26 +1229,6 @@ phoc_desktop_is_privileged_protocol (PhocDesktop *self, const struct wl_global *
     global == self->virtual_pointer->global);
 
   return is_priv;
-}
-
-/**
- * phoc_desktop_get_views:
- * @self: the desktop
- *
- * Get the current views. Don't manipulate the queue directly. This is
- * only meant for reading.
- *
- * Returns:(transfer none): The views.
- */
-GQueue *
-phoc_desktop_get_views (PhocDesktop *self)
-{
-  PhocDesktopPrivate *priv;
-
-  g_assert (PHOC_IS_DESKTOP (self));
-  priv = phoc_desktop_get_instance_private (self);
-
-  return priv->views;
 }
 
 /**
