@@ -1369,16 +1369,22 @@ void
 phoc_desktop_for_each_view (PhocDesktop *self, PhocDesktopViewIter view_iter, gpointer user_data)
 {
   PhocDesktopPrivate *priv = phoc_desktop_get_instance_private (self);
+  guint n_workspaces;
 
   g_assert (PHOC_IS_DESKTOP (self));
 
-  for (GList *l = priv->views->head; l; l = l->next) {
-    PhocView *view = PHOC_VIEW (l->data);
-    gboolean cont;
+  n_workspaces = phoc_workspace_manager_get_n_workspaces (priv->workspace_manager);
+  for (guint i = 0; i < n_workspaces; i++) {
+    PhocWorkspace *workspace = phoc_workspace_manager_get_by_index (priv->workspace_manager, i);
 
-    cont = (*view_iter)(self, view, user_data);
-    if (!cont)
-      return;
+    for (GList *l = phoc_workspace_get_views (workspace)->head; l; l = l->next) {
+      PhocView *view = PHOC_VIEW (l->data);
+      gboolean cont;
+
+      cont = (*view_iter)(self, view, user_data);
+      if (!cont)
+        return;
+    }
   }
 }
 
