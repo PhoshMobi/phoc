@@ -55,6 +55,8 @@
 #include "wlr-layer-shell-unstable-v1-protocol.h"
 #include "gesture-swipe.h"
 #include "layer-shell-effects.h"
+#include "workspace.h"
+#include "workspace-manager.h"
 #include "xdg-toplevel.h"
 #include "xdg-toplevel-decoration.h"
 #include "xwayland-surface.h"
@@ -111,6 +113,9 @@ typedef struct _PhocDesktopPrivate {
   /* Protocols that should go upstream */
   PhocLayerShellEffects *layer_shell_effects;
   PhocDeviceState       *device_state;
+
+  PhocWorkspaceManager  *workspace_manager;
+  PhocWorkspace         *active_workspace;
 } PhocDesktopPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (PhocDesktop, phoc_desktop, G_TYPE_OBJECT);
@@ -791,6 +796,15 @@ phoc_desktop_class_init (PhocDesktopClass *klass)
 
 
 static void
+on_active_workspace_changed (PhocDesktop *self, GParamSpec *pspec, PhocWorkspaceManager *manager)
+{
+  PhocDesktopPrivate *priv = phoc_desktop_get_instance_private (self);
+
+  priv->active_workspace = phoc_workspace_manager_get_active (priv->workspace_manager);
+}
+
+
+static void
 phoc_desktop_init (PhocDesktop *self)
 {
   PhocDesktopPrivate *priv;
@@ -807,10 +821,19 @@ phoc_desktop_init (PhocDesktop *self)
                                                   g_str_equal,
                                                   g_free,
                                                   NULL);
+
   priv->outputs_states = phoc_outputs_states_new (NULL);
   success = phoc_outputs_states_load (priv->outputs_states, &err);
   if (!success)
     g_debug ("Failed to load output states: %s", err->message);
+
+  priv->workspace_manager = phoc_workspace_manager_new ();
+  g_signal_connect_object (priv->workspace_manager,
+                           "notify::active",
+                           G_CALLBACK (on_active_workspace_changed),
+                           self,
+                           G_CONNECT_SWAPPED);
+  on_active_workspace_changed (self, NULL, priv->workspace_manager);
 }
 
 
@@ -1569,4 +1592,40 @@ phoc_desktop_get_saved_outputs_state (PhocDesktop *self, const char *output_iden
   }
 
   return NULL;
+}
+
+/**
+ * phoc_desktop_get_workspace_manager:
+ * @self: the desktop
+
+ * Get the workspace manager
+ *
+ * Returns:(transfer none): The workspace manager
+ */
+PhocWorkspaceManager *
+phoc_desktop_get_workspace_manager (PhocDesktop *self)
+{
+  PhocDesktopPrivate *priv = phoc_desktop_get_instance_private (self);
+
+  g_assert (PHOC_IS_DESKTOP (self));
+
+  return priv->workspace_manager;
+}
+
+/**
+ * phoc_desktop_get_active_workspace:
+ * @self: the desktop
+
+ * Get the workspace manager
+ *
+ * Returns:(transfer none): The workspace manager
+ */
+PhocWorkspace *
+phoc_desktop_get_active_workspace (PhocDesktop *self)
+{
+  PhocDesktopPrivate *priv = phoc_desktop_get_instance_private (self);
+
+  g_assert (PHOC_IS_DESKTOP (self));
+
+  return priv->active_workspace;
 }
