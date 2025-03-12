@@ -800,12 +800,25 @@ phoc_desktop_class_init (PhocDesktopClass *klass)
 }
 
 
+static gboolean
+workspace_damage_view_iter (PhocWorkspace *workspace, PhocView *view, gpointer user_data)
+{
+  phoc_view_damage_whole (view);
+  return TRUE;
+}
+
+
 static void
 on_active_workspace_changed (PhocDesktop *self, GParamSpec *pspec, PhocWorkspaceManager *manager)
 {
   PhocDesktopPrivate *priv = phoc_desktop_get_instance_private (self);
 
+  if (priv->active_workspace)
+    phoc_workspace_for_each_view (priv->active_workspace, workspace_damage_view_iter, NULL);
+
   priv->active_workspace = phoc_workspace_manager_get_active (priv->workspace_manager);
+
+  phoc_workspace_for_each_view (priv->active_workspace, workspace_damage_view_iter, NULL);
 }
 
 
