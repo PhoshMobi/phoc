@@ -1963,12 +1963,18 @@ PhocView *
 phoc_view_from_wlr_surface (struct wlr_surface *wlr_surface)
 {
   PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
+  PhocWorkspaceManager *manager = phoc_desktop_get_workspace_manager (desktop);
+  guint n_workspaces = phoc_workspace_manager_get_n_workspaces (manager);
 
-  for (GList *l = phoc_desktop_get_views (desktop)->head; l; l = l->next) {
-    PhocView *view = PHOC_VIEW (l->data);
+  for (guint i = 0; i < n_workspaces; i++) {
+    PhocWorkspace *workspace = phoc_workspace_manager_get_by_index (manager, i);
 
-    if (view->wlr_surface == wlr_surface)
-      return view;
+    for (GList *l = phoc_workspace_get_views (workspace)->head; l; l = l->next) {
+      PhocView *view = PHOC_VIEW (l->data);
+
+      if (view->wlr_surface == wlr_surface)
+        return view;
+    }
   }
 
   return NULL;
