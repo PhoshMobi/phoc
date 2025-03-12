@@ -233,6 +233,83 @@ handle_switch_to_workspace_relative (PhocSeat *seat, GVariant *param)
 }
 
 
+static void
+move_to_workspace (PhocView *view, int index)
+{
+  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
+  PhocWorkspaceManager *manager = phoc_desktop_get_workspace_manager (desktop);
+  guint n_workspaces = phoc_workspace_manager_get_n_workspaces (manager);
+  PhocWorkspace *active, *new;
+
+  g_assert (index >= 0);
+  g_assert (index < n_workspaces);
+
+  active = phoc_workspace_manager_get_active (manager);
+  new = phoc_workspace_manager_get_by_index (manager, index);
+  if (active == new)
+    return;
+
+  phoc_view_damage_whole (view);
+  if (!phoc_workspace_remove_view (active, view)) {
+    g_critical ("Current active view '%s' not found on active workspace %d",
+                phoc_view_get_app_id (view),
+                phoc_workspace_manager_get_active_index (manager));
+    return;
+  }
+
+  phoc_workspace_insert_view (new, view);
+  /* Switch to the workspace containing the moved view */
+  phoc_workspace_manager_set_active_by_index (manager, index);
+}
+
+
+static void
+handle_move_to_workspace (PhocSeat *seat, GVariant *param)
+{
+  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
+  PhocWorkspaceManager *manager = phoc_desktop_get_workspace_manager (desktop);
+  PhocView *view = phoc_seat_get_focus_view (seat);
+  int index = g_variant_get_int32 (param);
+  guint n_workspaces = phoc_workspace_manager_get_n_workspaces (manager);
+
+  if (!view)
+    return;
+
+  if (index < 0)
+    return;
+
+  if (index >= n_workspaces)
+    return;
+
+  move_to_workspace (view, index);
+}
+
+
+static void
+handle_move_to_workspace_relative (PhocSeat *seat, GVariant *param)
+{
+  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
+  PhocWorkspaceManager *manager = phoc_desktop_get_workspace_manager (desktop);
+  PhocView *view = phoc_seat_get_focus_view (seat);
+  int offset = g_variant_get_int32 (param);
+  int index = phoc_workspace_manager_get_active_index (manager);
+  guint n_workspaces = phoc_workspace_manager_get_n_workspaces (manager);
+
+  if (!view)
+    return;
+
+  index += offset;
+
+  if (index < 0)
+    return;
+
+  if (index >= n_workspaces)
+    return;
+
+  move_to_workspace (view, index);
+}
+
+
 /* This is copied from mutter which in turn got it form GTK+ */
 static inline gboolean
 is_alt (const gchar *string)
@@ -674,6 +751,24 @@ phoc_keybindings_constructed (GObject *object)
                        g_variant_new_int32 (-1));
   phoc_add_keybinding (self, self->settings,
                        "switch-to-workspace-right", handle_switch_to_workspace_relative,
+                       g_variant_new_int32 (+1));
+  phoc_add_keybinding (self, self->settings,
+                       "move-to-workspace-1", handle_move_to_workspace,
+                       g_variant_new_int32 (0));
+  phoc_add_keybinding (self, self->settings,
+                       "move-to-workspace-2", handle_move_to_workspace,
+                       g_variant_new_int32 (1));
+  phoc_add_keybinding (self, self->settings,
+                       "move-to-workspace-3", handle_move_to_workspace,
+                       g_variant_new_int32 (2));
+  phoc_add_keybinding (self, self->settings,
+                       "move-to-workspace-4", handle_move_to_workspace,
+                       g_variant_new_int32 (3));
+  phoc_add_keybinding (self, self->settings,
+                       "move-to-workspace-left", handle_move_to_workspace_relative,
+                       g_variant_new_int32 (-1));
+  phoc_add_keybinding (self, self->settings,
+                       "move-to-workspace-right", handle_move_to_workspace_relative,
                        g_variant_new_int32 (+1));
 
   self->mutter_settings = g_settings_new (MUTTER_KEYBINDINGS_SCHEMA_ID);
