@@ -453,7 +453,9 @@ count_surface_iterator (PhocOutput         *output,
 PHOC_TRACE_NO_INLINE static bool
 scan_out_fullscreen_view (PhocOutput *self, PhocView *view, struct wlr_output_state *pending)
 {
-  PhocInput *input = phoc_server_get_input (phoc_server_get_default ());
+  PhocServer *server = phoc_server_get_default ();
+  PhocInput *input = phoc_server_get_input (server);
+  PhocDesktop *desktop = phoc_server_get_desktop (server);
   struct wlr_output *wlr_output = self->wlr_output;
   size_t n_surfaces = 0;
   struct wlr_surface *wlr_surface;
@@ -470,6 +472,9 @@ scan_out_fullscreen_view (PhocOutput *self, PhocView *view, struct wlr_output_st
     if (phoc_drag_icon_is_mapped (drag_icon))
       return false;
   }
+
+  if (!phoc_workspace_has_view (phoc_desktop_get_active_workspace (desktop), view))
+    return false;
 
   if (phoc_output_has_shell_revealed (self))
     return false;
