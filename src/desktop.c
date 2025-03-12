@@ -201,7 +201,9 @@ desktop_view_at (PhocDesktop         *self,
                  double              *sx,
                  double              *sy)
 {
-  for (GList *l = phoc_desktop_get_views (self)->head; l; l = l->next) {
+  PhocDesktopPrivate *priv = phoc_desktop_get_instance_private (self);
+
+  for (GList *l = phoc_workspace_get_views (priv->active_workspace)->head; l; l = l->next) {
     PhocView *view = PHOC_VIEW (l->data);
 
     if (phoc_desktop_view_check_visibility (self, view) && view_at (view, lx, ly, surface, sx, sy))
@@ -349,7 +351,10 @@ phoc_desktop_view_check_visibility (PhocDesktop *self, PhocView *view)
     goto out;
   }
 
-  g_assert_true (priv->views->head);
+  if (!phoc_workspace_has_view (priv->active_workspace, view)) {
+    visible = FALSE;
+    goto out;
+  }
 
   /* current heuristics work well only for single output */
   if (wl_list_length (&self->outputs) != 1)
@@ -369,7 +374,7 @@ phoc_desktop_view_check_visibility (PhocDesktop *self, PhocView *view)
   if (!self->maximize)
     goto out;
 
-  top_view = phoc_desktop_get_view_by_index (self, 0);
+  top_view = phoc_workspace_get_view_by_index (priv->active_workspace, 0);
   /* XWayland parent relations can be complicated and aren't described by PhocView
    * relationships very well at the moment, so just make all XWayland windows visible
    * when some XWayland window is active for now */
@@ -1250,71 +1255,33 @@ phoc_desktop_get_views (PhocDesktop *self)
 void
 phoc_desktop_move_view_to_top (PhocDesktop *self, PhocView *view)
 {
-  GList *view_link;
-  PhocDesktopPrivate *priv;
+  PhocDesktopPrivate *priv = phoc_desktop_get_instance_private (self);
+  guint n_workspaces;
 
   g_assert (PHOC_IS_DESKTOP (self));
-  priv = phoc_desktop_get_instance_private (self);
 
-  view_link = g_queue_find (priv->views, view);
-  g_assert (view_link);
-
-  g_queue_unlink (priv->views, view_link);
-
-  if (G_UNLIKELY (phoc_view_is_always_on_top (view))) {
-    g_queue_push_head_link (priv->views, view_link);
-  } else {
-    GList *l = NULL;
-
-    for (l = phoc_desktop_get_views (self)->head; l; l = l->next) {
-      if (!phoc_view_is_always_on_top (PHOC_VIEW (l->data)))
-        break;
-    }
-
-    g_queue_insert_before_link (priv->views, l, view_link);
+  /* Fast path: check active workspace */
+  if (phoc_workspace_has_view (priv->active_workspace, view)) {
+      phoc_workspace_move_view_to_top (priv->active_workspace, view);
+      return;
   }
 
-  phoc_view_damage_whole (view);
-}
+  n_workspaces = phoc_workspace_manager_get_n_workspaces (priv->workspace_manager);
+  for (guint i = 0; i < n_workspaces; i++) {
+    PhocWorkspace *workspace = phoc_workspace_manager_get_by_index (priv->workspace_manager, i);
 
-/**
- * phoc_desktop_has_views:
- * @self: the desktop
- *
- * Check whether the desktop has any views.
- *
- * Returns: %TRUE if there's at least on view, otherwise %FALSE
- */
-gboolean
-phoc_desktop_has_views (PhocDesktop *self)
-{
-  PhocDesktopPrivate *priv;
+    /* Already checked above */
+    if (workspace == priv->active_workspace)
+      continue;
 
-  g_assert (PHOC_IS_DESKTOP (self));
-  priv = phoc_desktop_get_instance_private (self);
+    if (phoc_workspace_has_view (workspace, view)) {
+      phoc_workspace_move_view_to_top (workspace, view);
+      phoc_workspace_manager_set_active (priv->workspace_manager, workspace);
+      return;
+    }
+  }
 
-  return !!priv->views->head;
-}
-
-/**
- * phoc_desktop_get_view_by_index:
- * @self: the desktop
- * @index: the index to get the view for
- *
- * Gets the view at the given position in the queue. If the view is
- * not part of that desktop %NULL is returned.
- *
- * Returns:(transfer none)(nullable): the looked up view
- */
-PhocView *
-phoc_desktop_get_view_by_index (PhocDesktop *self, guint index)
-{
-  PhocDesktopPrivate *priv;
-
-  g_assert (PHOC_IS_DESKTOP (self));
-  priv = phoc_desktop_get_instance_private (self);
-
-  return g_queue_peek_nth (priv->views, index);
+  g_assert_not_reached ();
 }
 
 /**
@@ -1333,8 +1300,7 @@ phoc_desktop_insert_view (PhocDesktop *self, PhocView *view)
   g_assert (PHOC_IS_DESKTOP (self));
   priv = phoc_desktop_get_instance_private (self);
 
-  g_queue_push_head (priv->views, view);
-  phoc_desktop_move_view_to_top (self, view);
+  phoc_workspace_insert_view (priv->active_workspace, view);
 }
 
 /**
@@ -1350,11 +1316,20 @@ gboolean
 phoc_desktop_remove_view (PhocDesktop *self, PhocView *view)
 {
   PhocDesktopPrivate *priv;
+  guint n_workspaces;
 
   g_assert (PHOC_IS_DESKTOP (self));
   priv = phoc_desktop_get_instance_private (self);
+  n_workspaces = phoc_workspace_manager_get_n_workspaces (priv->workspace_manager);
 
-  return g_queue_remove (priv->views, view);
+  for (guint i = 0; i < n_workspaces; i++) {
+    PhocWorkspace *workspace = phoc_workspace_manager_get_by_index (priv->workspace_manager, i);
+
+    if (phoc_workspace_remove_view (workspace, view))
+      return TRUE;
+  }
+
+  return FALSE;
 }
 
 /**

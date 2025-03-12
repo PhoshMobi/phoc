@@ -119,9 +119,6 @@ PhocDesktop *           phoc_desktop_new (void);
 GQueue *                phoc_desktop_get_views                    (PhocDesktop *self);
 void                    phoc_desktop_move_view_to_top             (PhocDesktop *self,
                                                                    PhocView    *view);
-gboolean                phoc_desktop_has_views                    (PhocDesktop *self);
-PhocView *              phoc_desktop_get_view_by_index            (PhocDesktop *self,
-                                                                    guint       index);
 void                    phoc_desktop_insert_view                  (PhocDesktop *self,
                                                                    PhocView    *view);
 gboolean                phoc_desktop_remove_view                  (PhocDesktop *self,
