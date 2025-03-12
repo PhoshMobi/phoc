@@ -14,6 +14,7 @@
  */
 #include "phoc-config.h"
 #include "keybindings.h"
+#include "workspace-manager.h"
 #include "seat.h"
 #include "server.h"
 #include "keyboard.h"
@@ -206,6 +207,29 @@ handle_switch_input_source (PhocSeat *seat, GVariant *param)
   g_return_if_fail (PHOC_IS_KEYBOARD (keyboard));
 
   phoc_keyboard_next_layout (keyboard);
+}
+
+
+static void
+handle_switch_to_workspace (PhocSeat *seat, GVariant *param)
+{
+  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
+  PhocWorkspaceManager *manager = phoc_desktop_get_workspace_manager (desktop);
+  int index = g_variant_get_int32 (param);
+
+  phoc_workspace_manager_set_active_by_index (manager, index);
+}
+
+
+static void
+handle_switch_to_workspace_relative (PhocSeat *seat, GVariant *param)
+{
+  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
+  PhocWorkspaceManager *manager = phoc_desktop_get_workspace_manager (desktop);
+  int index = phoc_workspace_manager_get_active_index (manager);
+  int offset = g_variant_get_int32 (param);
+
+  phoc_workspace_manager_set_active_by_index (manager, index + offset);
 }
 
 
@@ -627,6 +651,30 @@ phoc_keybindings_constructed (GObject *object)
   phoc_add_keybinding (self, self->settings,
                        "switch-input-source", handle_switch_input_source,
                        NULL);
+  phoc_add_keybinding (self, self->settings,
+                       "switch-to-workspace-1", handle_switch_to_workspace,
+                       g_variant_new_int32 (0));
+  phoc_add_keybinding (self, self->settings,
+                       "switch-to-workspace-2", handle_switch_to_workspace,
+                       g_variant_new_int32 (1));
+  phoc_add_keybinding (self, self->settings,
+                       "switch-to-workspace-3", handle_switch_to_workspace,
+                       g_variant_new_int32 (2));
+  phoc_add_keybinding (self, self->settings,
+                       "switch-to-workspace-4", handle_switch_to_workspace,
+                       g_variant_new_int32 (3));
+  phoc_add_keybinding (self, self->settings,
+                       "switch-to-workspace-5", handle_switch_to_workspace,
+                       g_variant_new_int32 (4));
+  phoc_add_keybinding (self, self->settings,
+                       "switch-to-workspace-6", handle_switch_to_workspace,
+                       g_variant_new_int32 (5));
+  phoc_add_keybinding (self, self->settings,
+                       "switch-to-workspace-left", handle_switch_to_workspace_relative,
+                       g_variant_new_int32 (-1));
+  phoc_add_keybinding (self, self->settings,
+                       "switch-to-workspace-right", handle_switch_to_workspace_relative,
+                       g_variant_new_int32 (+1));
 
   self->mutter_settings = g_settings_new (MUTTER_KEYBINDINGS_SCHEMA_ID);
   phoc_add_keybinding (self, self->mutter_settings,
