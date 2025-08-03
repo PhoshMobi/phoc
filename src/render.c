@@ -270,6 +270,23 @@ render_layer (enum zwlr_layer_shell_v1_layer layer, PhocRenderContext *ctx)
 
 
 static void
+render_output_blings (PhocOutput *output, PhocRenderContext *ctx)
+{
+  GSList *blings;
+
+  blings = phoc_output_get_blings (output);
+  if (!blings)
+    return;
+
+  for (GSList *l = blings; l; l = l->next) {
+    PhocBling *bling = PHOC_BLING (l->data);
+
+    phoc_bling_render (bling, ctx);
+  }
+}
+
+
+static void
 render_drag_icons (PhocInput *input, PhocRenderContext *ctx)
 {
   ctx->alpha = 1.0;
@@ -519,6 +536,8 @@ phoc_renderer_render_output (PhocRenderer *self, PhocOutput *output, PhocRenderC
   render_drag_icons (phoc_server_get_input (server), ctx);
 
   render_layer (ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, ctx);
+
+  render_output_blings (output, ctx);
 
  renderer_end:
   wlr_output_add_software_cursors_to_render_pass (wlr_output, ctx->render_pass, damage);
