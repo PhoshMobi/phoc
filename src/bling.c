@@ -37,6 +37,9 @@ phoc_bling_render (PhocBling *self, PhocRenderContext *ctx)
 
   g_assert (PHOC_IS_BLING (self));
 
+  if (!phoc_bling_is_mapped (self))
+    return;
+
   iface = PHOC_BLING_GET_IFACE (self);
   g_assert (iface->render);
 
