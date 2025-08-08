@@ -1,3 +1,30 @@
+phoc (0.49~rc1) experimental; urgency=medium
+
+  * gtk-shell: Remove unused signal
+  * gtk-shell: Make sure to init listener links.
+    Otherwise cleaning up will fail when we can't get an xdg surface.
+    Tested-by: anteater <nt8r@protonmail.com>
+    Closes: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/411
+  * cursor: Guard against 0 serial.
+    On error the wlr functions return `0`. We don't want to use
+    that as last serial.
+  * tracing: Namespace tracing symbols.
+    Makes the doc build happy but also avoids collisions
+  * tracing: Add sysprof support.
+    Inspired from what glib is doing
+  * render: Add capture mark
+  * server: Track whether input is allowed.
+    In shell mode we don't want to allow any input when the shell
+    isn't attached (yet).
+  * seat: Reject input based on shell state too.
+    Closes: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/228
+  * output: Allow to damage whole output on each frame.
+    This allows to rule out damage tracking issues
+  * debug-control: Allow to toggle damaging whole output via DBus.
+    Can be useful to trigger in a running compositor
+
+ -- Guido Günther <agx@sigxcpu.org>  Wed, 06 Aug 2025 08:53:29 +0200
+
 phoc (0.48.0) experimental; urgency=medium
 
   * testlib: Store format in GPtrArray.
