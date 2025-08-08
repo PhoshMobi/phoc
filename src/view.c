@@ -167,7 +167,6 @@ phoc_view_child_root_unconstrain_popup (PhocChildRoot *root, struct wlr_box *box
 {
   PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
   PhocView *self = PHOC_VIEW (root);
-  struct wlr_surface_output *surface_output;
   struct wlr_box usable_area;
   struct wlr_box geom;
   PhocOutput *output;
@@ -180,13 +179,20 @@ phoc_view_child_root_unconstrain_popup (PhocChildRoot *root, struct wlr_box *box
   /* Try top left corner of the view's geometry: */
   phoc_view_get_geometry (self, &geom);
   output = phoc_desktop_layout_get_output (desktop, self->box.x + geom.x, self->box.y + geom.y);
-  if (!output && wl_list_empty (&self->wlr_surface->current_outputs))
-    return FALSE;
 
-  /* Otherwise just take the first output */
-  surface_output = wl_container_of (self->wlr_surface->current_outputs.next, surface_output, link);
-  output = PHOC_OUTPUT (surface_output->output->data);
-  g_assert (PHOC_IS_OUTPUT (output));
+  if (!output) {
+    struct wlr_surface_output *surface_output;
+
+    if (wl_list_empty (&self->wlr_surface->current_outputs))
+      return FALSE;
+
+    /* Otherwise just take the first output */
+    surface_output = wl_container_of (self->wlr_surface->current_outputs.next,
+                                      surface_output,
+                                      link);
+    output = PHOC_OUTPUT (surface_output->output->data);
+    g_assert (PHOC_IS_OUTPUT (output));
+  }
 
   if (!output) {
     g_warning ("No output found for view %p at %d,%d", self, self->box.x, self->box.y);
