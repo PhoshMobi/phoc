@@ -15,6 +15,7 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
+#include <locale.h>
 
 G_NORETURN static void
 print_version (void)
