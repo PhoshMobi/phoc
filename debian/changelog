@@ -1,3 +1,15 @@
+phoc (0.49.0) experimental; urgency=medium
+
+  [ Guido Günther ]
+  * view: Don't overwrite picked output.
+    If we found an output for the view we shouldn't overwrite it
+    unconditionally with the first output.
+
+  [ Achill Gilgenast ]
+  * tools/output-states: Add missing include <locale.h>
+
+ -- Guido Günther <agx@sigxcpu.org>  Thu, 14 Aug 2025 10:39:28 +0200
+
 phoc (0.49~rc1) experimental; urgency=medium
 
   * gtk-shell: Remove unused signal
