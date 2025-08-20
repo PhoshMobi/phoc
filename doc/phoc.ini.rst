@@ -84,6 +84,7 @@ can be specified as `*` to match any value. The configuration options are:
 - `drm-panel-orientation`: If `true` applies the panel orientation read from the DRM connector
   (if available). Defaults to `true`.
 - `phys_width`, `phys_height`: The physical dimensions of the display in `mm`.
+- `adaptive-sync`: If set to `enabled`, enables variable refresh rate, `disabled` or absent disables it.
 
 Example:
 
