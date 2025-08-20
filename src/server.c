@@ -186,9 +186,10 @@ on_child_setup (gpointer unused)
 }
 
 
-static gboolean
-phoc_startup_session_in_idle (PhocServer *self)
+static void
+phoc_startup_session_in_idle (gpointer data)
 {
+  PhocServer *self = PHOC_SERVER (data);
   GPid pid;
   g_auto (GStrv) argv;
   g_autoptr (GError) err = NULL;
@@ -208,7 +209,6 @@ phoc_startup_session_in_idle (PhocServer *self)
     g_critical ("Failed to launch session: %s", err->message);
     g_main_loop_quit (self->mainloop);
   }
-  return FALSE;
 }
 
 
@@ -217,7 +217,7 @@ phoc_startup_session (PhocServer *server)
 {
   gint id;
 
-  id = g_idle_add ((GSourceFunc) phoc_startup_session_in_idle, server);
+  id = g_idle_add_once (phoc_startup_session_in_idle, server);
   g_source_set_name_by_id (id, "[phoc] phoc_startup_session");
 }
 
