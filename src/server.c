@@ -27,6 +27,7 @@
 #include <wlr/xwayland/shell.h>
 
 #include <errno.h>
+#include <sys/resource.h>
 
 /* Maximum protocol versions we support */
 #define PHOC_WL_DISPLAY_VERSION 6
@@ -69,6 +70,8 @@ typedef struct _PhocServer {
   GMainLoop           *mainloop;
 
   GStrv                dt_compatibles;
+
+  struct rlimit        saved_nofile_rlimit;
 
   struct wl_display   *wl_display;
   guint                wl_source;
@@ -174,15 +177,26 @@ on_session_exit (GPid pid, gint status, PhocServer *self)
 
 
 static void
-on_child_setup (gpointer unused)
+on_child_setup (gpointer data)
 {
+  PhocServer *self = PHOC_SERVER (data);
   sigset_t mask;
+
+  g_assert (PHOC_IS_SERVER (data));
 
   /* phoc wants SIGUSR1 blocked due to wlroots/xwayland but we
      don't want to inherit that to children */
   sigemptyset (&mask);
   sigaddset (&mask, SIGUSR1);
   sigprocmask (SIG_UNBLOCK, &mask, NULL);
+
+  /* Restore nofile rlimit */
+  if (self->saved_nofile_rlimit.rlim_cur) {
+    if (setrlimit (RLIMIT_NOFILE, &self->saved_nofile_rlimit)) {
+      g_critical ("Failed to restore nofile rlimit: %s", g_strerror (errno));
+      return;
+    }
+  }
 }
 
 
@@ -219,6 +233,30 @@ phoc_startup_session (PhocServer *server)
 
   id = g_idle_add_once (phoc_startup_session_in_idle, server);
   g_source_set_name_by_id (id, "[phoc] phoc_startup_session");
+}
+
+
+static void
+phoc_server_raise_nofile_rlimit (PhocServer *self)
+{
+  struct rlimit new_rlimit;
+
+  if (getrlimit (RLIMIT_NOFILE, &self->saved_nofile_rlimit)) {
+    g_critical ("Failed to get nofile rlimit: %s", g_strerror (errno));
+    return;
+  }
+
+  new_rlimit = self->saved_nofile_rlimit;
+  new_rlimit.rlim_cur = new_rlimit.rlim_max;
+
+  if (setrlimit (RLIMIT_NOFILE, &new_rlimit)) {
+    g_critical ("Failed to raise nofile rlimit: %s, max open files is %" G_GUINT64_FORMAT,
+                g_strerror (errno),
+                (guint64)self->saved_nofile_rlimit.rlim_cur);
+    return;
+  }
+
+  g_debug ("Updated nofile current rlimit to %" G_GUINT64_FORMAT, (guint64)new_rlimit.rlim_cur);
 }
 
 
@@ -599,6 +637,9 @@ phoc_server_setup (PhocServer      *self,
   }
 
   phoc_wayland_init (self);
+
+  phoc_server_raise_nofile_rlimit (self);
+
   if (self->session_exec)
     phoc_startup_session (self);
 
