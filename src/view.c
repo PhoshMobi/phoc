@@ -928,8 +928,10 @@ phoc_view_set_fullscreen (PhocView *view, bool fullscreen, PhocOutput *output)
 
   if (was_fullscreen != fullscreen) {
     /* Don't allow unfocused surfaces to make themselves fullscreen */
-    if (fullscreen && phoc_view_is_mapped (view))
-      g_return_if_fail (phoc_input_view_has_focus (input, view));
+    if (fullscreen && phoc_view_is_mapped (view) && !phoc_input_view_has_focus (input, view)) {
+      g_warning ("Can't fullscreen view %p without focus", view);
+      return;
+    }
 
     PHOC_VIEW_GET_CLASS (view)->set_fullscreen (view, fullscreen);
 
