@@ -1421,6 +1421,7 @@ void
 phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
 {
   PhocSeatPrivate *priv;
+  PhocOutput *fullscreen_output;
   bool unfullscreen = true;
 
   g_assert (PHOC_IS_SEAT (seat));
@@ -1462,7 +1463,8 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
       if (output->fullscreen_view &&
           output->fullscreen_view != view &&
           wlr_output_layout_intersects (desktop->layout, output->wlr_output, &box)) {
-        phoc_view_set_fullscreen (output->fullscreen_view, false, NULL);
+        /* View stays fullscreen but output won't render it on top of all other views */
+        phoc_output_set_fullscreen_view (output, NULL);
       }
     }
   }
@@ -1536,6 +1538,11 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
   g_debug ("Focused view %p", view);
   phoc_cursor_update_focus (seat->cursor);
   phoc_input_method_relay_set_focus (&seat->im_relay, view->wlr_surface);
+
+  /* View was fullscreen on output, so scan it out like that again */
+  fullscreen_output = phoc_view_get_fullscreen_output (view);
+  if (fullscreen_output)
+    phoc_output_set_fullscreen_view (fullscreen_output, view);
 }
 
 /**
