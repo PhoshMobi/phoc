@@ -64,11 +64,15 @@ These gsettings are used by ``phoc``:
     - `switch-applications-backward`
     - `switch-applications`
     - `switch-input-source`
+    - `switch-to-workspace-left`, `switch-to-workspace-right`
+    - `switch-to-workspace-1`, `switch-to-workspace-2`, …, `switch-to-workspace-6`
     - `toggle-fullscreen`
     - `toggle-maximzed`
     - `toggle-tiled-left`
     - `toggle-tiled-right`
     - `unmaximize`
+- `org.gnome.desktop.wm.preferences`
+    - `num-workspaces`
 
 See also
 --------

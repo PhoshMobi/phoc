@@ -24,6 +24,7 @@
 #include "timed-animation.h"
 #include "view-child-private.h"
 #include "view-private.h"
+#include "workspace.h"
 
 #define PHOC_ANIM_DURATION_WINDOW_FADE 150
 #define PHOC_MOVE_TO_CORNER_MARGIN 12
@@ -1277,11 +1278,12 @@ phoc_view_map (PhocView *self, struct wlr_surface *surface)
   wl_signal_add (&self->wlr_surface->events.new_subsurface, &priv->surface_new_subsurface);
 
   if (desktop->maximize) {
+    PhocWorkspace *workspace = phoc_desktop_get_active_workspace (desktop);
     phoc_view_appear_activated (self, true);
 
-    if (phoc_desktop_has_views (desktop)) {
+    if (phoc_workspace_has_views (workspace)) {
       /* Mapping a new stack may make the old stack disappear, so damage its area */
-      PhocView *top_view = phoc_desktop_get_view_by_index (desktop, 0);
+      PhocView *top_view = phoc_workspace_get_view_by_index (workspace, 0);
       while (top_view) {
         phoc_view_damage_whole (top_view);
         top_view = top_view->parent;
@@ -1350,6 +1352,7 @@ void
 phoc_view_unmap (PhocView *view)
 {
   PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
+  PhocWorkspace *workspace = phoc_desktop_get_active_workspace (desktop);
   PhocViewPrivate *priv = phoc_view_get_instance_private (view);
 
   g_assert (view->wlr_surface != NULL);
@@ -1369,9 +1372,9 @@ phoc_view_unmap (PhocView *view)
 
   phoc_desktop_remove_view (desktop, view);
 
-  if (was_visible && desktop->maximize && phoc_desktop_has_views (desktop)) {
+  if (was_visible && desktop->maximize && phoc_workspace_has_views (workspace)) {
     /* Damage the newly activated stack as well since it may have just become visible */
-    PhocView *top_view = phoc_desktop_get_view_by_index (desktop, 0);
+    PhocView *top_view = phoc_workspace_get_view_by_index (workspace, 0);
     while (top_view) {
       phoc_view_damage_whole (top_view);
       top_view = top_view->parent;
@@ -1963,12 +1966,18 @@ PhocView *
 phoc_view_from_wlr_surface (struct wlr_surface *wlr_surface)
 {
   PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
+  PhocWorkspaceManager *manager = phoc_desktop_get_workspace_manager (desktop);
+  guint n_workspaces = phoc_workspace_manager_get_n_workspaces (manager);
 
-  for (GList *l = phoc_desktop_get_views (desktop)->head; l; l = l->next) {
-    PhocView *view = PHOC_VIEW (l->data);
+  for (guint i = 0; i < n_workspaces; i++) {
+    PhocWorkspace *workspace = phoc_workspace_manager_get_by_index (manager, i);
 
-    if (view->wlr_surface == wlr_surface)
-      return view;
+    for (GList *l = phoc_workspace_get_views (workspace)->head; l; l = l->next) {
+      PhocView *view = PHOC_VIEW (l->data);
+
+      if (view->wlr_surface == wlr_surface)
+        return view;
+    }
   }
 
   return NULL;

@@ -458,6 +458,7 @@ phoc_renderer_render_output (PhocRenderer *self, PhocOutput *output, PhocRenderC
   PhocServer *server = phoc_server_get_default ();
   struct wlr_output *wlr_output = output->wlr_output;
   PhocDesktop *desktop = PHOC_DESKTOP (output->desktop);
+  PhocWorkspace *workspace = phoc_desktop_get_active_workspace (desktop);
   pixman_region32_t *damage = ctx->damage;
 
   g_assert (PHOC_IS_RENDERER (self));
@@ -475,7 +476,7 @@ phoc_renderer_render_output (PhocRenderer *self, PhocOutput *output, PhocRenderC
                             });
 
   /* If a view is fullscreen on this output, render it */
-  if (output->fullscreen_view != NULL) {
+  if (output->fullscreen_view && phoc_workspace_has_view (workspace, output->fullscreen_view)) {
     PhocView *view = output->fullscreen_view;
 
     render_view (output, view, ctx);
@@ -504,7 +505,7 @@ phoc_renderer_render_output (PhocRenderer *self, PhocOutput *output, PhocRenderC
     render_layer (ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM, ctx);
 
     /* Render all views */
-    for (GList *l = phoc_desktop_get_views (desktop)->tail; l; l = l->prev) {
+    for (GList *l = phoc_workspace_get_views (workspace)->tail; l; l = l->prev) {
       PhocView *view = PHOC_VIEW (l->data);
 
       if (phoc_desktop_view_check_visibility (desktop, view))

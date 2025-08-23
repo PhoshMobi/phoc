@@ -5,6 +5,7 @@
 #include "layer-shell-effects.h"
 #include "phosh-private.h"
 #include "view.h"
+#include "workspace-manager.h"
 #include "xwayland-surface.h"
 
 #include <time.h>
@@ -115,12 +116,8 @@ typedef gboolean (*PhocDesktopViewIter)(PhocDesktop *self, PhocView *view, gpoin
 
 PhocDesktop *           phoc_desktop_new (void);
 
-GQueue *                phoc_desktop_get_views                    (PhocDesktop *self);
 void                    phoc_desktop_move_view_to_top             (PhocDesktop *self,
                                                                    PhocView    *view);
-gboolean                phoc_desktop_has_views                    (PhocDesktop *self);
-PhocView *              phoc_desktop_get_view_by_index            (PhocDesktop *self,
-                                                                    guint       index);
 void                    phoc_desktop_insert_view                  (PhocDesktop *self,
                                                                    PhocView    *view);
 gboolean                phoc_desktop_remove_view                  (PhocDesktop *self,
@@ -181,3 +178,6 @@ void                    phoc_desktop_save_outputs_state          (PhocDesktop *s
                                                                   GPtrArray   *output_configs);
 PhocOutputConfig *      phoc_desktop_get_saved_outputs_state     (PhocDesktop *self,
                                                                   const char  *output_identifier);
+
+PhocWorkspaceManager *  phoc_desktop_get_workspace_manager       (PhocDesktop *self);
+PhocWorkspace *         phoc_desktop_get_active_workspace        (PhocDesktop *self);
