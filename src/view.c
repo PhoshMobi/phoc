@@ -966,16 +966,16 @@ phoc_view_set_fullscreen (PhocView *view, bool fullscreen, PhocOutput *output)
   }
 
   if (was_fullscreen && !fullscreen) {
-    PhocOutput *phoc_output = priv->fullscreen_output;
+    PhocOutput *current_output = priv->fullscreen_output;
     priv->fullscreen_output->fullscreen_view = NULL;
     priv->fullscreen_output = NULL;
 
-    phoc_output_damage_whole (phoc_output);
+    phoc_output_damage_whole (current_output);
 
     if (priv->state == PHOC_VIEW_STATE_MAXIMIZED) {
-      view_arrange_maximized (view, phoc_output);
+      view_arrange_maximized (view, current_output);
     } else if (priv->state == PHOC_VIEW_STATE_TILED) {
-      view_arrange_tiled (view, phoc_output);
+      view_arrange_tiled (view, current_output);
     } else if (!wlr_box_empty (&view->saved)) {
       phoc_view_move_resize (view,
                              view->saved.x - view_geom.x * priv->scale,
