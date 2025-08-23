@@ -1,3 +1,6 @@
+Title: Getting started with Phoc development
+Slug: gettingstarted
+
 # Getting started with Phoc development
 
 ## Overview
