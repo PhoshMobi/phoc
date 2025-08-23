@@ -657,7 +657,7 @@ phoc_server_get_renderer (PhocServer *self)
  * phoc_server_get_desktop:
  * @self: The server
  *
- * Get's the desktop singleton
+ * Gets the desktop singleton
  *
  * Returns: (transfer none): The desktop
  */
@@ -797,7 +797,7 @@ phoc_server_get_log_domains (PhocServer *self)
  * phoc_server_get_last_active_seat:
  * @self: The server
  *
- * Get's the last active seat.
+ * Gets the last active seat.
  *
  * Returns: (transfer none): The last active seat.
  */
