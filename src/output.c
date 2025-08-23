@@ -2598,3 +2598,30 @@ phoc_output_get_blings (PhocOutput *self)
 
   return priv->blings;
 }
+
+/**
+ * phoc_output_set_full_screen_view:
+ * @self: The output
+ * @view: The view to set as fullscreen view
+ *
+ * Set the output's fullscreen view. We try direct scanout for this
+ * view and render it on top of all other views.
+ *
+ * This is not enough to (un)fullscreen a view. See
+ * `method@View.set_fullscreen`.
+ */
+void
+phoc_output_set_fullscreen_view (PhocOutput *self, PhocView *view)
+{
+  g_assert (PHOC_IS_OUTPUT (self));
+  g_assert (PHOC_IS_VIEW (view) || view == NULL);
+
+  if (self->fullscreen_view == view)
+    return;
+
+  self->fullscreen_view = view;
+
+  phoc_output_damage_whole (self);
+  if (view)
+    phoc_output_force_shell_reveal (self, false);
+}

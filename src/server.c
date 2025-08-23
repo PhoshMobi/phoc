@@ -933,6 +933,7 @@ phoc_server_set_linux_dmabuf_surface_feedback (PhocServer *self,
                                                bool        enable)
 {
   g_assert (PHOC_IS_SERVER (self));
+  g_assert (PHOC_IS_VIEW (view));
 
   if (!self->linux_dmabuf_v1 || !view->wlr_surface)
     return;

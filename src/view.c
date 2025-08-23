@@ -960,18 +960,15 @@ phoc_view_set_fullscreen (PhocView *view, bool fullscreen, PhocOutput *output)
                            output_box.width,
                            output_box.height);
 
-    output->fullscreen_view = view;
-    phoc_output_force_shell_reveal (output, false);
     priv->fullscreen_output = output;
-    phoc_output_damage_whole (output);
+    phoc_output_set_fullscreen_view (output, view);
   }
 
   if (was_fullscreen && !fullscreen) {
     PhocOutput *current_output = priv->fullscreen_output;
-    priv->fullscreen_output->fullscreen_view = NULL;
-    priv->fullscreen_output = NULL;
 
-    phoc_output_damage_whole (current_output);
+    priv->fullscreen_output = NULL;
+    phoc_output_set_fullscreen_view (current_output, NULL);
 
     if (priv->state == PHOC_VIEW_STATE_MAXIMIZED) {
       view_arrange_maximized (view, current_output);
