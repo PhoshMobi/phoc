@@ -69,7 +69,7 @@ directly but via a small shell wrapper at `_build/data/phoc-dev` which is anothe
 good place to make some temporary changes like setting `PHOC_DEBUG` or
 `G_MESSAGES_DEBUG`.
 
-To start an appplication in the running phoc run:
+To start an application in the running phoc run:
 
 ```sh
     WAYLAND_DISPLAY=wayland-0 gnome-terminal
