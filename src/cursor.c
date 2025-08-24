@@ -856,7 +856,7 @@ phoc_handle_shell_reveal (struct wlr_surface *surface, double lx, double ly, int
 
 
 static void
-phoc_passthrough_cursor (PhocCursor *self, uint32_t time)
+phoc_cursor_do_passthrough (PhocCursor *self, uint32_t time)
 {
   PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
   double sx, sy;
@@ -1200,7 +1200,7 @@ phoc_cursor_update_focus (PhocCursor *self)
 
   clock_gettime (CLOCK_MONOTONIC, &now);
 
-  phoc_passthrough_cursor (self, timespec_to_msec (&now));
+  phoc_cursor_do_passthrough (self, timespec_to_msec (&now));
 }
 
 static void
@@ -1297,7 +1297,7 @@ phoc_cursor_update_position (PhocCursor *self, uint32_t time)
 
   switch (priv->mode) {
   case PHOC_CURSOR_PASSTHROUGH:
-    phoc_passthrough_cursor (self, time);
+    phoc_cursor_do_passthrough (self, time);
     break;
   case PHOC_CURSOR_MOVE:
     phoc_cursor_do_move (self, time);
