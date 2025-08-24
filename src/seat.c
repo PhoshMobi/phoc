@@ -1370,7 +1370,7 @@ phoc_seat_view_from_view (PhocSeat *seat, PhocView *view)
 
 
 bool
-phoc_seat_allow_input (PhocSeat *seat, struct wl_resource *resource)
+phoc_seat_is_input_allowed (PhocSeat *seat, struct wl_resource *resource)
 {
   PhocSeatPrivate *priv;
 
@@ -1419,7 +1419,7 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
   priv = phoc_seat_get_instance_private (seat);
 
   g_debug ("Trying to focus view %p", view);
-  if (view && !phoc_seat_allow_input (seat, view->wlr_surface->resource))
+  if (view && !phoc_seat_is_input_allowed (seat, view->wlr_surface->resource))
     return;
 
   /* Make sure the view will be rendered on top of others, even if it's
@@ -1565,7 +1565,7 @@ phoc_seat_set_focus_layer (PhocSeat                    *seat,
 
   struct wlr_keyboard *keyboard = wlr_seat_get_keyboard (seat->seat);
 
-  if (!phoc_seat_allow_input (seat, layer->resource))
+  if (!phoc_seat_is_input_allowed (seat, layer->resource))
     return;
 
   if (priv->has_focus) {
