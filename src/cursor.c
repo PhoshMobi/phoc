@@ -1253,12 +1253,49 @@ phoc_cursor_do_move (PhocCursor *self, uint32_t time)
 }
 
 
+static void
+phoc_cursor_do_resize (PhocCursor *self, uint32_t time)
+{
+  PhocSeat *seat = self->seat;
+  PhocView *view;
+
+  view = phoc_seat_get_focus_view (seat);
+  if (view != NULL) {
+    struct wlr_box geom;
+    phoc_view_get_geometry (view, &geom);
+    double dx = self->cursor->x - self->offs_x;
+    double dy = self->cursor->y - self->offs_y;
+    double x = view->box.x;
+    double y = view->box.y;
+    int width = self->view_width;
+    int height = self->view_height;
+    if (self->resize_edges & WLR_EDGE_TOP) {
+      y = self->view_y + dy - geom.y * phoc_view_get_scale (view);
+      height -= dy;
+      if (height < 1) {
+        y += height;
+      }
+    } else if (self->resize_edges & WLR_EDGE_BOTTOM) {
+      height += dy;
+    }
+    if (self->resize_edges & WLR_EDGE_LEFT) {
+      x = self->view_x + dx - geom.x * phoc_view_get_scale (view);
+      width -= dx;
+      if (width < 1) {
+        x += width;
+      }
+    } else if (self->resize_edges & WLR_EDGE_RIGHT) {
+      width += dx;
+    }
+    phoc_view_move_resize (view, x, y, MAX (1, width), MAX (1, height));
+  }
+}
+
+
 void
 phoc_cursor_update_position (PhocCursor *self, uint32_t time)
 {
   PhocCursorPrivate *priv = phoc_cursor_get_instance_private (self);
-  PhocSeat *seat = self->seat;
-  PhocView *view;
 
   switch (priv->mode) {
   case PHOC_CURSOR_PASSTHROUGH:
@@ -1268,36 +1305,7 @@ phoc_cursor_update_position (PhocCursor *self, uint32_t time)
     phoc_cursor_do_move (self, time);
     break;
   case PHOC_CURSOR_RESIZE:
-    view = phoc_seat_get_focus_view (seat);
-    if (view != NULL) {
-      struct wlr_box geom;
-      phoc_view_get_geometry (view, &geom);
-      double dx = self->cursor->x - self->offs_x;
-      double dy = self->cursor->y - self->offs_y;
-      double x = view->box.x;
-      double y = view->box.y;
-      int width = self->view_width;
-      int height = self->view_height;
-      if (self->resize_edges & WLR_EDGE_TOP) {
-        y = self->view_y + dy - geom.y * phoc_view_get_scale (view);
-        height -= dy;
-        if (height < 1) {
-          y += height;
-        }
-      } else if (self->resize_edges & WLR_EDGE_BOTTOM) {
-        height += dy;
-      }
-      if (self->resize_edges & WLR_EDGE_LEFT) {
-        x = self->view_x + dx - geom.x * phoc_view_get_scale (view);
-        width -= dx;
-        if (width < 1) {
-          x += width;
-        }
-      } else if (self->resize_edges & WLR_EDGE_RIGHT) {
-        width += dx;
-      }
-      phoc_view_move_resize (view, x, y, MAX (1, width), MAX (1, height));
-    }
+    phoc_cursor_do_resize (self, time);
     break;
   default:
     g_error ("Invalid cursor mode %d", priv->mode);
