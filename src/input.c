@@ -21,7 +21,7 @@ struct _PhocInput {
   GObject              parent;
 
   struct wl_listener   new_input;
-  GSList              *seats; // PhocSeat
+  GSList              *seats; /* (element-type PhocSeat) */
 };
 
 G_DEFINE_TYPE (PhocInput, phoc_input, G_TYPE_OBJECT);
@@ -68,9 +68,8 @@ phoc_input_get_seat (PhocInput *self, char *name)
     seat = PHOC_SEAT (elem->data);
 
     g_assert (PHOC_IS_SEAT (seat));
-    if (strcmp (seat->seat->name, name) == 0) {
+    if (strcmp (seat->seat->name, name) == 0)
       return seat;
-    }
   }
 
   seat = phoc_seat_new (self, name);
@@ -90,12 +89,14 @@ handle_new_input (struct wl_listener *listener, void *data)
 
   seat = phoc_input_get_seat (self, seat_name);
   if (!seat) {
-    g_warning ("could not create PhocSeat");
+    g_warning ("Couldn't create seat");
     return;
   }
 
-  g_debug ("New input device: %s %s seat:%s", device->name,
-           phoc_input_get_device_type (device->type), seat_name);
+  g_debug ("New input device: %s %s seat:%s",
+           device->name,
+           phoc_input_get_device_type (device->type),
+           seat_name);
 
   phoc_seat_add_device (seat, device);
 }
@@ -166,9 +167,8 @@ phoc_input_view_has_focus (PhocInput *self, PhocView *view)
     PhocSeat *seat = PHOC_SEAT (elem->data);
 
     g_assert (PHOC_IS_SEAT (seat));
-    if (view == phoc_seat_get_focus_view (seat)) {
+    if (view == phoc_seat_get_focus_view (seat))
       return true;
-    }
   }
 
   return false;
@@ -195,8 +195,7 @@ phoc_input_update_cursor_focus (PhocInput *self)
     PhocSeat *seat = PHOC_SEAT (elem->data);
 
     g_assert (PHOC_IS_SEAT (seat));
-    phoc_cursor_update_position (phoc_seat_get_cursor (seat),
-                                 timespec_to_msec (&now));
+    phoc_cursor_update_position (phoc_seat_get_cursor (seat), timespec_to_msec (&now));
   }
 }
 
