@@ -8,8 +8,9 @@
 
 #include "output.h"
 
-#include <wlr/types/wlr_layer_shell_v1.h>
 #include <glib-object.h>
+
+#include <wayland-util.h>
 
 G_BEGIN_DECLS
 
