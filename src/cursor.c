@@ -15,6 +15,7 @@
 #include "gesture-drag.h"
 #include "gesture-swipe.h"
 #include "layer-shell-effects.h"
+#include "touch-point.h"
 
 #define _XOPEN_SOURCE 700
 #include <assert.h>
