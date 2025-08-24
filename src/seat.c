@@ -1530,14 +1530,17 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
   phoc_input_method_relay_set_focus (&seat->im_relay, view->wlr_surface);
 }
 
-/*
+/**
+ * phoc_seat_set_focus_layer:
+ * @seat: The seat
+ * @layer:(nullable): The layer surface to focus
+ *
  * Focus semantics of layer surfaces are somewhat detached from the normal focus
  * flow. For layers above the shell layer, for example, you cannot unfocus them.
  * You also cannot alt-tab between layer surfaces and shell surfaces.
  */
 void
-phoc_seat_set_focus_layer (PhocSeat                    *seat,
-                           struct wlr_layer_surface_v1 *layer)
+phoc_seat_set_focus_layer (PhocSeat *seat, struct wlr_layer_surface_v1 *layer)
 {
   PhocSeatPrivate *priv;
 
