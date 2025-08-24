@@ -100,7 +100,7 @@ apply_exclusive (struct wlr_box *usable_area,
  * Updates the cursor position for the given layer surface
  */
 void
-phoc_layer_shell_update_cursors (PhocLayerSurface *layer_surface, GSList *seats)
+phoc_layer_shell_update_cursors (PhocLayerSurface *layer_surface)
 {
   PhocServer *server = phoc_server_get_default ();
   PhocDesktop *desktop = phoc_server_get_desktop (server);
@@ -234,7 +234,7 @@ arrange_layer (PhocOutput                     *output,
      * Only update layer surfaces which kept their size (and so buffers) the
      * same, because those with resized buffers will be handled separately. */
     if (layer_surface->geo.x != old_geo.x || layer_surface->geo.y != old_geo.y)
-      phoc_layer_shell_update_cursors (layer_surface, seats);
+      phoc_layer_shell_update_cursors (layer_surface);
   }
 
   return sent_configure;

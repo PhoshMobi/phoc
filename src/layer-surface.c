@@ -213,8 +213,6 @@ phoc_layer_surface_remove_frame_callback (PhocAnimatable *iface, guint id)
 static void
 handle_surface_commit (struct wl_listener *listener, void *data)
 {
-  PhocServer *server = phoc_server_get_default ();
-  PhocInput *input = phoc_server_get_input (server);
   PhocLayerSurface *self = wl_container_of (listener, self, surface_commit);
   struct wlr_layer_surface_v1 *wlr_layer_surface = self->layer_surface;
   struct wlr_output *wlr_output = wlr_layer_surface->output;
@@ -248,7 +246,7 @@ handle_surface_commit (struct wl_listener *listener, void *data)
   struct wlr_surface *surface = wlr_layer_surface->surface;
   if (surface->WLR_PRIVATE.previous.width != surface->current.width ||
       surface->WLR_PRIVATE.previous.height != surface->current.height) {
-    phoc_layer_shell_update_cursors (self, phoc_input_get_seats (input));
+    phoc_layer_shell_update_cursors (self);
   }
 
   bool geo_changed = memcmp (&old_geo, &self->geo, sizeof (struct wlr_box)) != 0;

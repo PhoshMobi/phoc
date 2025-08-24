@@ -9,7 +9,6 @@
 
 G_BEGIN_DECLS
 
-void                 phoc_layer_shell_update_cursors (PhocLayerSurface *layer_surface,
-                                                      GSList           *seats);
+void                 phoc_layer_shell_update_cursors (PhocLayerSurface *layer_surface);
 
 G_END_DECLS
