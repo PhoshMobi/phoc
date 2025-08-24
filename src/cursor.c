@@ -1203,10 +1203,59 @@ phoc_cursor_update_focus (PhocCursor *self)
   phoc_passthrough_cursor (self, timespec_to_msec (&now));
 }
 
+static void
+phoc_cursor_do_move (PhocCursor *self, uint32_t time)
+{
+  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
+  PhocSeat *seat = self->seat;
+  PhocView *view;
+
+  view = phoc_seat_get_focus_view (seat);
+  if (view != NULL) {
+    struct wlr_box geom;
+    phoc_view_get_geometry (view, &geom);
+    double dx = self->cursor->x - self->offs_x;
+    double dy = self->cursor->y - self->offs_y;
+    PhocOutput *output = phoc_desktop_layout_get_output (desktop, self->cursor->x, self->cursor->y);
+    if (!output)
+      return;
+
+    struct wlr_box output_box;
+    wlr_output_layout_get_box (desktop->layout, output->wlr_output, &output_box);
+
+    bool output_is_landscape = output_box.width > output_box.height;
+
+    if (phoc_view_is_fullscreen (view)) {
+      phoc_view_set_fullscreen (view, true, output);
+    } else if (self->cursor->y < output_box.y + PHOC_EDGE_SNAP_THRESHOLD) {
+      phoc_cursor_suggest_view_state_change (self, view, output, PHOC_VIEW_STATE_MAXIMIZED, -1);
+    } else if (output_is_landscape &&
+               self->cursor->x < output_box.x + PHOC_EDGE_SNAP_THRESHOLD) {
+      phoc_cursor_suggest_view_state_change (self,
+                                             view,
+                                             output,
+                                             PHOC_VIEW_STATE_TILED,
+                                             PHOC_VIEW_TILE_LEFT);
+    } else if (output_is_landscape &&
+               self->cursor->x > output_box.x + output_box.width - PHOC_EDGE_SNAP_THRESHOLD) {
+      phoc_cursor_suggest_view_state_change (self,
+                                             view,
+                                             output,
+                                             PHOC_VIEW_STATE_TILED,
+                                             PHOC_VIEW_TILE_RIGHT);
+    } else {
+      phoc_cursor_clear_view_state_change (self);
+      phoc_view_restore (view);
+      phoc_view_move (view, self->view_x + dx - geom.x * phoc_view_get_scale (view),
+                      self->view_y + dy - geom.y * phoc_view_get_scale (view));
+    }
+  }
+}
+
+
 void
 phoc_cursor_update_position (PhocCursor *self, uint32_t time)
 {
-  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
   PhocCursorPrivate *priv = phoc_cursor_get_instance_private (self);
   PhocSeat *seat = self->seat;
   PhocView *view;
@@ -1216,46 +1265,7 @@ phoc_cursor_update_position (PhocCursor *self, uint32_t time)
     phoc_passthrough_cursor (self, time);
     break;
   case PHOC_CURSOR_MOVE:
-    view = phoc_seat_get_focus_view (seat);
-    if (view != NULL) {
-      struct wlr_box geom;
-      phoc_view_get_geometry (view, &geom);
-      double dx = self->cursor->x - self->offs_x;
-      double dy = self->cursor->y - self->offs_y;
-      PhocOutput *output = phoc_desktop_layout_get_output (desktop, self->cursor->x, self->cursor->y);
-      if (!output)
-        return;
-
-      struct wlr_box output_box;
-      wlr_output_layout_get_box (desktop->layout, output->wlr_output, &output_box);
-
-      bool output_is_landscape = output_box.width > output_box.height;
-
-      if (phoc_view_is_fullscreen (view)) {
-        phoc_view_set_fullscreen (view, true, output);
-      } else if (self->cursor->y < output_box.y + PHOC_EDGE_SNAP_THRESHOLD) {
-        phoc_cursor_suggest_view_state_change (self, view, output, PHOC_VIEW_STATE_MAXIMIZED, -1);
-      } else if (output_is_landscape &&
-                 self->cursor->x < output_box.x + PHOC_EDGE_SNAP_THRESHOLD) {
-        phoc_cursor_suggest_view_state_change (self,
-                                               view,
-                                               output,
-                                               PHOC_VIEW_STATE_TILED,
-                                               PHOC_VIEW_TILE_LEFT);
-      } else if (output_is_landscape &&
-                 self->cursor->x > output_box.x + output_box.width - PHOC_EDGE_SNAP_THRESHOLD) {
-        phoc_cursor_suggest_view_state_change (self,
-                                               view,
-                                               output,
-                                               PHOC_VIEW_STATE_TILED,
-                                               PHOC_VIEW_TILE_RIGHT);
-      } else {
-        phoc_cursor_clear_view_state_change (self);
-        phoc_view_restore (view);
-        phoc_view_move (view, self->view_x + dx - geom.x * phoc_view_get_scale (view),
-                        self->view_y + dy - geom.y * phoc_view_get_scale (view));
-      }
-    }
+    phoc_cursor_do_move (self, time);
     break;
   case PHOC_CURSOR_RESIZE:
     view = phoc_seat_get_focus_view (seat);
