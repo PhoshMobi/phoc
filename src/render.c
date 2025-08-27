@@ -150,7 +150,8 @@ render_texture (PhocOutput               *output,
   if (!phoc_utils_is_damaged (&proj_box, ctx->damage, clip_box, &damage))
     goto buffer_damage_finish;
 
-  transform = wlr_output_transform_compose (surface_transform, output->wlr_output->transform);
+  transform = wlr_output_transform_compose (wlr_output_transform_invert (surface_transform),
+                                            output->wlr_output->transform);
 
   wlr_render_pass_add_texture (ctx->render_pass, &(struct wlr_render_texture_options) {
       .texture = texture,
@@ -331,7 +332,7 @@ view_render_to_buffer_iterator (struct wlr_surface *surface, int sx, int sy, voi
       .texture = texture,
       .src_box = src_box,
       .dst_box = dst_box,
-      .transform = surface->current.transform,
+      .transform = wlr_output_transform_invert (surface->current.transform),
       .alpha = &alpha,
     });
 }
