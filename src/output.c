@@ -56,7 +56,7 @@ typedef struct _PhocOutputPrivate {
   PhocRenderer            *renderer;
   PhocOutputShield        *shield;
 
-  GSList                  *frame_callbacks;
+  GSList                  *frame_callbacks; /* (element-type: PhocOutputFrameCallbackInfo) */
   gint                     frame_callback_next_id;
   gint64                   last_frame_us;
 
@@ -80,7 +80,7 @@ typedef struct _PhocOutputPrivate {
   PhocLayoutTransaction *transaction;
   gboolean               modeset_shield;
 
-  GSList                *debug_damage;
+  GSList                *debug_damage; /* (element-type: PhocDebugDamageRegion) */
 } PhocOutputPrivate;
 
 static void phoc_output_initable_iface_init (GInitableIface *iface);
