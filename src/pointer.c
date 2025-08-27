@@ -105,7 +105,7 @@ on_touchpad_settings_changed (PhocPointer *self,
   enabled = g_settings_get_boolean (settings, "tap-and-drag-lock");
   libinput_device_config_tap_set_drag_lock_enabled (ldev,
                                                     enabled ?
-                                                    LIBINPUT_CONFIG_DRAG_LOCK_ENABLED :
+                                                    LIBINPUT_CONFIG_DRAG_LOCK_ENABLED_STICKY :
                                                     LIBINPUT_CONFIG_DRAG_LOCK_DISABLED);
 
   enabled = g_settings_get_boolean (settings, "disable-while-typing");
