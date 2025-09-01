@@ -17,11 +17,12 @@
 #include "bling.h"
 #include "cursor.h"
 #include "input.h"
-#include "layer-shell.h"
+#include "layer-surface.h"
 #include "seat.h"
 #include "server.h"
 #include "render.h"
 #include "render-private.h"
+#include "touch-point.h"
 #include "xwayland-surface.h"
 #include "utils.h"
 

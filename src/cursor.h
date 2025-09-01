@@ -12,7 +12,6 @@
 #include "seat.h"
 #include "event.h"
 #include "gesture.h"
-#include "touch-point.h"
 
 #include <glib-object.h>
 

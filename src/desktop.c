@@ -11,6 +11,7 @@
 #include <wlr/types/wlr_alpha_modifier_v1.h>
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_cursor.h>
+#include <wlr/types/wlr_cursor_shape_v1.h>
 #include <wlr/types/wlr_data_control_v1.h>
 #include <wlr/types/wlr_export_dmabuf_v1.h>
 #include <wlr/types/wlr_ext_image_capture_source_v1.h>
@@ -48,12 +49,10 @@
 #include "color-rect.h"
 #include "timed-animation.h"
 #include "outputs-states.h"
-#include "utils.h"
 #include "view.h"
 #include "virtual.h"
 #include "xdg-activation-v1.h"
 #include "wlr-layer-shell-unstable-v1-protocol.h"
-#include "gesture-swipe.h"
 #include "layer-shell-effects.h"
 #include "workspace.h"
 #include "workspace-manager.h"
@@ -103,6 +102,7 @@ typedef struct _PhocDesktopPrivate {
   struct wlr_idle_notifier_v1 *idle_notifier_v1;
   struct wlr_screencopy_manager_v1 *screencopy_manager_v1;
   struct wl_listener gamma_control_set_gamma;
+  struct wl_listener request_set_cursor_shape;
 
   /* Protocols without upstreamable implementations */
   PhocPhoshPrivate      *phosh;
@@ -559,6 +559,7 @@ on_output_destroyed (PhocDesktop *self, PhocOutput *destroyed_output)
   g_object_unref (destroyed_output);
 }
 
+
 static void
 handle_new_output (struct wl_listener *listener, void *data)
 {
@@ -575,6 +576,26 @@ handle_new_output (struct wl_listener *listener, void *data)
                            G_CALLBACK (on_output_destroyed),
                            self,
                            G_CONNECT_SWAPPED);
+}
+
+
+static void
+handle_request_set_cursor_shape (struct wl_listener *listener, void *data)
+{
+  const struct wlr_cursor_shape_manager_v1_request_set_shape_event *event = data;
+  PhocSeat *seat = PHOC_SEAT (event->seat_client->seat->data);
+  struct wlr_surface *focused_surface = seat->seat->pointer_state.focused_surface;
+  struct wl_client *focused_client = NULL;
+
+  if (focused_surface)
+    focused_client = wl_resource_get_client (focused_surface->resource);
+
+  if (focused_client == NULL || event->seat_client->client != focused_client) {
+    g_debug ("Denying request to set cursor shape from unfocused client");
+    return;
+  }
+
+  phoc_cursor_set_name (seat->cursor, focused_client, wlr_cursor_shape_v1_name (event->shape));
 }
 
 
@@ -596,6 +617,7 @@ phoc_desktop_constructed (GObject *object)
   PhocServer *server = phoc_server_get_default ();
   struct wl_display *wl_display = phoc_server_get_wl_display (server);
   struct wlr_backend *wlr_backend = phoc_server_get_backend (server);
+  struct wlr_cursor_shape_manager_v1 *cursor_shape_manager;
 
   G_OBJECT_CLASS (phoc_desktop_parent_class)->constructed (object);
 
@@ -691,6 +713,10 @@ phoc_desktop_constructed (GObject *object)
   self->pointer_constraint.notify = handle_pointer_constraint;
   wl_signal_add (&self->pointer_constraints->events.new_constraint, &self->pointer_constraint);
 
+  cursor_shape_manager = wlr_cursor_shape_manager_v1_create (wl_display, 1);
+  priv->request_set_cursor_shape.notify = handle_request_set_cursor_shape;
+  wl_signal_add (&cursor_shape_manager->events.request_set_shape, &priv->request_set_cursor_shape);
+
   wlr_alpha_modifier_v1_create (wl_display);
   wlr_presentation_create (wl_display, wlr_backend, PHOC_PRESENTATION_TIME_VERSION);
   self->foreign_toplevel_manager_v1 = wlr_foreign_toplevel_manager_v1_create (wl_display);
@@ -737,6 +763,7 @@ phoc_desktop_finalize (GObject *object)
   PhocDesktop *self = PHOC_DESKTOP (object);
   PhocDesktopPrivate *priv = phoc_desktop_get_instance_private (self);
 
+  wl_list_remove (&priv->request_set_cursor_shape.link);
   wl_list_remove (&priv->gamma_control_set_gamma.link);
   wl_list_remove (&self->layout_change.link);
   wl_list_remove (&self->xdg_shell_toplevel.link);
