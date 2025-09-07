@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2019 Purism SPC
- *               2023-2025 The Phosh Developers
+ *               2023-2024 The Phosh Developers
+ *               2025 Phosh.mobi e.V.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  * Author: Guido Günther <agx@sigxcpu.org>
@@ -26,6 +27,7 @@
 #include <wlr/xwayland/shell.h>
 
 #include <errno.h>
+#include <sys/resource.h>
 
 /* Maximum protocol versions we support */
 #define PHOC_WL_DISPLAY_VERSION 6
@@ -68,6 +70,8 @@ typedef struct _PhocServer {
   GMainLoop           *mainloop;
 
   GStrv                dt_compatibles;
+
+  struct rlimit        saved_nofile_rlimit;
 
   struct wl_display   *wl_display;
   guint                wl_source;
@@ -155,7 +159,7 @@ phoc_wayland_init (PhocServer *self)
 static void
 on_session_exit (GPid pid, gint status, PhocServer *self)
 {
-  g_autoptr(GError) err = NULL;
+  g_autoptr (GError) err = NULL;
 
   g_return_if_fail (PHOC_IS_SERVER (self));
   g_spawn_close_pid (pid);
@@ -173,21 +177,33 @@ on_session_exit (GPid pid, gint status, PhocServer *self)
 
 
 static void
-on_child_setup (gpointer unused)
+on_child_setup (gpointer data)
 {
+  PhocServer *self = PHOC_SERVER (data);
   sigset_t mask;
+
+  g_assert (PHOC_IS_SERVER (data));
 
   /* phoc wants SIGUSR1 blocked due to wlroots/xwayland but we
      don't want to inherit that to children */
-  sigemptyset(&mask);
-  sigaddset(&mask, SIGUSR1);
-  sigprocmask(SIG_UNBLOCK, &mask, NULL);
+  sigemptyset (&mask);
+  sigaddset (&mask, SIGUSR1);
+  sigprocmask (SIG_UNBLOCK, &mask, NULL);
+
+  /* Restore nofile rlimit */
+  if (self->saved_nofile_rlimit.rlim_cur) {
+    if (setrlimit (RLIMIT_NOFILE, &self->saved_nofile_rlimit)) {
+      g_critical ("Failed to restore nofile rlimit: %s", g_strerror (errno));
+      return;
+    }
+  }
 }
 
 
-static gboolean
-phoc_startup_session_in_idle (PhocServer *self)
+static void
+phoc_startup_session_in_idle (gpointer data)
 {
+  PhocServer *self = PHOC_SERVER (data);
   GPid pid;
   g_auto (GStrv) argv;
   g_autoptr (GError) err = NULL;
@@ -207,7 +223,6 @@ phoc_startup_session_in_idle (PhocServer *self)
     g_critical ("Failed to launch session: %s", err->message);
     g_main_loop_quit (self->mainloop);
   }
-  return FALSE;
 }
 
 
@@ -216,8 +231,32 @@ phoc_startup_session (PhocServer *server)
 {
   gint id;
 
-  id = g_idle_add ((GSourceFunc) phoc_startup_session_in_idle, server);
+  id = g_idle_add_once (phoc_startup_session_in_idle, server);
   g_source_set_name_by_id (id, "[phoc] phoc_startup_session");
+}
+
+
+static void
+phoc_server_raise_nofile_rlimit (PhocServer *self)
+{
+  struct rlimit new_rlimit;
+
+  if (getrlimit (RLIMIT_NOFILE, &self->saved_nofile_rlimit)) {
+    g_critical ("Failed to get nofile rlimit: %s", g_strerror (errno));
+    return;
+  }
+
+  new_rlimit = self->saved_nofile_rlimit;
+  new_rlimit.rlim_cur = new_rlimit.rlim_max;
+
+  if (setrlimit (RLIMIT_NOFILE, &new_rlimit)) {
+    g_critical ("Failed to raise nofile rlimit: %s, max open files is %" G_GUINT64_FORMAT,
+                g_strerror (errno),
+                (guint64)self->saved_nofile_rlimit.rlim_cur);
+    return;
+  }
+
+  g_debug ("Updated nofile current rlimit to %" G_GUINT64_FORMAT, (guint64)new_rlimit.rlim_cur);
 }
 
 
@@ -324,9 +363,8 @@ phoc_server_initable_init (GInitable    *initable,
   }
 
   self->renderer = phoc_renderer_new (self->backend, error);
-  if (self->renderer == NULL) {
+  if (self->renderer == NULL)
     return FALSE;
-  }
   wlr_renderer = phoc_renderer_get_wlr_renderer (self->renderer);
   wlr_renderer_init_wl_shm (wlr_renderer, self->wl_display);
 
@@ -341,7 +379,9 @@ phoc_server_initable_init (GInitable    *initable,
 
   self->data_device_manager = wlr_data_device_manager_create (self->wl_display);
 
-  self->compositor = wlr_compositor_create (self->wl_display, PHOC_WL_DISPLAY_VERSION, wlr_renderer);
+  self->compositor = wlr_compositor_create (self->wl_display,
+                                            PHOC_WL_DISPLAY_VERSION,
+                                            wlr_renderer);
   wl_signal_add (&self->compositor->events.new_surface, &self->new_surface);
   self->new_surface.notify = handle_new_surface;
 
@@ -437,7 +477,7 @@ phoc_server_finalize (GObject *object)
   g_clear_pointer (&self->session_exec, g_free);
 
   if (self->inited) {
-    g_unsetenv("WAYLAND_DISPLAY");
+    g_unsetenv ("WAYLAND_DISPLAY");
     self->inited = FALSE;
   }
 
@@ -517,7 +557,7 @@ phoc_server_get_default (void)
 
   if (G_UNLIKELY (instance == NULL)) {
     g_autoptr (GError) err = NULL;
-    g_debug("Creating server");
+    g_debug ("Creating server");
     instance = g_initable_new (PHOC_TYPE_SERVER, NULL, &err, NULL);
     if (instance == NULL) {
       g_critical ("Failed to create server: %s", err->message);
@@ -577,13 +617,13 @@ phoc_server_setup (PhocServer      *self,
   g_print ("Running compositor on wayland display '%s'\n", socket);
 
   if (!wlr_backend_start (self->backend)) {
-    g_warning("Failed to start backend");
+    g_warning ("Failed to start backend");
     wlr_backend_destroy (self->backend);
     wl_display_destroy (self->wl_display);
     return FALSE;
   }
 
-  g_setenv("WAYLAND_DISPLAY", socket, true);
+  g_setenv ("WAYLAND_DISPLAY", socket, true);
 
   if (self->flags & PHOC_SERVER_FLAG_SHELL_MODE) {
     g_message ("Enabling shell mode");
@@ -597,6 +637,9 @@ phoc_server_setup (PhocServer      *self,
   }
 
   phoc_wayland_init (self);
+
+  phoc_server_raise_nofile_rlimit (self);
+
   if (self->session_exec)
     phoc_startup_session (self);
 
