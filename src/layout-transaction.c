@@ -9,10 +9,6 @@
 #define G_LOG_DOMAIN "phoc-layout-transaction"
 
 #include "phoc-config.h"
-#include "desktop.h"
-#include "output.h"
-#include "server.h"
-#include "layer-surface.h"
 
 #include "layout-transaction.h"
 

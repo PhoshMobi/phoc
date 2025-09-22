@@ -156,8 +156,8 @@ PhocSeatView      *phoc_seat_view_from_view (PhocSeat *seat, PhocView *view);
 void               phoc_seat_set_exclusive_client (PhocSeat         *seat,
                                                    struct wl_client *client);
 
-bool               phoc_seat_allow_input (PhocSeat           *seat,
-                                          struct wl_resource *resource);
+bool               phoc_seat_is_input_allowed (PhocSeat           *seat,
+                                               struct wl_resource *resource);
 
 void               phoc_seat_maybe_set_cursor (PhocSeat *self, const char *name);
 

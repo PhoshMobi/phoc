@@ -856,7 +856,7 @@ phoc_handle_shell_reveal (struct wlr_surface *surface, double lx, double ly, int
 
 
 static void
-phoc_passthrough_cursor (PhocCursor *self, uint32_t time)
+phoc_cursor_do_passthrough (PhocCursor *self, uint32_t time)
 {
   PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
   double sx, sy;
@@ -870,7 +870,7 @@ phoc_passthrough_cursor (PhocCursor *self, uint32_t time)
   if (surface)
     client = wl_resource_get_client (surface->resource);
 
-  if (surface && !phoc_seat_allow_input (seat, surface->resource))
+  if (surface && !phoc_seat_is_input_allowed (seat, surface->resource))
     return;
 
   if (priv->image_client != client || !client) {
@@ -1200,7 +1200,7 @@ phoc_cursor_update_focus (PhocCursor *self)
 
   clock_gettime (CLOCK_MONOTONIC, &now);
 
-  phoc_passthrough_cursor (self, timespec_to_msec (&now));
+  phoc_cursor_do_passthrough (self, timespec_to_msec (&now));
 }
 
 static void
@@ -1297,7 +1297,7 @@ phoc_cursor_update_position (PhocCursor *self, uint32_t time)
 
   switch (priv->mode) {
   case PHOC_CURSOR_PASSTHROUGH:
-    phoc_passthrough_cursor (self, time);
+    phoc_cursor_do_passthrough (self, time);
     break;
   case PHOC_CURSOR_MOVE:
     phoc_cursor_do_move (self, time);
@@ -1573,7 +1573,7 @@ phoc_cursor_handle_touch_down (PhocCursor                  *self,
   struct wlr_surface *surface = phoc_desktop_wlr_surface_at (desktop, lx, ly, &sx, &sy, &view);
   bool shell_revealed = phoc_handle_shell_reveal (surface, lx, ly, PHOC_SHELL_REVEAL_TOUCH_THRESHOLD);
 
-  if (!shell_revealed && surface && phoc_seat_allow_input (seat, surface->resource)) {
+  if (!shell_revealed && surface && phoc_seat_is_input_allowed (seat, surface->resource)) {
     struct wlr_surface *root = wlr_surface_get_root_surface (surface);
 
     send_touch_down (seat, surface, event, sx, sy);
@@ -1727,7 +1727,7 @@ phoc_cursor_handle_touch_motion (PhocCursor                    *self,
       }
     }
 
-    if (phoc_seat_allow_input (self->seat, surface->resource))
+    if (phoc_seat_is_input_allowed (self->seat, surface->resource))
       send_touch_motion (self->seat, surface, event, sx, sy);
   }
 

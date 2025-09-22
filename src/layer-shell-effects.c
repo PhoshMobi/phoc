@@ -9,12 +9,10 @@
 #define G_LOG_DOMAIN "phoc-layer-shell-effects"
 
 #include "phoc-config.h"
+
 #include "layer-shell.h"
 #include "layer-shell-effects.h"
-#include "phoc-animation.h"
-#include "phoc-enums.h"
 #include "server.h"
-#include "utils.h"
 
 #include <glib-object.h>
 
