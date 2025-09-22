@@ -1377,9 +1377,6 @@ phoc_seat_is_input_allowed (PhocSeat *seat, struct wl_resource *resource)
   g_assert (PHOC_IS_SEAT (seat));
   priv = phoc_seat_get_instance_private (seat);
 
-  if (!phoc_server_get_allow_input (phoc_server_get_default ()))
-    return false;
-
   return !priv->exclusive_client || wl_resource_get_client (resource) == priv->exclusive_client;
 }
 
@@ -2124,3 +2121,4 @@ phoc_seat_add_shortcuts_inhibit (PhocSeat                                   *sel
                             G_CALLBACK (on_shortcuts_inhibit_destroy),
                             self);
 }
+
