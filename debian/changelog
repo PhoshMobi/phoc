@@ -1,3 +1,93 @@
+phoc (0.50~rc1) experimental; urgency=medium
+
+  [ Guido Günther ]
+  * doc: Document `adaptive-sync`
+  * doc: Add a slug.
+    Otherwise it appears in the docs as "Unknown document"
+  * workspace: Introduce workspaces.
+    A workspace groups a set of views in layout coordinates. We only
+    display one workspace (called `active`) at a time. Views can move
+    between workspaces while layer-surfaces are always rendered on all
+    workspaces.
+    The workspace manager keeps track of the existing workspaces.
+  * desktop: Instantiate workspace manager.
+    We add the workspace manager, listen to workspace changes and provide
+    getters, so other parts of the stack can access those too.
+  * keybindings: Allow to switch workspaces
+  * keybindings: Allow to move windows between workspaces
+  * render: Only render active workspace.
+    The other views remain "hidden" until their workspace becomes the active
+    one.
+  * output: Only use direct scanout if view is on active workspace
+  * view: Iterate over workspaces.
+    If this becomes to cumbersome we could keep a hash map (wlr_surface,
+    view) of all views on the desktop.
+  * desktop: Let phoc_desktop_for_each_view iterate all workspaces
+  * desktop: Manage the workspace queue rather than global view queue.
+    Operations are per workspace now.
+  * desktop: Damage output areas that change between workspaces
+  * desktop: Drop get_views() and the view queue.
+    Everything is per workspace now
+  * doc: Document new gsettings.
+    Helps: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/330
+  * desktop: Remove unused headers
+  * cursor: Don't include touch-point in header.
+    Let's be more specific as it speeds up compilation
+  * cursor: Move view moving code to separate function
+  * cursor: Move view resize code to separate function
+  * cursor: Save one indent level by exiting early
+  * desktop: Support cursor-shape-v1 protocol.
+    Avoids some duplicate cursors when e.g. resizing GTK4 apps
+  * server: Fix indent
+  * server: Use g_idle_add_once.
+    It's less error prone
+  * server: Bump nofile soft rlimit to the hard limit value.
+    Lets not run out of file descriptors when a client requests
+    a lot of buffers.
+    We restore the rlimit before forking of the child process.
+    Closes: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/415
+  * pointer: Use libinput's LIBINPUT_CONFIG_DRAG_LOCK_ENABLED_STICKY.
+    Recommended in the libinput 1.27 release notes:
+    https://lists.freedesktop.org/archives/wayland-devel/2024-November/043860.html
+  * layout-transaction: Remove unused headers
+  * layer-shell-effects: Drop unused headers
+  * layer-shell: Include correct headers.
+    We can minimize the included headers a bit
+  * seat: Rename allow_input to is_input_allowed.
+    We check rather than changing the mode
+  * cursor: Fix function name.
+    The prefix is `phoc_cursor_`
+  * layer-shell: Drop unused seats argument from update_cursors()
+    The function gets the seats on its own.
+  * layer-shell: Update cursor when arranging surfaces.
+    The code so far only updated the cursor for the layer surface
+    but we need to take the case into account where a layer surface
+    moves away and reveals a non layer-surface.
+    Otherwise we might get the wrong cursor when we e.g. close
+    phosh's overview and the cursor is over an app.
+  * seat: Revert "Reject input based on shell state too"
+    This breaks (among other things) type to search in Phosh after startup.
+    We want to fix that at the input level rather than avoiding
+    that the surface gets focus.
+    This reverts commit 4f22f58a95af938f129cf9b532d7284a79524dfa.
+    Reopens: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/228
+  * wlroots: Update 0.19.1
+
+  [ Sebastian Krzyszkowiak ]
+  * render: Invert the surface transform before applying.
+    The Wayland protocol specification says this about wl_surface::set_buffer_transform:
+       This request sets the transformation that the client has already applied to
+       the content of the buffer. (...) The compositor applies the inverse of this
+       transformation whenever it uses the buffer contents.
+    phoc currently did the opposite (applying the specified transform to the received
+    buffer), which is a regression since 0.37.0 (for output rendering) and 0.45.0
+    (for thumbnails).
+    Make it work as specified again by applying the inverse of the buffer transform.
+    Fixes 0e31b45f6 ("render: Switch to wlr_render_pass")
+    Fixes a51f7cd13 ("render: Switch thumbnail rendering to new render API")
+
+ -- Guido Günther <agx@sigxcpu.org>  Sat, 27 Sep 2025 18:21:41 +0200
+
 phoc (0.49.0) experimental; urgency=medium
 
   [ Guido Günther ]
