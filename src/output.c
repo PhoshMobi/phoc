@@ -575,7 +575,7 @@ phoc_output_draw (PhocOutput *self)
   PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
   struct wlr_output *wlr_output = self->wlr_output;
   bool needs_frame, scanned_out = false;
-  pixman_region32_t buffer_damage, frame_damage;
+  pixman_region32_t buffer_damage;
   PhocRenderContext render_context;
   struct wlr_buffer *buffer;
   struct wlr_render_pass *render_pass;
@@ -596,10 +596,7 @@ phoc_output_draw (PhocOutput *self)
   if (G_UNLIKELY (priv->gamma_lut_changed))
     phoc_output_set_gamma_lut (self, &pending);
 
-  pixman_region32_init (&frame_damage);
-  pixman_region32_copy (&frame_damage, &self->damage_ring.current);
-  wlr_output_state_set_damage (&pending, &frame_damage);
-  pixman_region32_fini (&frame_damage);
+  wlr_output_state_set_damage (&pending, &self->damage_ring.current);
 
   /* Check if we can delegate the fullscreen surface to the output */
   if (self->fullscreen_view)
