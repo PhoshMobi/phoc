@@ -1059,6 +1059,7 @@ phoc_output_initable_init (GInitable    *initable,
   phoc_output_fill_state (self, output_config, &pending);
   phoc_output_set_layout_pos (self, output_config);
   wlr_output_commit_state (self->wlr_output, &pending);
+  wlr_output_state_finish (&pending);
 
   for (GSList *elem = phoc_input_get_seats (input); elem; elem = elem->next) {
     PhocSeat *seat = PHOC_SEAT (elem->data);
@@ -1088,8 +1089,6 @@ phoc_output_initable_init (GInitable    *initable,
       g_warning ("Could not create cutout overlay");
     }
   }
-
-  wlr_output_state_finish (&pending);
 
   g_message ("Output '%s' added ('%s'/'%s'/'%s'), "
              "%" PRId32 "mm x %" PRId32 "mm",
