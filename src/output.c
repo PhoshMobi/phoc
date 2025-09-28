@@ -744,6 +744,7 @@ phoc_output_handle_commit (struct wl_listener *listener, void *data)
       phoc_output_raise_shield (self, FALSE);
       priv->modeset_shield = TRUE;
     }
+    phoc_output_damage_whole (self);
   }
 
   if (event->state->committed & (WLR_OUTPUT_STATE_ENABLED |
@@ -751,11 +752,6 @@ phoc_output_handle_commit (struct wl_listener *listener, void *data)
                                  WLR_OUTPUT_STATE_SCALE |
                                  WLR_OUTPUT_STATE_TRANSFORM)) {
     update_output_manager_config (self->desktop);
-  }
-
-  if (event->state->committed & (WLR_OUTPUT_STATE_MODE |
-                                 WLR_OUTPUT_STATE_TRANSFORM)) {
-    wlr_output_schedule_frame (self->wlr_output);
   }
 
   if (event->state->committed & WLR_OUTPUT_STATE_ENABLED && self->wlr_output->enabled) {
