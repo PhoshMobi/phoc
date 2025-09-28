@@ -1612,10 +1612,17 @@ phoc_output_for_each_surface (PhocOutput          *self,
 void
 phoc_output_damage_whole (PhocOutput *self)
 {
+  pixman_region32_t damage;
+  int width, height;
+
   if (self == NULL || self->wlr_output == NULL)
     return;
 
-  wlr_damage_ring_add_whole (&self->damage_ring);
+  wlr_output_transformed_resolution (self->wlr_output, &width, &height);
+  pixman_region32_init_rect (&damage, 0, 0, width, height);
+  phoc_output_damage_region (self, &damage);
+  pixman_region32_fini (&damage);
+
   wlr_output_schedule_frame (self->wlr_output);
 }
 
