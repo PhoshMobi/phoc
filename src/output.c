@@ -1819,7 +1819,7 @@ phoc_output_damage_region (PhocOutput *self, const pixman_region32_t *region)
   pixman_region32_init (&clipped);
   pixman_region32_intersect_rect (&clipped, region, 0, 0, width, height);
 
-  if (!pixman_region32_not_empty (&clipped)) {
+  if (pixman_region32_empty (&clipped)) {
     pixman_region32_fini (&clipped);
     return FALSE;
   }
