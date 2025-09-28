@@ -1009,7 +1009,6 @@ phoc_output_initable_init (GInitable    *initable,
   PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
   PhocOutputConfig *output_config;
   struct wlr_output_state pending;
-  int width, height;
 
   self->wlr_output->data = self;
   wl_list_insert (&self->desktop->outputs, &self->link);
@@ -1074,8 +1073,6 @@ phoc_output_initable_init (GInitable    *initable,
   phoc_output_damage_whole (self);
 
   update_output_manager_config (self->desktop);
-
-  wlr_output_transformed_resolution (self->wlr_output, &width, &height);
 
   if (phoc_server_check_debug_flags (server, PHOC_SERVER_DEBUG_FLAG_CUTOUTS)) {
     priv->cutouts = phoc_cutouts_overlay_new (phoc_server_get_compatibles (server));
