@@ -482,10 +482,9 @@ phoc_renderer_render_output (PhocRenderer *self, PhocOutput *output, PhocRenderC
 
   g_assert (PHOC_IS_RENDERER (self));
 
-  if (!pixman_region32_not_empty (damage)) {
-    /* Output isn't damaged but needs buffer swap */
+  /* Output isn't damaged but needs buffer swap */
+  if (pixman_region32_empty (damage))
     goto renderer_end;
-  }
 
   wlr_render_pass_add_rect (ctx->render_pass,
                             &(struct wlr_render_rect_options){
