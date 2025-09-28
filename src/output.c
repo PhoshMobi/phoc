@@ -562,9 +562,8 @@ build_debug_damage_tracking (PhocOutput *self)
     elem = next;
   };
 
-  if (pixman_region32_not_empty (&highlight_damage)) {
+  if (pixman_region32_not_empty (&highlight_damage))
     wlr_damage_ring_add (&self->damage_ring, &highlight_damage);
-  }
 
   pixman_region32_fini (&highlight_damage);
 }
@@ -2437,7 +2436,6 @@ phoc_output_handle_gamma_control_set_gamma (struct wl_listener *listener, void *
   priv->gamma_lut_changed = TRUE;
   wlr_output_schedule_frame (self->wlr_output);
 }
-
 
 /**
  * phoc_output_transform_damage:
