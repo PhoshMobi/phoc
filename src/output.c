@@ -588,7 +588,6 @@ phoc_output_draw (PhocOutput *self)
   needs_frame = wlr_output->needs_frame;
   needs_frame |= pixman_region32_not_empty (&self->damage_ring.current);
   needs_frame |= priv->gamma_lut_changed;
-  needs_frame |= (priv->debug_damage != NULL);
 
   if (!needs_frame)
     return;
