@@ -1020,6 +1020,7 @@ phoc_output_initable_init (GInitable    *initable,
   }
 
   wlr_damage_ring_init (&self->damage_ring);
+  phoc_output_damage_whole (self);
 
   self->output_destroy.notify = phoc_output_handle_destroy;
   wl_signal_add (&self->wlr_output->events.destroy, &self->output_destroy);
@@ -1067,7 +1068,6 @@ phoc_output_initable_init (GInitable    *initable,
 
   phoc_layer_shell_arrange (self);
   phoc_layer_shell_update_focus ();
-  phoc_output_damage_whole (self);
 
   update_output_manager_config (self->desktop);
 
