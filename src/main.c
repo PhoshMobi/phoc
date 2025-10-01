@@ -127,8 +127,8 @@ main (int argc, char **argv)
   g_autoptr (GError) err = NULL;
   g_autoptr (GMainLoop) loop = NULL;
   g_autoptr (PhocServer) server = NULL;
-  g_autofree gchar *config_path = NULL;
-  g_autofree gchar *exec = NULL, *socket = NULL;
+  g_autofree char *config_path = NULL;
+  g_autofree char *exec = NULL, *socket = NULL;
   PhocServerFlags flags = PHOC_SERVER_FLAG_NONE;
   PhocServerDebugFlags debug_flags = PHOC_SERVER_DEBUG_FLAG_NONE;
   gboolean version = FALSE, shell_mode = FALSE, verbose = FALSE;

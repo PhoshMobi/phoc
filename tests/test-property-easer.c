@@ -195,7 +195,7 @@ test_phoc_property_easer_props_variant (void)
 
 
 gint
-main (gint argc, gchar *argv[])
+main (gint argc, char *argv[])
 {
   g_test_init (&argc, &argv, NULL);
 

@@ -67,7 +67,7 @@ typedef struct _PhocServer {
   PhocRenderer        *renderer;
   PhocDesktop         *desktop;
 
-  gchar               *session_exec;
+  char                *session_exec;
   GPid                 session_pid;
   gint                 exit_status;
   GMainLoop           *mainloop;

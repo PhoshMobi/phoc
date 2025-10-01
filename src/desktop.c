@@ -508,7 +508,7 @@ handle_pointer_constraint (struct wl_listener *listener, void *data)
 
 static void
 auto_maximize_changed_cb (PhocDesktop *self,
-                          const gchar *key,
+                          const char  *key,
                           GSettings   *settings)
 {
   gboolean max = g_settings_get_boolean (settings, key);
@@ -522,7 +522,7 @@ auto_maximize_changed_cb (PhocDesktop *self,
 
 static void
 on_enable_animations_changed (PhocDesktop *self,
-                              const gchar *key,
+                              const char  *key,
                               GSettings   *settings)
 {
   PhocDesktopPrivate *priv;

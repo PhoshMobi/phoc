@@ -756,7 +756,7 @@ phoc_test_buffer_equal (PhocTestBuffer *buf1, PhocTestBuffer *buf2)
  * Returns: %TRUE if buffers was saved successfully, otherwise %FALSE
  */
 gboolean
-phoc_test_buffer_save (PhocTestBuffer *buffer, const gchar *filename)
+phoc_test_buffer_save (PhocTestBuffer *buffer, const char *filename)
 {
   cairo_surface_t *surface;
   cairo_status_t status;
@@ -783,7 +783,7 @@ phoc_test_buffer_save (PhocTestBuffer *buffer, const gchar *filename)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (cairo_surface_t, cairo_surface_destroy)
 
 gboolean
-phoc_test_buffer_matches_screenshot (PhocTestBuffer *buffer, const gchar *filename)
+phoc_test_buffer_matches_screenshot (PhocTestBuffer *buffer, const char *filename)
 {
   const char *msg;
   g_autoptr (cairo_surface_t) surface = cairo_image_surface_create_from_png (filename);

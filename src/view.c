@@ -1198,10 +1198,10 @@ phoc_view_handle_surface_new_subsurface (struct wl_listener *listener, void *dat
   phoc_subsurface_new (PHOC_CHILD_ROOT (self), wlr_subsurface);
 }
 
-static gchar *
-munge_app_id (const gchar *app_id)
+static char *
+munge_app_id (const char *app_id)
 {
-  gchar *id = g_strdup (app_id);
+  char *id = g_strdup (app_id);
   gint i;
 
   g_strcanon (id,
@@ -1569,8 +1569,8 @@ bind_scale_to_fit_setting (PhocView *self)
   g_clear_object (&priv->settings);
 
   if (priv->app_id) {
-    g_autofree gchar *munged_app_id = munge_app_id (priv->app_id);
-    g_autofree gchar *path = g_strconcat ("/sm/puri/phoc/application/", munged_app_id, "/", NULL);
+    g_autofree char *munged_app_id = munge_app_id (priv->app_id);
+    g_autofree char *path = g_strconcat ("/sm/puri/phoc/application/", munged_app_id, "/", NULL);
     priv->settings = g_settings_new_with_path ("sm.puri.phoc.application", path);
 
     g_settings_bind (priv->settings,

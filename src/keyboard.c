@@ -494,7 +494,7 @@ set_fallback_keymap (PhocKeyboard *self)
 
 
 static void
-set_xkb_keymap (PhocKeyboard *self, const gchar *layout, const gchar *variant, const gchar *options)
+set_xkb_keymap (PhocKeyboard *self, const char *layout, const char *variant, const char *options)
 {
   struct xkb_rule_names rules = { 0 };
   struct xkb_context *context = NULL;
@@ -537,17 +537,17 @@ set_xkb_keymap (PhocKeyboard *self, const gchar *layout, const gchar *variant, c
 
 static void
 on_input_setting_changed (PhocKeyboard *self,
-                          const gchar  *key,
+                          const char   *key,
                           GSettings    *settings)
 {
   g_auto (GStrv) xkb_options = NULL;
   g_autoptr (GVariant) sources = NULL;
   GVariantIter iter;
-  g_autofree gchar *id = NULL;
-  g_autofree gchar *type = NULL;
-  g_autofree gchar *xkb_options_string = NULL;
-  const gchar *layout = NULL;
-  const gchar *variant = NULL;
+  g_autofree char *id = NULL;
+  g_autofree char *type = NULL;
+  g_autofree char *xkb_options_string = NULL;
+  const char *layout = NULL;
+  const char *variant = NULL;
   PhocInputDevice *input_device;
   struct wlr_input_device *device;
 
@@ -593,7 +593,7 @@ on_input_setting_changed (PhocKeyboard *self,
 
 static void
 on_keyboard_setting_changed (PhocKeyboard *self,
-                             const gchar  *key,
+                             const char   *key,
                              GSettings    *settings)
 {
   gboolean repeat;
@@ -860,7 +860,7 @@ phoc_keyboard_next_layout (PhocKeyboard *self)
 {
   g_autoptr (GVariant) sources = NULL;
   GVariantIter iter;
-  gchar *type, *id, *cur_type, *cur_id;
+  char *type, *id, *cur_type, *cur_id;
   GVariantBuilder builder;
   gboolean next;
 

@@ -153,7 +153,7 @@ test_phoc_timed_animation_dispose_on_done (void)
 
 
 gint
-main (gint argc, gchar *argv[])
+main (gint argc, char *argv[])
 {
   g_test_init (&argc, &argv, NULL);
 
