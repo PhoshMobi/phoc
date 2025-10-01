@@ -196,7 +196,7 @@ phoc_workspace_manager_set_active (PhocWorkspaceManager *self, PhocWorkspace *wo
   found = g_ptr_array_find (self->workspaces, workspace, &index);
   g_assert (found);
 
-  g_debug ("Switching to workspace %d", index);
+  g_debug ("Switching to workspace %u", index);
   self->active = workspace;
   g_object_notify_by_pspec (G_OBJECT (self), props[PROP_WORKSPACE]);
 }
@@ -217,7 +217,7 @@ phoc_workspace_manager_set_active_by_index (PhocWorkspaceManager *self, guint in
   if (self->active == workspace)
     return;
 
-  g_debug ("Switching to workspace %d", index);
+  g_debug ("Switching to workspace %u", index);
   self->active = workspace;
   g_object_notify_by_pspec (G_OBJECT (self), props[PROP_WORKSPACE]);
 }
