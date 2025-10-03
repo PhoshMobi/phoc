@@ -1,11 +1,12 @@
-phoc 0.50~rc1
--------------
+phoc 0.50.0
+-----------
 Released September 2025
 * Initial workspace support
 * Usual bunch of bug fixes
 * Issues fixed:
     * https://gitlab.gnome.org/World/Phosh/phoc/-/issues/415
 * Contributors:
+    * Evangelos Ribeiro Tzaras
     * Guido Günther
     * Sebastian Krzyszkowiak
 
