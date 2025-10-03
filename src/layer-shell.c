@@ -123,7 +123,7 @@ phoc_layer_shell_update_cursors (PhocLayerSurface *layer_surface)
         phoc_cursor_update_position (cursor,
                                      time.tv_sec * 1000 + time.tv_nsec / 1000000);
       } else {
-        g_critical ("Failed to get time, not updating position. Errno: %s\n", strerror (errno));
+        g_critical ("Failed to get time, not updating position. Errno: %s", strerror (errno));
       }
     }
   }

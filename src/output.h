@@ -191,4 +191,8 @@ GSList    *phoc_output_get_debug_damage      (PhocOutput *self);
 enum wlr_scale_filter_mode
            phoc_output_get_texture_filter_mode (PhocOutput *self);
 
+void       phoc_output_add_bling (PhocOutput *self, PhocBling *bling);
+void       phoc_output_remove_bling (PhocOutput *self, PhocBling *bling);
+GSList *   phoc_output_get_blings (PhocOutput *self);
+
 G_END_DECLS

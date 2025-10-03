@@ -124,6 +124,8 @@ sources = files(
   'view.h',
   'virtual.c',
   'virtual.h',
+  'workspace-indicator.c',
+  'workspace-indicator.h',
   'workspace-manager.c',
   'workspace-manager.h',
   'workspace.c',

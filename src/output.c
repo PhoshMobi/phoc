@@ -56,7 +56,7 @@ typedef struct _PhocOutputPrivate {
   PhocRenderer            *renderer;
   PhocOutputShield        *shield;
 
-  GSList                  *frame_callbacks;
+  GSList                  *frame_callbacks; /* (element-type: PhocOutputFrameCallbackInfo) */
   gint                     frame_callback_next_id;
   gint64                   last_frame_us;
 
@@ -80,7 +80,8 @@ typedef struct _PhocOutputPrivate {
   PhocLayoutTransaction *transaction;
   gboolean               modeset_shield;
 
-  GSList                *debug_damage;
+  GSList                *blings; /* (element-type: PhocBling) */
+  GSList                *debug_damage; /* (element-type: PhocDebugDamageRegion) */
 } PhocOutputPrivate;
 
 static void phoc_output_initable_iface_init (GInitableIface *iface);
@@ -453,6 +454,7 @@ count_surface_iterator (PhocOutput         *output,
 PHOC_TRACE_NO_INLINE static bool
 scan_out_fullscreen_view (PhocOutput *self, PhocView *view, struct wlr_output_state *pending)
 {
+  PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
   PhocServer *server = phoc_server_get_default ();
   PhocInput *input = phoc_server_get_input (server);
   PhocDesktop *desktop = phoc_server_get_desktop (server);
@@ -477,6 +479,9 @@ scan_out_fullscreen_view (PhocOutput *self, PhocView *view, struct wlr_output_st
     return false;
 
   if (phoc_output_has_shell_revealed (self))
+    return false;
+
+  if (priv->blings)
     return false;
 
   if (phoc_output_has_layer (self, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY))
@@ -2526,4 +2531,68 @@ phoc_output_get_debug_damage (PhocOutput *self)
   priv = phoc_output_get_instance_private (self);
 
   return priv->debug_damage;
+}
+
+/**
+ * phoc_output_add_bling:
+ * @self: The output
+ * @bling: The bling to add
+ *
+ * By adding a [type@Bling] to an output you ensure that it gets rendered
+ * just before the output if the output is active and the bling is mapped.
+ *
+ * The output will take a reference on the [type@Bling] that will be
+ * dropped when the bling is removed or the output is destroyed.
+ */
+void
+phoc_output_add_bling (PhocOutput *self, PhocBling *bling)
+{
+  PhocOutputPrivate *priv;
+
+  g_assert (PHOC_IS_OUTPUT (self));
+  g_assert (PHOC_IS_BLING (bling));
+  priv = phoc_output_get_instance_private (self);
+
+  priv->blings = g_slist_prepend (priv->blings, g_object_ref (bling));
+}
+
+/**
+ * phoc_output_remove_bling:
+ * @self: The output
+ * @bling: The bling to remove
+ *
+ * Removes the given bling from the output.
+ */
+void
+phoc_output_remove_bling (PhocOutput *self, PhocBling *bling)
+{
+  PhocOutputPrivate *priv;
+
+  g_assert (PHOC_IS_OUTPUT (self));
+  g_assert (PHOC_IS_BLING (bling));
+  priv = phoc_output_get_instance_private (self);
+
+  g_return_if_fail (g_slist_find (priv->blings, bling));
+
+  priv->blings = g_slist_remove (priv->blings, bling);
+  g_object_unref (bling);
+}
+
+/**
+ * phoc_output_get_blings:
+ * @self: The output
+ *
+ * Gets the output's current list of blings.
+ *
+ * Returns: (transfer none)(element-type PhocBling): A list
+ */
+GSList *
+phoc_output_get_blings (PhocOutput *self)
+{
+  PhocOutputPrivate *priv;
+
+  g_assert (PHOC_IS_OUTPUT (self));
+  priv = phoc_output_get_instance_private (self);
+
+  return priv->blings;
 }

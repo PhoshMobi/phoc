@@ -55,6 +55,7 @@
 #include "wlr-layer-shell-unstable-v1-protocol.h"
 #include "layer-shell-effects.h"
 #include "workspace.h"
+#include "workspace-indicator.h"
 #include "workspace-manager.h"
 #include "xdg-toplevel.h"
 #include "xdg-toplevel-decoration.h"
@@ -830,16 +831,57 @@ workspace_damage_view_iter (PhocWorkspace *workspace, PhocView *view, gpointer u
   return TRUE;
 }
 
+#define INDICATOR_OFFSET 16
+#define INDICATOR_SIZE 64
+
+static void
+show_workspace_indicator (PhocDesktop *self, int num)
+{
+  PhocOutput *output;
+  g_autoptr (PhocTimedAnimation) fade_anim = NULL;
+  g_autoptr (PhocPropertyEaser) easer = NULL;
+  g_autoptr (PhocColorRect) rect = NULL;
+
+  if (!phoc_desktop_get_enable_animations (self))
+    return;
+
+  wl_list_for_each (output, &self->outputs, link) {
+    GSList *blings = phoc_output_get_blings (output);
+
+    for (GSList *l = blings; l; l = l->next) {
+      if (PHOC_IS_WORKSPACE_INDICATOR (l->data)) {
+        phoc_output_remove_bling (output, l->data);
+        break;
+      }
+    }
+  }
+
+  wl_list_for_each (output, &self->outputs, link) {
+    g_autoptr (PhocWorkspaceIndicator) indicator = NULL;
+
+    indicator = phoc_workspace_indicator_new (PHOC_ANIMATABLE (output),
+                                              num,
+                                              output->lx + INDICATOR_OFFSET,
+                                              output->ly + INDICATOR_OFFSET,
+                                              INDICATOR_SIZE);
+    phoc_output_add_bling (output, PHOC_BLING (indicator));
+    phoc_bling_map (PHOC_BLING (indicator));
+  }
+}
+
 
 static void
 on_active_workspace_changed (PhocDesktop *self, GParamSpec *pspec, PhocWorkspaceManager *manager)
 {
   PhocDesktopPrivate *priv = phoc_desktop_get_instance_private (self);
+  int index;
 
   if (priv->active_workspace)
     phoc_workspace_for_each_view (priv->active_workspace, workspace_damage_view_iter, NULL);
 
   priv->active_workspace = phoc_workspace_manager_get_active (priv->workspace_manager);
+  index = phoc_workspace_manager_get_active_index (priv->workspace_manager);
+  show_workspace_indicator (self, index + 1);
 
   phoc_workspace_for_each_view (priv->active_workspace, workspace_damage_view_iter, NULL);
 }
