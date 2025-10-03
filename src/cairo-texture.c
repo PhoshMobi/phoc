@@ -129,7 +129,7 @@ phoc_cairo_texture_constructed (GObject *object)
   self->surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, self->width, self->height);
   surface_status = cairo_surface_status (self->surface);
   if (surface_status != CAIRO_STATUS_SUCCESS) {
-    g_warning ("Failed to create cairo surface: %d\n", surface_status);
+    g_warning ("Failed to create cairo surface: %d", surface_status);
     return;
   }
   self->cairo = cairo_create (self->surface);

@@ -258,7 +258,7 @@ bling_map (PhocBling *bling)
   cr = phoc_cairo_texture_get_context (self->texture);
 
   if (!cr) {
-    g_warning ("No Cairo context, cannot render spinner\n");
+    g_warning ("No Cairo context, cannot render spinner");
     return;
   }
 
