@@ -99,7 +99,7 @@ API documentation is available at <https://world.pages.gitlab.gnome.org/Phosh/ph
 ## Getting in Touch
 
 - Issue tracker: <https://gitlab.gnome.org/World/Phosh/phoc/issues>
-- Matrix: <https://matrix.to/#/#phosh:sigxcpu.org>
+- Matrix: <https://matrix.to/#/#phosh:phosh.mobi>
 
 [1]: https://gitlab.freedesktop.org/wlroots/
 [2]: debian/control
