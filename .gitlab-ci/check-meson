@@ -20,7 +20,7 @@ while IFS= read -r -d '' file; do
      rm -f "${TMPDIR}/meson.build"
      ret=1
   fi
-done <  <(find . -name '*.build' -print0)
+done <  <(find . -name '*.build' -not -path './subprojects/*' -print0)
 
 if [ -n "$TMPDIR" ]; then
     rmdir "${TMPDIR}"
