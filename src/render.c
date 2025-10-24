@@ -482,9 +482,9 @@ phoc_renderer_render_output (PhocRenderer *self, PhocOutput *output, PhocRenderC
 
   g_assert (PHOC_IS_RENDERER (self));
 
-  if (!pixman_region32_not_empty (damage)) {
-    /* Output isn't damaged but needs buffer swap */
-    goto renderer_end;
+  if (pixman_region32_empty (damage)) {
+    g_signal_emit (self, signals[RENDER_END], 0, ctx);
+    return;
   }
 
   wlr_render_pass_add_rect (ctx->render_pass,
@@ -539,7 +539,6 @@ phoc_renderer_render_output (PhocRenderer *self, PhocOutput *output, PhocRenderC
 
   render_output_blings (output, ctx);
 
- renderer_end:
   wlr_output_add_software_cursors_to_render_pass (wlr_output, ctx->render_pass, damage);
 
   if (G_UNLIKELY (phoc_server_check_debug_flags (server, PHOC_SERVER_DEBUG_FLAG_TOUCH_POINTS)))
