@@ -1,4 +1,4 @@
-FROM debian:trixie-slim
+FROM debian:forky-slim
 
 # Build-deps for phoc and wlroots
 RUN export DEBIAN_FRONTEND=noninteractive \

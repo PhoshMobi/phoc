@@ -1,7 +1,7 @@
 ---
 include:
   - project: 'guidog/meta-phosh'
-    ref: 'a7ec8974bb14258191146c791d8c614322dfd9e1'
+    ref: '5cd8a2143477b1cb3197944773143bf02fae01d6'
     file: '/ci/phosh-common-jobs.yml'
   - project: 'Infrastructure/freedesktop-ci-templates'
     ref: 'd03cddbcff35f26861429fc816c00323f48e99af'
@@ -50,7 +50,7 @@ variables:
         wayland-dev wayland-protocols xcb-util-image-dev xcb-util-renderutil-dev
         xcb-util-wm-dev libseat-dev hwdata-dev libdisplay-info-dev
   XVFB_RUN: xvfb-run -s -noreset
-  DEBIAN_IMAGE: $CI_REGISTRY/world/phosh/phoc/debian:v0.0.2025-04-13
+  DEBIAN_IMAGE: $CI_REGISTRY/world/phosh/phoc/debian:v0.0.2025-10-22
 
 .build: &build
   script:
@@ -74,7 +74,7 @@ variables:
   - apk -q add alpine-sdk
   - apk -q add $ALPINE_EDGE_DEPS $ALPINE_EDGE_WLROOTS_DEPS
 
-build-with-xwayland-debian-trixie:
+build-with-xwayland-debian-forky:
   stage: build
   image: ${DEBIAN_IMAGE}
   before_script: *before_script_debian
@@ -85,7 +85,7 @@ build-with-xwayland-debian-trixie:
     paths:
       - _build
 
-build-with-xwayland-debian-trixie-clang:
+build-with-xwayland-debian-forky-clang:
   stage: build
   image: ${DEBIAN_IMAGE}
   variables:
@@ -115,11 +115,11 @@ build-without-xwayland-alpinelinux-edge:
   <<: *build
   allow_failure: true
 
-unit-test-with-xwayland-debian-trixie:
+unit-test-with-xwayland-debian-forky:
   stage: test+docs
   image: ${DEBIAN_IMAGE}
   needs:
-    - build-with-xwayland-debian-trixie
+    - build-with-xwayland-debian-forky
   before_script: *before_script_debian
   script:
     - WLR_RENDERER=pixman ${XVFB_RUN} meson test --print-errorlogs -C _build
@@ -133,7 +133,7 @@ unit-test-with-xwayland-debian-trixie:
     paths:
       - _build
 
-asan-test-native-debian-trixie:
+asan-test-native-debian-forky:
   stage: test+docs
   image: ${DEBIAN_IMAGE}
   tags: [asan]
@@ -144,11 +144,11 @@ asan-test-native-debian-trixie:
     - WLR_RENDERER=pixman ${XVFB_RUN} meson test --verbose -C _build-asan
   allow_failure: true
 
-scan-build-native-debian-trixie:
+scan-build-native-debian-forky:
   stage: test+docs
   image: ${DEBIAN_IMAGE}
   needs:
-    - build-with-xwayland-debian-trixie-clang
+    - build-with-xwayland-debian-forky-clang
   before_script: *before_script_debian
   script:
     - "SCANBUILD=${PWD}/tools/scan-build ninja -C _build scan-build"
@@ -256,19 +256,19 @@ check-meson:
   extends:
     - .phosh-check-meson
 
-package-deb-debian-trixie:arm64:
+package-deb-debian-forky:arm64:
   stage: package
   variables:
-    PHOSH_DOCKER_IMAGE: debian:trixie
+    PHOSH_DOCKER_IMAGE: debian:forky
     DEB_BUILD_PROFILES: 'pkg.phoc.embedwlroots'
   extends: .phosh-build-debian-package
   tags:
     - aarch64
 
-package-deb-debian-trixie:sanitizers:arm64:
+package-deb-debian-forky:sanitizers:arm64:
   stage: package
   variables:
-    PHOSH_DOCKER_IMAGE: debian:trixie
+    PHOSH_DOCKER_IMAGE: debian:forky
     DEB_BUILD_PROFILES: 'pkg.phoc.embedwlroots pkg.phoc.sanitizers'
   extends: .phosh-build-debian-package
   tags:
