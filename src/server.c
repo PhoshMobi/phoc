@@ -103,9 +103,11 @@ wayland_event_source_prepare (GSource *base,
                               int     *timeout)
 {
   WaylandEventSource *source = (WaylandEventSource *)base;
+  struct wl_event_loop *loop = wl_display_get_event_loop (source->display);
 
   *timeout = -1;
 
+  wl_event_loop_dispatch_idle (loop);
   wl_display_flush_clients (source->display);
 
   return FALSE;
