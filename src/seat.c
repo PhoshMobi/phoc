@@ -726,19 +726,29 @@ phoc_seat_handle_request_set_primary_selection (struct wl_listener *listener, vo
 
 static void seat_view_destroy (PhocSeatView *seat_view);
 
+
+static void
+phoc_seat_seat_views_destroy (PhocSeat *self)
+{
+  PhocSeatPrivate *priv = phoc_seat_get_instance_private (self);
+
+  if (priv->views) {
+    g_queue_free_full (priv->views, (GDestroyNotify)seat_view_destroy);
+    priv->views = NULL;
+  }
+}
+
+
 static void
 phoc_seat_handle_destroy (struct wl_listener *listener, void *data)
 {
   PhocSeat *self = wl_container_of (listener, self, destroy);
-  PhocSeatPrivate *priv = phoc_seat_get_instance_private (self);
 
   // TODO: probably more to be freed here
   wl_list_remove (&self->destroy.link);
 
   phoc_input_method_relay_destroy (&self->im_relay);
-
-  g_queue_free_full (priv->views, (GDestroyNotify)seat_view_destroy);
-  priv->views = NULL;
+  phoc_seat_seat_views_destroy (self);
 }
 
 
@@ -1855,6 +1865,7 @@ phoc_seat_dispose (GObject *object)
   PhocSeat *self = PHOC_SEAT (object);
   PhocSeatPrivate *priv = phoc_seat_get_instance_private (self);
 
+  phoc_seat_seat_views_destroy (self);
   g_clear_object (&priv->device_state);
   g_clear_object (&self->cursor);
 

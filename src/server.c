@@ -20,6 +20,8 @@
 
 #include <gmobile.h>
 
+#include <glib-unix.h>
+
 #include <wlr/types/wlr_drm.h>
 #include <wlr/types/wlr_linux_dmabuf_v1.h>
 #include <wlr/types/wlr_security_context_v1.h>
@@ -66,6 +68,7 @@ typedef struct _PhocServer {
   PhocDesktop         *desktop;
 
   gchar               *session_exec;
+  GPid                 session_pid;
   gint                 exit_status;
   GMainLoop           *mainloop;
 
@@ -85,6 +88,7 @@ typedef struct _PhocServer {
   struct wlr_data_device_manager *data_device_manager;
 
   struct wl_listener   new_surface;
+
 } PhocServer;
 
 static void phoc_server_initable_iface_init (GInitableIface *iface);
@@ -96,6 +100,27 @@ typedef struct {
   GSource source;
   struct wl_display *display;
 } WaylandEventSource;
+
+
+static gboolean
+on_shutdown_signal (gpointer user_data)
+{
+  static gboolean signal_sent;
+  PhocServer *self = PHOC_SERVER (user_data);
+
+  g_return_val_if_fail (self->session_pid > 0, FALSE);
+
+  if (!signal_sent) {
+    g_debug ("Ending session via SIGTERM");
+    kill (self->session_pid, SIGTERM);
+    signal_sent = TRUE;
+    return TRUE;
+  }
+
+  g_warning ("Received 2nd SIGTERM, quitting.");
+  g_main_loop_quit (self->mainloop);
+  return FALSE;
+}
 
 
 static gboolean
@@ -221,6 +246,8 @@ phoc_startup_session_in_idle (gpointer data)
                      G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_SEARCH_PATH,
                      on_child_setup, self, &pid, &err)) {
     g_child_watch_add (pid, (GChildWatchFunc)on_session_exit, self);
+    self->session_pid = pid;
+    g_unix_signal_add (SIGTERM, on_shutdown_signal, self);
   } else {
     g_critical ("Failed to launch session: %s", err->message);
     g_main_loop_quit (self->mainloop);
