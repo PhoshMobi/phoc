@@ -1,3 +1,61 @@
+phoc (0.51~rc1) experimental; urgency=medium
+
+  * render: Use pixman_region_empty()
+    We can expect recent enough pixman that supports this nowadays.
+  * render: Exit early when there is no damage.
+    As touch-points and debug-damage submit proper damage nowadays there's
+    no point in proceeding. Software cursors are only rendered when they
+    overlap with the pass in damage either.
+    This has the nice side effect that we don't emit any tracemarks when
+    there was nothing to render.
+    We keep emitting `render-end` for the moment until we received that signal
+    from the output shields.
+  * output: Move pending finish closer to commit.
+    No need to keep it around longer
+  * output: Use pixman_region_empty()
+    We can expect recent enough pixman that supports this nowadays.
+  * output: Drop pointless call to wlr_output_transformed_resolution()
+    Fixes: 550062499 ("wlroots: Upate to 79e06303")
+  * output: Drop pointless copy
+    wlr_output_state_set_damage() copies aready so no need to copy
+    it upfront.
+  * output: Damage output early.
+    This ensures we have a sufficiently sized damage size early on.
+  * output: Damage whole output.
+    Instead of just adding the current damage_ring (of whatever size)
+    ensure the damage ring's buffer covers the whole output.
+  * output: Drop check for debug_damage.
+    When we render debug-damage the damage-ring will contain the
+    damage information for the rects to render so damage_ring.current
+    will already be non-empty.
+  * output: Damage output when transform/scale/mode changes
+    wlr_damage_ring_set_bounds() damaged the whole buffer. Since that
+    is gone we need to do that on our own.
+    Fixes: 550062499 ("wlroots: Upate to 79e06303")
+  * ci: Update shared scripts to 5cd8a21
+  * ci: Switch to Debian forky
+  * wlroots: Switch to 0.19.2
+  * server: Dispatch idle loop in prepare.
+    Without this we might have the idle callback not running when there are
+    no events. This can result in e.g. the workspace indicator not going away
+    until e.g. the mouse moves.
+  * ci: Switch to newer forky
+  * seat: Destroy seat views before cursor.
+    Destroy a seat view invokes `phoc_cursor_set_mode` so we
+    need to do that first.
+    We can't use `g_clear_pointer` as that seats the given pointer
+    to `NULL` before invoking the free func. This breaks fails as
+    `seat_view_destroy` still accesses `priv->views`.
+    As `phoc_seat_handle_destroy` does the same we need to guard
+    against double cleanup. We'll disentangle that further when
+    looking at multiple seats.
+  * server: Kill spawned child gracefully.
+    So far we just went away. Instead pass the `SIGTERM` on to
+    the child so it can clean up.
+    On 2nd `SIGTERM` we exit gracefully.
+
+ -- Guido Günther <agx@sigxcpu.org>  Sat, 08 Nov 2025 09:45:44 +0100
+
 phoc (0.50.0) experimental; urgency=medium
 
   [ Evangelos Ribeiro Tzaras ]

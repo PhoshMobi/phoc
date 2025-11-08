@@ -1,3 +1,12 @@
+phoc 0.51~rc1
+-------------
+Released November 2025
+* Update to wlroots 0.19.2
+* Exit cleanly on SIGTERM
+* Internal cleanups
+* Contributors:
+    * Guido Günther
+
 phoc 0.50.0
 -----------
 Released September 2025
