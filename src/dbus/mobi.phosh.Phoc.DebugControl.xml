@@ -3,7 +3,7 @@
 <node xmlns:doc="http://www.freedesktop.org/dbus/1.0/doc.dtd">
 
   <!--
-      mobi.phosh.DebugControl:
+      mobi.phosh.Phoc.DebugControl:
 
       This interface is exported by the compositor to control its runtime
       debug settings.
