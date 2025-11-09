@@ -45,7 +45,7 @@ test_phoc_utils_compute_scale (void)
 }
 
 gint
-main (gint argc, gchar *argv[])
+main (gint argc, char *argv[])
 {
   g_test_init (&argc, &argv, NULL);
 

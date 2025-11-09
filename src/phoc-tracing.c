@@ -16,9 +16,9 @@
 void
 phoc_trace_mark (gint64       begin_time_nsec,
                  gint64       duration_nsec,
-                 const gchar *group,
-                 const gchar *name,
-                 const gchar *message_format,
+                 const char  *group,
+                 const char  *name,
+                 const char  *message_format,
                  ...)
 {
   va_list args;

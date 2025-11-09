@@ -24,7 +24,7 @@ void                  phoc_property_easer_set_easing       (PhocPropertyEaser  *
                                                             PhocEasing          easing);
 PhocEasing            phoc_property_easer_get_easing       (PhocPropertyEaser  *self);
 guint                 phoc_property_easer_set_props        (PhocPropertyEaser  *self,
-                                                            const gchar        *first_property_name,
+                                                            const char         *first_property_name,
                                                             ...) G_GNUC_NULL_TERMINATED;
 
 double phoc_lerp (double a, double b, double t);

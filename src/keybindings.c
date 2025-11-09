@@ -36,7 +36,7 @@ typedef void (*PhocKeyHandlerFunc) (PhocSeat *seat, GVariant *param);
  */
 typedef struct
 {
-  gchar              *name;
+  char               *name;
   PhocKeyHandlerFunc  func;
   GVariant           *param;
 
@@ -312,7 +312,7 @@ handle_move_to_workspace_relative (PhocSeat *seat, GVariant *param)
 
 /* This is copied from mutter which in turn got it form GTK+ */
 static inline gboolean
-is_alt (const gchar *string)
+is_alt (const char *string)
 {
   return ((string[0] == '<') &&
           (string[1] == 'a' || string[1] == 'A') &&
@@ -322,7 +322,7 @@ is_alt (const gchar *string)
 }
 
 static inline gboolean
-is_ctl (const gchar *string)
+is_ctl (const char *string)
 {
   return ((string[0] == '<') &&
           (string[1] == 'c' || string[1] == 'C') &&
@@ -332,7 +332,7 @@ is_ctl (const gchar *string)
 }
 
 static inline gboolean
-is_modx (const gchar *string)
+is_modx (const char *string)
 {
   return ((string[0] == '<') &&
           (string[1] == 'm' || string[1] == 'M') &&
@@ -343,7 +343,7 @@ is_modx (const gchar *string)
 }
 
 static inline gboolean
-is_ctrl (const gchar *string)
+is_ctrl (const char *string)
 {
   return ((string[0] == '<') &&
           (string[1] == 'c' || string[1] == 'C') &&
@@ -354,7 +354,7 @@ is_ctrl (const gchar *string)
 }
 
 static inline gboolean
-is_shft (const gchar *string)
+is_shft (const char *string)
 {
   return ((string[0] == '<') &&
           (string[1] == 's' || string[1] == 'S') &&
@@ -365,7 +365,7 @@ is_shft (const gchar *string)
 }
 
 static inline gboolean
-is_shift (const gchar *string)
+is_shift (const char *string)
 {
   return ((string[0] == '<') &&
           (string[1] == 's' || string[1] == 'S') &&
@@ -377,7 +377,7 @@ is_shift (const gchar *string)
 }
 
 static inline gboolean
-is_control (const gchar *string)
+is_control (const char *string)
 {
   return ((string[0] == '<') &&
           (string[1] == 'c' || string[1] == 'C') &&
@@ -391,7 +391,7 @@ is_control (const gchar *string)
 }
 
 static inline gboolean
-is_meta (const gchar *string)
+is_meta (const char *string)
 {
   return ((string[0] == '<') &&
           (string[1] == 'm' || string[1] == 'M') &&
@@ -402,7 +402,7 @@ is_meta (const gchar *string)
 }
 
 static inline gboolean
-is_super (const gchar *string)
+is_super (const char *string)
 {
   return ((string[0] == '<') &&
           (string[1] == 's' || string[1] == 'S') &&
@@ -414,7 +414,7 @@ is_super (const gchar *string)
 }
 
 static inline gboolean
-is_hyper (const gchar *string)
+is_hyper (const char *string)
 {
   return ((string[0] == '<') &&
           (string[1] == 'h' || string[1] == 'H') &&
@@ -426,7 +426,7 @@ is_hyper (const gchar *string)
 }
 
 static inline gboolean
-is_keycode (const gchar *string)
+is_keycode (const char *string)
 {
   return (string[0] == '0' &&
           string[1] == 'x' &&
@@ -441,7 +441,7 @@ is_keycode (const gchar *string)
  * and symbols.
  */
 PhocKeyCombo *
-phoc_parse_accelerator (const gchar *accelerator)
+phoc_parse_accelerator (const char *accelerator)
 {
   PhocKeyCombo *combo;
   xkb_keysym_t keyval;
@@ -504,7 +504,7 @@ phoc_parse_accelerator (const gchar *accelerator)
         len -= 7;
         mods |= WLR_MODIFIER_LOGO;
       } else {
-        gchar last_ch;
+        char last_ch;
 
         last_ch = *accelerator;
         while (last_ch && last_ch != '>') {
@@ -524,7 +524,7 @@ phoc_parse_accelerator (const gchar *accelerator)
       } else {
         keyval = xkb_keysym_from_name (accelerator, XKB_KEYSYM_CASE_INSENSITIVE);
         if (keyval == XKB_KEY_NoSymbol) {
-          g_autofree gchar *with_xf86 = g_strconcat ("XF86", accelerator, NULL);
+          g_autofree char *with_xf86 = g_strconcat ("XF86", accelerator, NULL);
           keyval = xkb_keysym_from_name (with_xf86, XKB_KEYSYM_CASE_INSENSITIVE);
 
           if (keyval == XKB_KEY_NoSymbol)
@@ -564,7 +564,7 @@ key_combo_eq (const PhocKeyCombo *sym1, const PhocKeyCombo *sym2)
 
 
 static gboolean
-keybinding_by_name (const PhocKeybinding *keybinding, const gchar *name)
+keybinding_by_name (const PhocKeybinding *keybinding, const char *name)
 {
   return g_strcmp0 (keybinding->name, name);
 }
@@ -584,7 +584,7 @@ keybinding_by_key_combo (const PhocKeybinding *keybinding, const PhocKeyCombo *c
 
 static void
 on_keybinding_setting_changed (PhocKeybindings *self,
-                               const gchar     *key,
+                               const char      *key,
                                GSettings       *settings)
 {
   g_auto(GStrv) accelerators = NULL;
@@ -624,11 +624,11 @@ on_keybinding_setting_changed (PhocKeybindings *self,
 static gboolean
 phoc_add_keybinding (PhocKeybindings    *self,
                      GSettings          *settings,
-                     const gchar        *name,
+                     const char         *name,
                      PhocKeyHandlerFunc  func,
                      GVariant           *param)
 {
-  g_autofree gchar *signal_name = NULL;
+  g_autofree char *signal_name = NULL;
   PhocKeybinding *binding;
 
   if (g_slist_find_custom (self->bindings, name, (GCompareFunc)keybinding_by_name)) {

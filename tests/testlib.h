@@ -146,8 +146,8 @@ void            phoc_test_xdg_update_buffer (PhocTestClientGlobals      *globals
                                              guint32                     color);
 /* Buffers */
 gboolean phoc_test_buffer_equal (PhocTestBuffer *buf1, PhocTestBuffer *buf2);
-gboolean phoc_test_buffer_save (PhocTestBuffer *buffer, const gchar *filename);
-gboolean phoc_test_buffer_matches_screenshot (PhocTestBuffer *buffer, const gchar *filename);
+gboolean phoc_test_buffer_save (PhocTestBuffer *buffer, const char *filename);
+gboolean phoc_test_buffer_matches_screenshot (PhocTestBuffer *buffer, const char *filename);
 void     phoc_test_buffer_free (PhocTestBuffer *buffer);
 
 #define _phoc_test_screenshot_name(l, f, n) \
@@ -160,7 +160,7 @@ void     phoc_test_buffer_free (PhocTestBuffer *buffer);
  */
 #define phoc_assert_screenshot(g, f) G_STMT_START {                      \
     PhocTestClientGlobals *__g = (g);                                    \
-    gchar *__f = g_test_build_filename (G_TEST_DIST, "screenshots", f, NULL); \
+    char *__f = g_test_build_filename (G_TEST_DIST, "screenshots", f, NULL); \
     PhocTestBuffer *__s = phoc_test_client_capture_output (__g, &__g->output); \
     g_test_message ("Snapshotting %s", f);                               \
     if (phoc_test_buffer_matches_screenshot (__s, __f)); else {         \
@@ -185,8 +185,8 @@ void     phoc_test_buffer_free (PhocTestBuffer *buffer);
 #define phoc_assert_buffer_equal(b1, b2)    G_STMT_START { \
     PhocTestBuffer *__b1 = (b1), *__b2 = (b2);                          \
     if (phoc_test_buffer_equal (__b1, __b2)); else {                  \
-      g_autofree gchar *__name1 = _phoc_test_screenshot_name (__LINE__, G_STRFUNC, 1); \
-      g_autofree gchar *__name2 = _phoc_test_screenshot_name (__LINE__, G_STRFUNC, 2); \
+      g_autofree char *__name1 = _phoc_test_screenshot_name (__LINE__, G_STRFUNC, 1); \
+      g_autofree char *__name2 = _phoc_test_screenshot_name (__LINE__, G_STRFUNC, 2); \
       phoc_test_buffer_save (__b1, __name1);                            \
       phoc_test_buffer_save (__b2, __name2);                            \
       g_assertion_message (G_LOG_DOMAIN, __FILE__, __LINE__, G_STRFUNC, \
