@@ -1556,7 +1556,8 @@ phoc_seat_set_focus_layer (PhocSeat *seat, struct wlr_layer_surface_v1 *layer)
 
   if (!layer) {
     if (seat->focused_layer) {
-      PhocOutput *output = PHOC_OUTPUT (seat->focused_layer->output->data);
+      PhocLayerSurface *focused_layer_surface = PHOC_LAYER_SURFACE (seat->focused_layer->data);
+      PhocOutput *output = phoc_layer_surface_get_output (focused_layer_surface);
       PhocSeatView *seat_view = g_queue_peek_head (priv->views);
 
       seat->focused_layer = NULL;
