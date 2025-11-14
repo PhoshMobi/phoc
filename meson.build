@@ -1,7 +1,7 @@
 project(
   'phoc',
   'c',
-  version: '0.51.rc1',
+  version: '0.51.0',
   license: 'GPLv3+',
   meson_version: '>= 0.63.0',
   default_options: ['warning_level=1', 'buildtype=debugoptimized', 'c_std=gnu11'],
