@@ -1,3 +1,20 @@
+phoc (0.51.0) experimental; urgency=medium
+
+  [ Gotam Gorabh ]
+  * tree: Prefer char over gchar
+
+  [ Sebastian Krzyszkowiak ]
+  * seat: Use the getter to access focused layer's output.
+    This gracefully deals with the case where seat->focused_layer->output is NULL.
+
+  [ Guido Günther ]
+  * server: Dispose renderer first.
+    We create the backend before the renderer and should dispose them
+    in opposite order. This fixes a crash when cleaning up the pixman
+    renderer on alpine.
+
+ -- Guido Günther <agx@sigxcpu.org>  Fri, 14 Nov 2025 21:28:41 +0100
+
 phoc (0.51~rc1) experimental; urgency=medium
 
   * render: Use pixman_region_empty()
