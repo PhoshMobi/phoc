@@ -12,6 +12,7 @@ wayland_protocols = [
   [wl_protocol_dir, 'staging/ext-image-capture-source/ext-image-capture-source-v1.xml'],
   [wl_protocol_dir, 'staging/ext-image-copy-capture/ext-image-copy-capture-v1.xml'],
   [wl_protocol_dir, 'unstable/pointer-constraints/pointer-constraints-unstable-v1.xml'],
+  [wl_protocol_dir, 'unstable/text-input/text-input-unstable-v3.xml'],
   [wl_protocol_dir, 'unstable/xdg-decoration/xdg-decoration-unstable-v1.xml'],
   ['gtk-shell.xml'],
   ['phoc-device-state-unstable-v1.xml'],

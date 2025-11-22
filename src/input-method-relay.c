@@ -6,6 +6,8 @@
 #include "server.h"
 #include "input-method-relay.h"
 
+#include "text-input-unstable-v3-protocol.h"
+
 #include <gmobile.h>
 
 #include <assert.h>
@@ -300,6 +302,11 @@ submit_preedit (PhocInputMethodRelay *self, PhocTextInput *text_input)
   wlr_text_input_v3_send_commit_string (text_input->input, preedit->text);
   g_clear_pointer (&preedit->text, g_free);
   wlr_text_input_v3_send_done (text_input->input);
+
+  /* As we submitted the preedit the input method needs to forget it too: */
+  wlr_input_method_v2_send_text_change_cause (self->input_method,
+                                              ZWP_TEXT_INPUT_V3_CHANGE_CAUSE_OTHER);
+  wlr_input_method_v2_send_done (self->input_method);
 }
 
 
