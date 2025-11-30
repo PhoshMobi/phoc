@@ -111,7 +111,6 @@ typedef struct _PhocDesktopPrivate {
 
   /* Protocols that should go upstream */
   PhocLayerShellEffects *layer_shell_effects;
-  PhocDeviceState       *device_state;
 
   PhocWorkspaceManager  *workspace_manager;
   PhocWorkspace         *active_workspace;
@@ -785,7 +784,6 @@ phoc_desktop_finalize (GObject *object)
   g_clear_object (&priv->phosh);
   g_clear_pointer (&priv->gtk_shell, phoc_gtk_shell_destroy);
   g_clear_object (&priv->layer_shell_effects);
-  g_clear_object (&priv->device_state);
   g_clear_pointer (&self->layout, wlr_output_layout_destroy);
 
   g_clear_object (&priv->outputs_states);
