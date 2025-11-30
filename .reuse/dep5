@@ -101,7 +101,7 @@ Files:
  data/phoc-dev.ini
  data/phoc-dev.service.in
  data/mobi.phosh.Phoc.desktop.in.in
- data/sm.puri.phoc.gschema.xml
+ data/mobi.phosh.phoc.gschema.xml
  debian/*
  doc/gettingstarted.md
  doc/phoc.gsettings.rst
