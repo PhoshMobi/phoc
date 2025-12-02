@@ -88,22 +88,22 @@ static GParamSpec *props[PROP_LAST_PROP];
 
 
 typedef struct _PhocDesktopPrivate {
-  PhocIdleInhibit       *idle_inhibit;
+  PhocIdleInhibit   *idle_inhibit;
 
-  gboolean               enable_animations;
+  gboolean           enable_animations;
 
-  GSettings             *settings;
-  GSettings             *interface_settings;
+  GSettings         *settings;
+  GSettings         *interface_settings;
 
-  PhocOutputsStates     *outputs_states;
+  PhocOutputsStates *outputs_states;
 
   /* Protocols from wlroots */
   struct wlr_data_control_manager_v1 *data_control_manager_v1;
   struct wlr_ext_image_copy_capture_manager_v1 *ext_image_copy_capture_manager_v1;
-  struct wlr_idle_notifier_v1 *idle_notifier_v1;
-  struct wlr_screencopy_manager_v1 *screencopy_manager_v1;
-  struct wl_listener gamma_control_set_gamma;
-  struct wl_listener request_set_cursor_shape;
+  struct wlr_idle_notifier_v1        *idle_notifier_v1;
+  struct wlr_screencopy_manager_v1   *screencopy_manager_v1;
+  struct wl_listener     gamma_control_set_gamma;
+  struct wl_listener     request_set_cursor_shape;
 
   /* Protocols without upstreamable implementations */
   PhocPhoshPrivate      *phosh;
