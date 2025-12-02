@@ -2050,19 +2050,22 @@ phoc_output_handle_output_power_manager_set_mode (struct wl_listener *listener, 
  * phone LCD), %FALSE otherwise.
  */
 gboolean
-phoc_output_is_builtin (PhocOutput *output)
+phoc_output_is_builtin (PhocOutput *self)
 {
-  g_return_val_if_fail (output, FALSE);
-  g_return_val_if_fail (output->wlr_output, FALSE);
-  g_return_val_if_fail (output->wlr_output->name, FALSE);
+  const char *name;
 
-  if (g_str_has_prefix (output->wlr_output->name, "LVDS-"))
+  g_return_val_if_fail (self, FALSE);
+  g_return_val_if_fail (self->wlr_output, FALSE);
+  g_return_val_if_fail (self->wlr_output->name, FALSE);
+
+  name = self->wlr_output->name;
+  if (g_str_has_prefix (name, "LVDS-"))
     return TRUE;
-  else if (g_str_has_prefix (output->wlr_output->name, "eDP-"))
+  else if (g_str_has_prefix (name, "eDP-"))
     return TRUE;
-  else if (g_str_has_prefix (output->wlr_output->name, "DSI-"))
+  else if (g_str_has_prefix (name, "DSI-"))
     return TRUE;
-  else if (g_str_has_prefix (output->wlr_output->name, "DPI-"))
+  else if (g_str_has_prefix (name, "DPI-"))
     return TRUE;
 
   return FALSE;
