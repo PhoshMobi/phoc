@@ -153,7 +153,7 @@ phoc_output_cutouts_new (const char * const *compatibles)
 
 
 struct wlr_texture *
-phoc_output_cutouts_get_cutouts_texture (PhocOutputCutouts *self, PhocOutput *output)
+phoc_output_cutouts_get_cutouts_texture (PhocOutputCutouts *self)
 {
   int width, height, radius, stride;
   GListModel *cutouts;
@@ -163,8 +163,6 @@ phoc_output_cutouts_get_cutouts_texture (PhocOutputCutouts *self, PhocOutput *ou
   struct wlr_texture *texture;
   g_autoptr (cairo_surface_t) surface = NULL;
   g_autoptr (cairo_t) cr = NULL;
-
-  g_return_val_if_fail (PHOC_IS_OUTPUT_CUTOUTS (self), NULL);
 
   if (self->panel == NULL)
     return NULL;
