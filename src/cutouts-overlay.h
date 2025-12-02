@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Phosh Developers
+ * Copyright (C) 2022-2025 Phosh.mobi e.V.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -12,12 +12,12 @@
 
 G_BEGIN_DECLS
 
-#define PHOC_TYPE_CUTOUTS_OVERLAY (phoc_cutouts_overlay_get_type ())
+#define PHOC_TYPE_OUTPUT_CUTOUTS (phoc_output_cutouts_get_type ())
 
-G_DECLARE_FINAL_TYPE (PhocCutoutsOverlay, phoc_cutouts_overlay, PHOC, CUTOUTS_OVERLAY, GObject)
+G_DECLARE_FINAL_TYPE (PhocOutputCutouts, phoc_output_cutouts, PHOC, OUTPUT_CUTOUTS, GObject)
 
-PhocCutoutsOverlay *phoc_cutouts_overlay_new                 (const char * const *compatibles);
-struct wlr_texture *phoc_cutouts_overlay_get_cutouts_texture (PhocCutoutsOverlay *self,
-                                                              PhocOutput         *output);
+PhocOutputCutouts *phoc_output_cutouts_new (const char * const *compatibles);
+struct wlr_texture *phoc_output_cutouts_get_cutouts_texture (PhocOutputCutouts *self,
+                                                             PhocOutput         *output);
 
 G_END_DECLS

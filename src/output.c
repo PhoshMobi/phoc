@@ -60,7 +60,7 @@ typedef struct _PhocOutputPrivate {
   gint                     frame_callback_next_id;
   gint64                   last_frame_us;
 
-  PhocCutoutsOverlay      *cutouts;
+  PhocOutputCutouts       *cutouts;
   gulong                   render_cutouts_id;
   struct wlr_texture      *cutouts_texture;
 
@@ -1067,10 +1067,10 @@ phoc_output_initable_init (GInitable    *initable,
   update_output_manager_config (self->desktop);
 
   if (phoc_server_check_debug_flags (server, PHOC_SERVER_DEBUG_FLAG_CUTOUTS)) {
-    priv->cutouts = phoc_cutouts_overlay_new (phoc_server_get_compatibles (server));
+    priv->cutouts = phoc_output_cutouts_new (phoc_server_get_compatibles (server));
     if (priv->cutouts) {
       g_message ("Adding cutouts overlay");
-      priv->cutouts_texture = phoc_cutouts_overlay_get_cutouts_texture (priv->cutouts, self);
+      priv->cutouts_texture = phoc_output_cutouts_get_cutouts_texture (priv->cutouts, self);
       priv->render_cutouts_id = g_signal_connect_swapped (renderer, "render-end",
                                                           G_CALLBACK (render_cutouts),
                                                           self);
