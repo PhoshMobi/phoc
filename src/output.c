@@ -2053,6 +2053,7 @@ phoc_output_handle_output_power_manager_set_mode (struct wl_listener *listener, 
 gboolean
 phoc_output_is_builtin (PhocOutput *self)
 {
+  PhocServer *server = phoc_server_get_default ();
   const char *name;
 
   g_return_val_if_fail (self, FALSE);
@@ -2068,6 +2069,15 @@ phoc_output_is_builtin (PhocOutput *self)
     return TRUE;
   else if (g_str_has_prefix (name, "DPI-"))
     return TRUE;
+
+  if (G_UNLIKELY (phoc_server_check_debug_flags (server, PHOC_SERVER_DEBUG_FLAG_FAKE_BUILTIN))) {
+    if (g_str_has_prefix (name, "WL-"))
+      return TRUE;
+    else if (g_str_has_prefix (name, "X11-"))
+      return TRUE;
+    else if (g_str_has_prefix (name, "HEADLESS-"))
+      return TRUE;
+  }
 
   return FALSE;
 }

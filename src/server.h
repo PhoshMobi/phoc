@@ -50,6 +50,7 @@ typedef enum _PhocServerDebugFlags {
   PHOC_SERVER_DEBUG_FLAG_FORCE_SHELL_REVEAL = 1 << 7,
   PHOC_SERVER_DEBUG_FLAG_IGNORE_STATES      = 1 << 8,
   PHOC_SERVER_DEBUG_FLAG_DAMAGE_WHOLE       = 1 << 9,
+  PHOC_SERVER_DEBUG_FLAG_FAKE_BUILTIN       = 1 << 10,
 } PhocServerDebugFlags;
 
 
