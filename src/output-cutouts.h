@@ -16,7 +16,8 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE (PhocOutputCutouts, phoc_output_cutouts, PHOC, OUTPUT_CUTOUTS, GObject)
 
-PhocOutputCutouts *phoc_output_cutouts_new (const char * const *compatibles);
-struct wlr_texture *phoc_output_cutouts_get_cutouts_texture (PhocOutputCutouts *self);
+PhocOutputCutouts *      phoc_output_cutouts_new (const char * const *compatibles);
+struct wlr_texture *     phoc_output_cutouts_get_cutouts_texture (PhocOutputCutouts *self);
+const pixman_region32_t *phoc_output_cutouts_get_region (PhocOutputCutouts *self);
 
 G_END_DECLS

@@ -24,7 +24,9 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (cairo_surface_t, cairo_surface_destroy)
 /**
  * PhocOutputCutouts:
  *
- * An overlay texture to render a devices cutouts.
+ * Tracks display cutout information. This can be used for providing
+ * cutout information to clients and to render an overlay texture
+ * showing the devices cutouts.
  */
 
 enum {
@@ -39,8 +41,31 @@ struct _PhocOutputCutouts {
 
   GStrv   compatibles;
   GmDisplayPanel *panel;
+
+  pixman_region32_t cutouts;
 };
 G_DEFINE_TYPE (PhocOutputCutouts, phoc_output_cutouts, G_TYPE_OBJECT)
+
+
+static void
+phoc_output_cutouts_update (PhocOutputCutouts *self)
+{
+  GListModel *cutouts;
+
+  pixman_region32_clear (&self->cutouts);
+
+  if (self->panel == NULL)
+    return;
+
+  cutouts = gm_display_panel_get_cutouts (self->panel);
+  for (int i = 0; i < g_list_model_get_n_items (cutouts); i++) {
+    g_autoptr (GmCutout) cutout = g_list_model_get_item (cutouts, i);
+    const GmRect *bounds = gm_cutout_get_bounds (cutout);
+
+    pixman_region32_union_rect (&self->cutouts, &self->cutouts,
+                                bounds->x, bounds->y, bounds->width, bounds->height);
+  }
+}
 
 
 static void
@@ -67,6 +92,8 @@ output_cutouts_set_compatibles (PhocOutputCutouts *self, const char *const *comp
 
   g_debug ("Found panel '%s'", gm_display_panel_get_name (panel));
   g_set_object (&self->panel, panel);
+
+  phoc_output_cutouts_update (self);
 }
 
 
@@ -116,6 +143,8 @@ phoc_output_cutouts_finalize (GObject *object)
   g_clear_object (&self->panel);
   g_clear_pointer (&self->compatibles, g_strfreev);
 
+  pixman_region32_fini (&self->cutouts);
+
   G_OBJECT_CLASS (phoc_output_cutouts_parent_class)->finalize (object);
 }
 
@@ -141,6 +170,7 @@ phoc_output_cutouts_class_init (PhocOutputCutoutsClass *klass)
 static void
 phoc_output_cutouts_init (PhocOutputCutouts *self)
 {
+  pixman_region32_init (&self->cutouts);
 }
 
 
@@ -157,13 +187,14 @@ struct wlr_texture *
 phoc_output_cutouts_get_cutouts_texture (PhocOutputCutouts *self)
 {
   int width, height, radius, stride;
-  GListModel *cutouts;
   unsigned char *data;
   PhocServer *server = phoc_server_get_default ();
   PhocRenderer *renderer = phoc_server_get_renderer (server);
   struct wlr_texture *texture;
   g_autoptr (cairo_surface_t) surface = NULL;
   g_autoptr (cairo_t) cr = NULL;
+  const pixman_box32_t *boxes;
+  int n_cutouts;
 
   if (self->panel == NULL)
     return NULL;
@@ -177,12 +208,12 @@ phoc_output_cutouts_get_cutouts_texture (PhocOutputCutouts *self)
   cairo_set_line_width (cr, 5.0);
   cairo_set_source_rgba (cr, 0.5f, 0.0f, 0.5f, 0.5f);
 
-  cutouts = gm_display_panel_get_cutouts (self->panel);
-  for (int i = 0; i < g_list_model_get_n_items (cutouts); i++) {
-    g_autoptr (GmCutout) cutout = g_list_model_get_item (cutouts, i);
-    const GmRect *bounds = gm_cutout_get_bounds (cutout);
+  boxes = pixman_region32_rectangles (&self->cutouts, &n_cutouts);
+  for (int i = 0; i < n_cutouts; i++) {
 
-    cairo_rectangle (cr, bounds->x, bounds->y, bounds->width, bounds->height);
+    cairo_rectangle (cr, boxes[i].x1, boxes[i].y1,
+                     boxes[i].x2 - boxes[i].x1,
+                     boxes[i].y2 - boxes[i].y1);
     cairo_fill (cr);
   }
 
@@ -218,4 +249,20 @@ phoc_output_cutouts_get_cutouts_texture (PhocOutputCutouts *self)
                                      DRM_FORMAT_ARGB8888, stride, width, height, data);
 
   return texture;
+}
+
+/**
+ * phoc_output_cutouts_get_region:
+ * @self: The cutouts
+ *
+ * Get cutouts region
+ *
+ * Returns: The cutouts region
+ */
+const pixman_region32_t *
+phoc_output_cutouts_get_region (PhocOutputCutouts *self)
+{
+  g_assert (PHOC_IS_OUTPUT_CUTOUTS (self));
+
+  return &self->cutouts;
 }
