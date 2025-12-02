@@ -22,7 +22,7 @@
 #include "anim/animatable.h"
 #include "bling.h"
 #include "cursor.h"
-#include "cutouts-overlay.h"
+#include "output-cutouts.h"
 #include "settings.h"
 #include "layer-shell.h"
 #include "layer-shell-effects.h"

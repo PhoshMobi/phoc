@@ -12,7 +12,7 @@
 
 #include "server.h"
 #include "render-private.h"
-#include "cutouts-overlay.h"
+#include "output-cutouts.h"
 
 #include <gmobile.h>
 #include <cairo/cairo.h>
