@@ -1065,7 +1065,8 @@ phoc_output_initable_init (GInitable    *initable,
 
   update_output_manager_config (self->desktop);
 
-  if (phoc_server_check_debug_flags (server, PHOC_SERVER_DEBUG_FLAG_CUTOUTS)) {
+  if (phoc_server_check_debug_flags (server, PHOC_SERVER_DEBUG_FLAG_CUTOUTS) &&
+      phoc_output_is_builtin (self)) {
     priv->cutouts = phoc_output_cutouts_new (phoc_server_get_compatibles (server));
     if (priv->cutouts) {
       g_message ("Adding cutouts overlay");
