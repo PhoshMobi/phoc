@@ -35,10 +35,10 @@ enum {
 static GParamSpec *props[PROP_LAST_PROP];
 
 struct _PhocOutputCutouts {
-  GObject          parent;
+  GObject parent;
 
-  GStrv            compatibles;
-  GmDisplayPanel  *panel;
+  GStrv   compatibles;
+  GmDisplayPanel *panel;
 };
 G_DEFINE_TYPE (PhocOutputCutouts, phoc_output_cutouts, G_TYPE_OBJECT)
 
@@ -110,7 +110,7 @@ phoc_output_cutouts_get_property (GObject    *object,
 static void
 phoc_output_cutouts_finalize (GObject *object)
 {
-  PhocOutputCutouts *self = PHOC_OUTPUT_CUTOUTS(object);
+  PhocOutputCutouts *self = PHOC_OUTPUT_CUTOUTS (object);
 
   g_clear_object (&self->panel);
   g_clear_pointer (&self->compatibles, g_strfreev);
