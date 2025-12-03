@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2020 Purism SPC
- *               2025 The Phosh Devlopers
+ *               2025 Phosh.mobi e.V.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  * Author: Guido Günther <agx@sigxcpu.org>
@@ -11,22 +11,22 @@
 #include <wayland-client-protocol.h>
 
 typedef struct _PhocTestLayerSurface {
-  struct wl_surface            *wl_surface;
+  struct wl_surface *wl_surface;
   struct zwlr_layer_surface_v1 *layer_surface;
-  PhocTestBuffer                buffer;
-  guint32                       width, height;
-  gboolean                      configured;
+  PhocTestBuffer     buffer;
+  guint32 width, height;
+  gboolean configured;
 } PhocTestLayerSurface;
 
 
 typedef struct _PhocTestPopup {
-  struct wl_surface            *wl_surface;
-  struct xdg_surface           *xdg_surface;
-  struct xdg_popup             *xdg_popup;
-  PhocTestBuffer                buffer;
-  guint32                       width, height;
-  gboolean                      configured;
-  guint32                       repositioned;
+  struct wl_surface  *wl_surface;
+  struct xdg_surface *xdg_surface;
+  struct xdg_popup   *xdg_popup;
+  PhocTestBuffer      buffer;
+  guint32 width, height;
+  gboolean configured;
+  guint32 repositioned;
 } PhocTestPopup;
 
 
