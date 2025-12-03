@@ -520,7 +520,7 @@ build_compositor_config (PhocTestClientIface *iface)
  * otherwise.
  */
 void
-phoc_test_client_run (gint timeout, PhocTestClientIface *iface, gpointer data)
+phoc_test_client_run (int timeout, PhocTestClientIface *iface, gpointer data)
 {
   PhocConfig *config;
   struct task_data td = { .data = data };
@@ -609,7 +609,7 @@ phoc_test_client_create_shm_buffer (PhocTestClientGlobals *globals,
   return TRUE;
 }
 
-static gint
+static int
 foreign_toplevel_compare (gconstpointer data, gconstpointer title)
 {
   const PhocTestForeignToplevel *toplevel = data;

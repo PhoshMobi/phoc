@@ -40,8 +40,8 @@ test_phoc_client_surface (void)
   phoc_test_client_run (TEST_PHOC_CLIENT_TIMEOUT, &iface, NULL);
 }
 
-gint
-main (gint argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
   g_test_init (&argc, &argv, NULL);
 

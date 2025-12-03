@@ -39,8 +39,8 @@ test_color_rect_new (void)
 }
 
 
-gint
-main (gint argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
   g_test_init (&argc, &argv, NULL);
 

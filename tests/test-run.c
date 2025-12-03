@@ -49,8 +49,8 @@ test_phoc_run_session_failure (void)
   g_assert_cmpint (phoc_server_get_session_exit_status (server), ==, 1);
 }
 
-gint
-main (gint argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
   g_test_init (&argc, &argv, NULL);
 

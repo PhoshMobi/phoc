@@ -167,8 +167,8 @@ test_xwayland_simple (void)
   phoc_test_client_run (3, &iface, GINT_TO_POINTER (FALSE));
 }
 
-gint
-main (gint argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
   g_test_init (&argc, &argv, NULL);
 

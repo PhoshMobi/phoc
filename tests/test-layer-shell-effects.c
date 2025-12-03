@@ -192,8 +192,8 @@ test_layer_shell_effects_stack_surface_simple (void)
 }
 
 
-gint
-main (gint argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
   g_test_init (&argc, &argv, NULL);
 
