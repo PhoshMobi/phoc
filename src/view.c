@@ -1210,7 +1210,6 @@ static char *
 munge_app_id (const char *app_id)
 {
   char *id = g_strdup (app_id);
-  gint i;
 
   g_strcanon (id,
               "0123456789"
@@ -1218,7 +1217,7 @@ munge_app_id (const char *app_id)
               "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
               "-",
               '-');
-  for (i = 0; id[i] != '\0'; i++)
+  for (int i = 0; id[i] != '\0'; i++)
     id[i] = g_ascii_tolower (id[i]);
 
   return id;
