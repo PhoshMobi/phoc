@@ -449,18 +449,26 @@ phoc_view_get_fullscreen_output (PhocView *self)
   return priv->fullscreen_output;
 }
 
+/**
+ * phoc_view_get_box:
+ * @self: The view
+ * @box: (out): The box
+ *
+ * Get the views in layout coordinates (taking any scale-to-fit scale
+ * into account).
+ */
 void
-phoc_view_get_box (PhocView *view, struct wlr_box *box)
+phoc_view_get_box (PhocView *self, struct wlr_box *box)
 {
   PhocViewPrivate *priv;
 
-  g_assert (PHOC_IS_VIEW (view));
-  priv = phoc_view_get_instance_private (view);
+  g_assert (PHOC_IS_VIEW (self));
+  priv = phoc_view_get_instance_private (self);
 
-  box->x = view->box.x;
-  box->y = view->box.y;
-  box->width = view->box.width * priv->scale;
-  box->height = view->box.height * priv->scale;
+  box->x = self->box.x;
+  box->y = self->box.y;
+  box->width = self->box.width * priv->scale;
+  box->height = self->box.height * priv->scale;
 }
 
 

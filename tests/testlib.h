@@ -117,7 +117,7 @@ typedef struct _PhocTestFixture {
 } PhocTestFixture;
 
 /* Test client */
-void phoc_test_client_run (gint timeout, PhocTestClientIface *iface, gpointer data);
+void phoc_test_client_run (int timeout, PhocTestClientIface *iface, gpointer data);
 int  phoc_test_client_create_shm_buffer (PhocTestClientGlobals *globals,
                                          PhocTestBuffer *buffer,
                                          int width, int height, guint32 format);

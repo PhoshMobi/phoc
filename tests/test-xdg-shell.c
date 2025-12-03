@@ -180,8 +180,8 @@ test_xdg_shell_toplevel_maximized_scale (void)
 }
 
 
-gint
-main (gint argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
   g_test_init (&argc, &argv, NULL);
 

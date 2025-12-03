@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Phosh Developers
+ * Copyright (C) 2022-2025 Phosh.mobi e.V.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -12,7 +12,7 @@
 
 #include "server.h"
 #include "render-private.h"
-#include "cutouts-overlay.h"
+#include "output-cutouts.h"
 
 #include <gmobile.h>
 #include <cairo/cairo.h>
@@ -22,7 +22,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (cairo_t, cairo_destroy)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (cairo_surface_t, cairo_surface_destroy)
 
 /**
- * PhocCutoutsOverlay:
+ * PhocOutputCutouts:
  *
  * An overlay texture to render a devices cutouts.
  */
@@ -34,17 +34,17 @@ enum {
 };
 static GParamSpec *props[PROP_LAST_PROP];
 
-struct _PhocCutoutsOverlay {
-  GObject          parent;
+struct _PhocOutputCutouts {
+  GObject parent;
 
-  GStrv            compatibles;
-  GmDisplayPanel  *panel;
+  GStrv   compatibles;
+  GmDisplayPanel *panel;
 };
-G_DEFINE_TYPE (PhocCutoutsOverlay, phoc_cutouts_overlay, G_TYPE_OBJECT)
+G_DEFINE_TYPE (PhocOutputCutouts, phoc_output_cutouts, G_TYPE_OBJECT)
 
 
 static void
-cutouts_overlay_set_compatibles (PhocCutoutsOverlay *self, const char *const *compatibles)
+output_cutouts_set_compatibles (PhocOutputCutouts *self, const char *const *compatibles)
 {
   GmDisplayPanel *panel = NULL;
   g_autoptr (GmDeviceInfo) info = NULL;
@@ -70,16 +70,16 @@ cutouts_overlay_set_compatibles (PhocCutoutsOverlay *self, const char *const *co
 
 
 static void
-phoc_cutouts_overlay_set_property (GObject      *object,
-                                   guint         property_id,
-                                   const GValue *value,
-                                   GParamSpec   *pspec)
+phoc_output_cutouts_set_property (GObject      *object,
+                                  guint         property_id,
+                                  const GValue *value,
+                                  GParamSpec   *pspec)
 {
-  PhocCutoutsOverlay *self = PHOC_CUTOUTS_OVERLAY (object);
+  PhocOutputCutouts *self = PHOC_OUTPUT_CUTOUTS (object);
 
   switch (property_id) {
   case PROP_COMPATIBLES:
-    cutouts_overlay_set_compatibles (self, g_value_get_boxed (value));
+    output_cutouts_set_compatibles (self, g_value_get_boxed (value));
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -89,12 +89,12 @@ phoc_cutouts_overlay_set_property (GObject      *object,
 
 
 static void
-phoc_cutouts_overlay_get_property (GObject    *object,
-                                   guint       property_id,
-                                   GValue     *value,
-                                   GParamSpec *pspec)
+phoc_output_cutouts_get_property (GObject    *object,
+                                  guint       property_id,
+                                  GValue     *value,
+                                  GParamSpec *pspec)
 {
-  PhocCutoutsOverlay *self = PHOC_CUTOUTS_OVERLAY (object);
+  PhocOutputCutouts *self = PHOC_OUTPUT_CUTOUTS (object);
 
   switch (property_id) {
   case PROP_COMPATIBLES:
@@ -108,25 +108,25 @@ phoc_cutouts_overlay_get_property (GObject    *object,
 
 
 static void
-phoc_cutouts_overlay_finalize (GObject *object)
+phoc_output_cutouts_finalize (GObject *object)
 {
-  PhocCutoutsOverlay *self = PHOC_CUTOUTS_OVERLAY(object);
+  PhocOutputCutouts *self = PHOC_OUTPUT_CUTOUTS (object);
 
   g_clear_object (&self->panel);
   g_clear_pointer (&self->compatibles, g_strfreev);
 
-  G_OBJECT_CLASS (phoc_cutouts_overlay_parent_class)->finalize (object);
+  G_OBJECT_CLASS (phoc_output_cutouts_parent_class)->finalize (object);
 }
 
 
 static void
-phoc_cutouts_overlay_class_init (PhocCutoutsOverlayClass *klass)
+phoc_output_cutouts_class_init (PhocOutputCutoutsClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->get_property = phoc_cutouts_overlay_get_property;
-  object_class->set_property = phoc_cutouts_overlay_set_property;
-  object_class->finalize = phoc_cutouts_overlay_finalize;
+  object_class->get_property = phoc_output_cutouts_get_property;
+  object_class->set_property = phoc_output_cutouts_set_property;
+  object_class->finalize = phoc_output_cutouts_finalize;
 
   props[PROP_COMPATIBLES] =
     g_param_spec_boxed ("compatibles", "", "",
@@ -138,22 +138,22 @@ phoc_cutouts_overlay_class_init (PhocCutoutsOverlayClass *klass)
 
 
 static void
-phoc_cutouts_overlay_init (PhocCutoutsOverlay *self)
+phoc_output_cutouts_init (PhocOutputCutouts *self)
 {
 }
 
 
-PhocCutoutsOverlay *
-phoc_cutouts_overlay_new (const char * const *compatibles)
+PhocOutputCutouts *
+phoc_output_cutouts_new (const char * const *compatibles)
 {
-  return g_object_new (PHOC_TYPE_CUTOUTS_OVERLAY,
+  return g_object_new (PHOC_TYPE_OUTPUT_CUTOUTS,
                        "compatibles", compatibles,
                        NULL);
 }
 
 
 struct wlr_texture *
-phoc_cutouts_overlay_get_cutouts_texture (PhocCutoutsOverlay *self, PhocOutput *output)
+phoc_output_cutouts_get_cutouts_texture (PhocOutputCutouts *self)
 {
   int width, height, radius, stride;
   GListModel *cutouts;
@@ -163,8 +163,6 @@ phoc_cutouts_overlay_get_cutouts_texture (PhocCutoutsOverlay *self, PhocOutput *
   struct wlr_texture *texture;
   g_autoptr (cairo_surface_t) surface = NULL;
   g_autoptr (cairo_t) cr = NULL;
-
-  g_return_val_if_fail (PHOC_IS_CUTOUTS_OVERLAY (self), NULL);
 
   if (self->panel == NULL)
     return NULL;

@@ -1,4 +1,3 @@
-
 #define G_LOG_DOMAIN "phoc-output"
 
 #include "phoc-config.h"
@@ -22,7 +21,7 @@
 #include "anim/animatable.h"
 #include "bling.h"
 #include "cursor.h"
-#include "cutouts-overlay.h"
+#include "output-cutouts.h"
 #include "settings.h"
 #include "layer-shell.h"
 #include "layer-shell-effects.h"
@@ -53,35 +52,35 @@ enum {
 static guint signals[N_SIGNALS];
 
 typedef struct _PhocOutputPrivate {
-  PhocRenderer            *renderer;
-  PhocOutputShield        *shield;
+  PhocRenderer     *renderer;
+  PhocOutputShield *shield;
 
-  GSList                  *frame_callbacks; /* (element-type: PhocOutputFrameCallbackInfo) */
-  gint                     frame_callback_next_id;
-  gint64                   last_frame_us;
+  GSList  *frame_callbacks; /* (element-type: PhocOutputFrameCallbackInfo) */
+  gint     frame_callback_next_id;
+  gint64   last_frame_us;
 
-  PhocCutoutsOverlay      *cutouts;
-  gulong                   render_cutouts_id;
-  struct wlr_texture      *cutouts_texture;
+  PhocOutputCutouts *cutouts;
+  gulong   render_cutouts_id;
+  struct wlr_texture *cutouts_texture;
 
   gboolean shell_revealed;
   gboolean force_shell_reveal;
 
-  struct wl_listener     damage;
-  struct wl_listener     frame;
-  struct wl_listener     needs_frame;
-  struct wl_listener     request_state;
+  struct wl_listener    damage;
+  struct wl_listener    frame;
+  struct wl_listener    needs_frame;
+  struct wl_listener    request_state;
 
-  PhocOutputScaleFilter  scale_filter;
-  gboolean               gamma_lut_changed;
+  PhocOutputScaleFilter scale_filter;
+  gboolean gamma_lut_changed;
 
-  GQueue                *layer_surfaces[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY + 1];
+  GQueue  *layer_surfaces[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY + 1];
 
   PhocLayoutTransaction *transaction;
-  gboolean               modeset_shield;
+  gboolean modeset_shield;
 
-  GSList                *blings; /* (element-type: PhocBling) */
-  GSList                *debug_damage; /* (element-type: PhocDebugDamageRegion) */
+  GSList  *blings;          /* (element-type: PhocBling) */
+  GSList  *debug_damage;    /* (element-type: PhocDebugDamageRegion) */
 } PhocOutputPrivate;
 
 static void phoc_output_initable_iface_init (GInitableIface *iface);
@@ -294,7 +293,7 @@ static void
 phoc_output_init (PhocOutput *self)
 {
   PhocServer *server = phoc_server_get_default ();
-  PhocOutputPrivate *priv = phoc_output_get_instance_private(self);
+  PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
 
   priv->frame_callback_next_id = 1;
   priv->last_frame_us = g_get_monotonic_time ();
@@ -560,7 +559,7 @@ build_debug_damage_tracking (PhocOutput *self)
       priv->debug_damage = g_slist_delete_link (priv->debug_damage, elem);
     }
     elem = next;
-  };
+  }
 
   if (pixman_region32_not_empty (&highlight_damage))
     wlr_damage_ring_add (&self->damage_ring, &highlight_damage);
@@ -666,7 +665,7 @@ phoc_output_handle_frame (struct wl_listener *listener, void *data)
     PhocOutputFrameCallbackInfo *cb_info = l->data;
     gboolean ret;
 
-    ret = cb_info->callback(cb_info->animatable, priv->last_frame_us, cb_info->user_data);
+    ret = cb_info->callback (cb_info->animatable, priv->last_frame_us, cb_info->user_data);
     if (ret == G_SOURCE_REMOVE) {
       phoc_output_frame_callback_info_free (cb_info);
       priv->frame_callbacks = g_slist_delete_link (priv->frame_callbacks, l);
@@ -1067,10 +1066,10 @@ phoc_output_initable_init (GInitable    *initable,
   update_output_manager_config (self->desktop);
 
   if (phoc_server_check_debug_flags (server, PHOC_SERVER_DEBUG_FLAG_CUTOUTS)) {
-    priv->cutouts = phoc_cutouts_overlay_new (phoc_server_get_compatibles (server));
+    priv->cutouts = phoc_output_cutouts_new (phoc_server_get_compatibles (server));
     if (priv->cutouts) {
       g_message ("Adding cutouts overlay");
-      priv->cutouts_texture = phoc_cutouts_overlay_get_cutouts_texture (priv->cutouts, self);
+      priv->cutouts_texture = phoc_output_cutouts_get_cutouts_texture (priv->cutouts);
       priv->render_cutouts_id = g_signal_connect_swapped (renderer, "render-end",
                                                           G_CALLBACK (render_cutouts),
                                                           self);
@@ -1723,9 +1722,8 @@ damage_view_blings (PhocOutput *self, PhocView  *view)
 void
 phoc_output_damage_from_view (PhocOutput *self, PhocView *view, bool whole)
 {
-  if (!phoc_view_accept_damage (self, view)) {
+  if (!phoc_view_accept_damage (self, view))
     return;
-  }
 
   if (whole)
     damage_view_blings (self, view);
@@ -2150,7 +2148,7 @@ phoc_output_remove_frame_callback  (PhocOutput *self, guint id)
       return;
     }
   }
-  g_return_if_reached();
+  g_return_if_reached ();
 }
 
 
@@ -2275,7 +2273,7 @@ phoc_output_has_layer (PhocOutput *self, enum zwlr_layer_shell_v1_layer layer)
 static gboolean
 should_reveal_shell (PhocOutput *self)
 {
-  PhocServer *server = phoc_server_get_default();
+  PhocServer *server = phoc_server_get_default ();
   PhocDesktop *desktop = phoc_server_get_desktop (server);
   PhocInput *input = phoc_server_get_input (server);
   PhocOutputPrivate *priv;
@@ -2286,12 +2284,11 @@ should_reveal_shell (PhocOutput *self)
 
   for (GSList *elem = phoc_input_get_seats (input); elem; elem = elem->next) {
     PhocSeat *seat = PHOC_SEAT (elem->data);
-    /* is our layer-surface focused on some seat? */
-    if (seat->focused_layer && seat->focused_layer->output == self->wlr_output) {
+    /* Is our layer-surface focused on some seat? */
+    if (seat->focused_layer && seat->focused_layer->output == self->wlr_output)
       return true;
-    }
 
-    /* is OSK displayed because of our fullscreen view? */
+    /* Is OSK displayed because of our fullscreen view? */
     if (phoc_view_is_mapped (self->fullscreen_view) &&
         phoc_input_method_relay_is_enabled (&seat->im_relay, self->fullscreen_view->wlr_surface)) {
       PhocLayerSurface *osk = phoc_layer_shell_find_osk (self);
@@ -2300,19 +2297,18 @@ should_reveal_shell (PhocOutput *self)
     }
   }
 
-  /* is some draggable surface unfolded, being dragged or animated? */
+  /* Is some draggable surface unfolded, being dragged or animated? */
   wl_list_for_each (layer_surface, &self->layer_surfaces, link) {
     PhocDraggableLayerSurface *draggable;
 
     draggable = phoc_desktop_get_draggable_layer_surface (desktop, layer_surface);
     if (draggable &&
         (phoc_draggable_layer_surface_get_state (draggable) != PHOC_DRAGGABLE_SURFACE_STATE_NONE ||
-         phoc_draggable_layer_surface_is_unfolded (draggable))) {
+         phoc_draggable_layer_surface_is_unfolded (draggable)))
       return true;
-    }
   }
 
-  /* is shell reveal forced by user gesture? */
+  /* Is shell reveal forced by user gesture? */
   return priv->force_shell_reveal;
 }
 
@@ -2337,9 +2333,8 @@ phoc_output_update_shell_reveal (PhocOutput *self)
   old = priv->shell_revealed;
   priv->shell_revealed = should_reveal_shell (self);
 
-  if (priv->shell_revealed != old) {
+  if (priv->shell_revealed != old)
     phoc_output_damage_whole (self);
-  }
 }
 
 /**
@@ -2423,7 +2418,7 @@ phoc_output_handle_gamma_control_set_gamma (struct wl_listener *listener, void *
 {
   const struct wlr_gamma_control_manager_v1_set_gamma_event *event = data;
   PhocOutput *self = PHOC_OUTPUT (event->output->data);
-  PhocOutputPrivate *priv = phoc_output_get_instance_private(self);
+  PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
 
   if (!self)
     return;
@@ -2492,7 +2487,7 @@ phoc_output_get_texture_filter_mode (PhocOutput *self)
     g_assert_not_reached ();
   }
 
-  if (ceilf(self->wlr_output->scale) == self->wlr_output->scale)
+  if (ceilf (self->wlr_output->scale) == self->wlr_output->scale)
     return WLR_SCALE_FILTER_NEAREST;
 
   return WLR_SCALE_FILTER_BILINEAR;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Phosh Developers
+ * Copyright (C) 2023-2025 Phosh.mobi e.V.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -16,11 +16,11 @@
 typedef struct  {
   xcb_connection_t      *conn;
   PhocTestClientGlobals *globals;
-  GMainLoop             *loop;
-  xcb_window_t           window;
+  GMainLoop   *loop;
+  xcb_window_t window;
 
-  gboolean               mapped;
-  gboolean               unmapped;
+  gboolean     mapped;
+  gboolean     unmapped;
 } PhocXcbTestClientData;
 
 
@@ -67,9 +67,9 @@ static void
 on_idle (gpointer data)
 {
   PhocXcbTestClientData *cdata = data;
-  const xcb_setup_t      *setup  = xcb_get_setup (cdata->conn);
-  xcb_screen_iterator_t   iter   = xcb_setup_roots_iterator (setup);
-  xcb_screen_t           *screen = iter.data;
+  const xcb_setup_t *setup = xcb_get_setup (cdata->conn);
+  xcb_screen_iterator_t iter = xcb_setup_roots_iterator (setup);
+  xcb_screen_t *screen = iter.data;
   uint32_t values[2] = {
     screen->white_pixel,
     XCB_EVENT_MASK_POINTER_MOTION | XCB_EVENT_MASK_STRUCTURE_NOTIFY,
@@ -93,7 +93,7 @@ on_idle (gpointer data)
   g_test_message ("Mapping window");
   xcb_map_window (cdata->conn, cdata->window);
   xcb_flush (cdata->conn);
-  /* Run the main loop in this thread until we timeout of unmap happend */
+  /* Run the main loop in this thread until we timeout of unmap happened */
   xcb_flush (cdata->conn);
 }
 
@@ -167,8 +167,8 @@ test_xwayland_simple (void)
   phoc_test_client_run (3, &iface, GINT_TO_POINTER (FALSE));
 }
 
-gint
-main (gint argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
   g_test_init (&argc, &argv, NULL);
 

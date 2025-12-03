@@ -46,8 +46,8 @@ test_phoc_server_setup_args (void)
   g_assert_cmpstr (phoc_server_get_session_exec (server), ==, "/bin/bash");
 }
 
-gint
-main (gint argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
   g_test_init (&argc, &argv, NULL);
 

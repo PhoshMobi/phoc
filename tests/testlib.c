@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2020 Purism SPC
- *               2025 The Phosh Developers
+ *               2025 Phosh.mobi e.V.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -18,7 +18,7 @@
 struct task_data {
   PhocTestClientFunc   func;
   PhocTestOutputConfig output_config;
-  gpointer             data;
+  gpointer data;
 };
 
 
@@ -195,7 +195,7 @@ output_handle_scale (void *data, struct wl_output *wl_output,
   PhocTestClientGlobals *globals = data;
   PhocTestOutputConfig output_config = globals->output_config;
 
-  g_assert_cmpint(scale, ==, ceil(output_config.scale));
+  g_assert_cmpint (scale, ==, ceil (output_config.scale));
 }
 
 
@@ -520,7 +520,7 @@ build_compositor_config (PhocTestClientIface *iface)
  * otherwise.
  */
 void
-phoc_test_client_run (gint timeout, PhocTestClientIface *iface, gpointer data)
+phoc_test_client_run (int timeout, PhocTestClientIface *iface, gpointer data)
 {
   PhocConfig *config;
   struct task_data td = { .data = data };
@@ -609,7 +609,7 @@ phoc_test_client_create_shm_buffer (PhocTestClientGlobals *globals,
   return TRUE;
 }
 
-static gint
+static int
 foreign_toplevel_compare (gconstpointer data, gconstpointer title)
 {
   const PhocTestForeignToplevel *toplevel = data;
@@ -907,7 +907,7 @@ static const struct xdg_toplevel_listener xdg_toplevel_listener = {
 
 /**
  * phoc_test_xdg_toplevel_new:
- * @globals: The wayland globals
+ * @globals: The Wayland globals
  * @width: The desired surface width
  * @height: The desired surface height
  * @title: The desired title
@@ -955,11 +955,11 @@ phoc_test_xdg_toplevel_new (PhocTestClientGlobals *globals,
 
 /**
  * phoc_test_xdg_toplevel_new:
- * @globals: The wayland globals
+ * @globals: The Wayland globals
  * @width: The desired surface width
  * @height: The desired surface height
  * @title: The desired title
- * @color: Tehe color to fill the surface with
+ * @color: The color to fill the surface with
  *
  * Creates a xdg toplevel with the given property for use in tests.
  * If width and/or height are 0, defaults will be used. Free with

@@ -44,8 +44,8 @@ test_phoc_utils_compute_scale (void)
   g_assert_cmpfloat (scale, ==, 1.0);
 }
 
-gint
-main (gint argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
   g_test_init (&argc, &argv, NULL);
 
