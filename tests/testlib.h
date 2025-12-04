@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2020 Purism SPC
- *               2025 The Phosh Developers
+ *               2025 Phosh.mobi e.V.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */

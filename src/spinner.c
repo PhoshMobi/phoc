@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 The Phosh Developers
+ * Copyright (C) 2025 Phosh.mobi e.V.
  *
  * Portions of this code came from AdwSpinnerPaintable, which retains the following copyright:
  * Copyright (C) 2024 Alice Mikhaylenko <alicem@gnome.org>

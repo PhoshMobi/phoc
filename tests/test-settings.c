@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Phosh Developers
+ * Copyright (C) 2023 Phosh.mobi e.V.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
