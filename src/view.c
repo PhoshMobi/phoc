@@ -204,7 +204,7 @@ phoc_view_child_root_unconstrain_popup (PhocChildRoot *root, struct wlr_box *box
   usable_area.x += output->lx;
   usable_area.y += output->ly;
 
-  /* the output box expressed in the coordinate system of the toplevel parent
+  /* The output box expressed in the coordinate system of the toplevel parent
    * of the popup */
   *box = (struct wlr_box) {
     .x = usable_area.x - self->box.x,
@@ -454,8 +454,8 @@ phoc_view_get_fullscreen_output (PhocView *self)
  * @self: The view
  * @box: (out): The box
  *
- * Get the views in layout coordinates (taking any scale-to-fit scale
- * into account).
+ * Get the view's box in layout coordinates (taking any scale-to-fit
+ * scale into account).
  */
 void
 phoc_view_get_box (PhocView *self, struct wlr_box *box)
@@ -550,7 +550,7 @@ view_save (PhocView *view)
   if (!phoc_view_is_floating (view))
     return;
 
-  /* backup window state */
+  /* Backup window state */
   struct wlr_box geom;
   phoc_view_get_geometry (view, &geom);
   view->saved.x = view->box.x + geom.x * priv->scale;
@@ -927,7 +927,7 @@ phoc_view_set_fullscreen (PhocView *view, bool fullscreen, PhocOutput *output)
   bool was_fullscreen = phoc_view_is_fullscreen (view);
 
   if (was_fullscreen != fullscreen) {
-    /* don't allow unfocused surfaces to make themselves fullscreen */
+    /* Don't allow unfocused surfaces to make themselves fullscreen */
     if (fullscreen && phoc_view_is_mapped (view))
       g_return_if_fail (phoc_input_view_has_focus (input, view));
 
@@ -1010,7 +1010,7 @@ phoc_view_move_to_next_output (PhocView *view, enum wlr_direction direction)
   if (!output)
     return false;
 
-  /* use current view's x,y as ref_lx, ref_ly */
+  /* Use current view's x,y as ref_lx, ref_ly */
   new_output = wlr_output_layout_adjacent_output (layout, direction, output->wlr_output,
                                                   view->box.x, view->box.y);
   if (!new_output)
@@ -1020,7 +1020,7 @@ phoc_view_move_to_next_output (PhocView *view, enum wlr_direction direction)
   usable_area = output->usable_area;
   l_output = wlr_output_layout_get (desktop->layout, new_output);
 
-  /* update saved position to the new output */
+  /* Update saved position to the new output */
   x = usable_area.x + l_output->x + usable_area.width / 2 - view->saved.width / 2;
   y = usable_area.y + l_output->y + usable_area.height / 2 - view->saved.height / 2;
   g_debug ("moving view's saved position to %f %f", x, y);
@@ -1149,7 +1149,7 @@ view_center (PhocView *view, PhocOutput *output)
     struct wlr_output *wlr_output = wlr_output_layout_output_at (desktop->layout,
                                                                  cursor->cursor->x,
                                                                  cursor->cursor->y);
-    /* empty layout */
+    /* Empty layout */
     if (!wlr_output)
       return false;
     output = PHOC_OUTPUT (wlr_output->data);
@@ -1762,7 +1762,7 @@ static void
 phoc_view_set_tiled_default (PhocView *self, bool tiled)
 {
   if (tiled) {
-    /* fallback to the maximized flag on the toplevel so it can remove its drop shadows */
+    /* Fallback to the maximized flag on the toplevel so it can remove its drop shadows */
     PHOC_VIEW_GET_CLASS (self)->set_maximized (self, true);
   }
 }
