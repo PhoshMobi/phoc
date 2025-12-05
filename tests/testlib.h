@@ -197,6 +197,26 @@ void     phoc_test_buffer_free (PhocTestBuffer *buffer);
     }                                                                                       \
 } G_STMT_END
 
+/**
+ * phoc_test_assert_cmpbox
+ * @b1: A box
+ * @b2: A box
+ *
+ * Debugging macro to compare two boxes.
+ */
+#define phoc_assert_cmpbox(b1, b2) G_STMT_START {                                           \
+    __auto_type __b1 = (b1);                                                                \
+    __auto_type __b2 = (b2);                                                                \
+    if (__b1->x != __b2->x || __b1->y != __b2->y ||                                         \
+        __b1->width != __b2->width || __b1->height != __b2->height) {                       \
+      g_autofree char *__msg =                                                              \
+        g_strdup_printf ("Box " #b1 " (%d,%d %dx%d) doesn't match " #b2 " (%d,%d %dx%d)",   \
+                         __b1->x, __b1->y, __b1->width, __b1->height,                       \
+                         __b2->x, __b2->y, __b2->width, __b2->height);                      \
+      g_assertion_message (G_LOG_DOMAIN, __FILE__, __LINE__, G_STRFUNC, __msg);             \
+    }                                                                                       \
+} G_STMT_END
+
 /* Test setup and fixtures */
 void phoc_test_setup (PhocTestFixture *fixture, gconstpointer data);
 void phoc_test_teardown (PhocTestFixture *fixture, gconstpointer unused);
