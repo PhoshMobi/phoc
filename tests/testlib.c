@@ -952,9 +952,8 @@ phoc_test_xdg_toplevel_new (PhocTestClientGlobals *globals,
   return xs;
 }
 
-
 /**
- * phoc_test_xdg_toplevel_new:
+ * phoc_test_xdg_toplevel_new_with_buffer:
  * @globals: The Wayland globals
  * @width: The desired surface width
  * @height: The desired surface height
