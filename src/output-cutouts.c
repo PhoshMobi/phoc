@@ -43,6 +43,7 @@ struct _PhocOutputCutouts {
   GmDisplayPanel *panel;
 
   pixman_region32_t cutouts;
+  GArray *corners;
 };
 G_DEFINE_TYPE (PhocOutputCutouts, phoc_output_cutouts, G_TYPE_OBJECT)
 
@@ -51,6 +52,7 @@ static void
 phoc_output_cutouts_update (PhocOutputCutouts *self)
 {
   GListModel *cutouts;
+  uint32_t radius;
 
   pixman_region32_clear (&self->cutouts);
 
@@ -64,6 +66,14 @@ phoc_output_cutouts_update (PhocOutputCutouts *self)
 
     pixman_region32_union_rect (&self->cutouts, &self->cutouts,
                                 bounds->x, bounds->y, bounds->width, bounds->height);
+  }
+
+  radius = gm_display_panel_get_border_radius (self->panel);
+  g_array_remove_range (self->corners, 0, self->corners->len);
+  for (int i = 0; i < PHOC_NUM_CORNERS; i++) {
+    PhocCutoutCorner corner = { .radius = radius, .position = i };
+
+    g_array_append_val (self->corners, corner);
   }
 }
 
@@ -143,6 +153,7 @@ phoc_output_cutouts_finalize (GObject *object)
   g_clear_object (&self->panel);
   g_clear_pointer (&self->compatibles, g_strfreev);
 
+  g_clear_pointer (&self->corners, g_array_unref);
   pixman_region32_fini (&self->cutouts);
 
   G_OBJECT_CLASS (phoc_output_cutouts_parent_class)->finalize (object);
@@ -171,6 +182,7 @@ static void
 phoc_output_cutouts_init (PhocOutputCutouts *self)
 {
   pixman_region32_init (&self->cutouts);
+  self->corners = g_array_new (FALSE, FALSE, sizeof (PhocCutoutCorner));
 }
 
 
@@ -186,7 +198,7 @@ phoc_output_cutouts_new (const char * const *compatibles)
 struct wlr_texture *
 phoc_output_cutouts_get_cutouts_texture (PhocOutputCutouts *self)
 {
-  int width, height, radius, stride;
+  int width, height, stride;
   unsigned char *data;
   PhocServer *server = phoc_server_get_default ();
   PhocRenderer *renderer = phoc_server_get_renderer (server);
@@ -194,6 +206,7 @@ phoc_output_cutouts_get_cutouts_texture (PhocOutputCutouts *self)
   g_autoptr (cairo_surface_t) surface = NULL;
   g_autoptr (cairo_t) cr = NULL;
   const pixman_box32_t *boxes;
+  const PhocCutoutCorner *corner;
   int n_cutouts;
 
   if (self->panel == NULL)
@@ -201,7 +214,6 @@ phoc_output_cutouts_get_cutouts_texture (PhocOutputCutouts *self)
 
   width = gm_display_panel_get_x_res (self->panel);
   height = gm_display_panel_get_y_res (self->panel);
-  radius = gm_display_panel_get_border_radius (self->panel);
 
   surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, width, height);
   cr = cairo_create (surface);
@@ -210,36 +222,43 @@ phoc_output_cutouts_get_cutouts_texture (PhocOutputCutouts *self)
 
   boxes = pixman_region32_rectangles (&self->cutouts, &n_cutouts);
   for (int i = 0; i < n_cutouts; i++) {
-
     cairo_rectangle (cr, boxes[i].x1, boxes[i].y1,
                      boxes[i].x2 - boxes[i].x1,
                      boxes[i].y2 - boxes[i].y1);
     cairo_fill (cr);
   }
 
-  /* top left */
-  cairo_move_to (cr, 0, 0);
-  cairo_arc (cr, radius, radius, radius, M_PI, 1.5 * M_PI);
-  cairo_close_path (cr);
-  cairo_fill (cr);
+  corner = phoc_output_cutouts_get_corner (self, PHOC_CORNER_TOP_LEFT);
+  if (corner) {
+    cairo_move_to (cr, 0, 0);
+    cairo_arc (cr, corner->radius, corner->radius, corner->radius, M_PI, 1.5 * M_PI);
+    cairo_close_path (cr);
+    cairo_fill (cr);
+  }
 
-  /* top right */
-  cairo_move_to (cr, width, 0);
-  cairo_arc (cr, width - radius, radius, radius, 1.5 * M_PI, 2 * M_PI);
-  cairo_close_path (cr);
-  cairo_fill (cr);
+  corner = phoc_output_cutouts_get_corner (self, PHOC_CORNER_TOP_RIGHT);
+  if (corner) {
+    cairo_move_to (cr, width, 0);
+    cairo_arc (cr, width - corner->radius, corner->radius, corner->radius, 1.5 * M_PI, 2 * M_PI);
+    cairo_close_path (cr);
+    cairo_fill (cr);
+  }
 
-  /* bottom right */
-  cairo_move_to (cr, width, height);
-  cairo_arc (cr, width - radius, height - radius, radius, 0, 0.5 * M_PI);
-  cairo_close_path (cr);
-  cairo_fill (cr);
+  corner = phoc_output_cutouts_get_corner (self, PHOC_CORNER_BOTTOM_RIGHT);
+  if (corner) {
+    cairo_move_to (cr, width, height);
+    cairo_arc (cr, width - corner->radius, height - corner->radius, corner->radius, 0, 0.5 * M_PI);
+    cairo_close_path (cr);
+    cairo_fill (cr);
+  }
 
-  /* bottom left */
-  cairo_move_to (cr, 0, height);
-  cairo_arc (cr, radius, height - radius, radius, 0.5 * M_PI, M_PI);
-  cairo_close_path (cr);
-  cairo_fill (cr);
+  corner = phoc_output_cutouts_get_corner (self, PHOC_CORNER_BOTTOM_LEFT);
+  if (corner) {
+    cairo_move_to (cr, 0, height);
+    cairo_arc (cr, corner->radius, height - corner->radius, corner->radius, 0.5 * M_PI, M_PI);
+    cairo_close_path (cr);
+    cairo_fill (cr);
+  }
 
   cairo_surface_flush (surface);
   data = cairo_image_surface_get_data (surface);
@@ -265,4 +284,43 @@ phoc_output_cutouts_get_region (PhocOutputCutouts *self)
   g_assert (PHOC_IS_OUTPUT_CUTOUTS (self));
 
   return &self->cutouts;
+}
+
+/**
+ * phoc_output_cutouts_get_corners:
+ * @self: The cutouts
+ *
+ * If the panel has rounded corner, get corner cutouts.
+ *
+ * Returns:(element-type PhocCutoutCorner): The corner cutouts
+ */
+const GArray *
+phoc_output_cutouts_get_corners (PhocOutputCutouts *self)
+{
+  g_assert (PHOC_IS_OUTPUT_CUTOUTS (self));
+
+  return self->corners;
+}
+
+/**
+ * phoc_output_cutouts_get_corner:
+ * @self: The cutouts
+ *
+ * Get the rounded corner, if present.
+ *
+ * Returns:(nullable)(transfer none): The corner
+ */
+const PhocCutoutCorner *
+phoc_output_cutouts_get_corner (PhocOutputCutouts *self, PhocCornerPosition pos)
+{
+  g_assert (PHOC_IS_OUTPUT_CUTOUTS (self));
+
+  for (int i = 0; i < self->corners->len; i++) {
+    PhocCutoutCorner *corner = &g_array_index (self->corners, PhocCutoutCorner, i);
+
+    if (corner->position == pos)
+      return corner;
+  }
+
+  return NULL;
 }
