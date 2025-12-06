@@ -99,9 +99,10 @@ typedef struct PhocTestClientIface {
   PhocTestOutputConfig output_config;
 } PhocTestClientIface;
 
+typedef struct _PhocTestXdgToplevelSurface PhocTestXdgToplevelSurface;
+typedef void (* PhocXdgAckConfigureCallback) (PhocTestXdgToplevelSurface *surface, gpointer data);
 
-typedef struct _PhocTestXdgToplevelSurface
-{
+struct _PhocTestXdgToplevelSurface {
   struct wl_surface *wl_surface;
   struct xdg_surface *xdg_surface;
   struct xdg_toplevel *xdg_toplevel;
@@ -111,7 +112,12 @@ typedef struct _PhocTestXdgToplevelSurface
   guint32 width, height;
   gboolean configured;
   gboolean toplevel_configured;
-} PhocTestXdgToplevelSurface;
+  struct {
+    PhocXdgAckConfigureCallback callback;
+    gpointer data;
+    GDestroyNotify data_free_func;
+  } ack_configure;
+};
 
 
 typedef struct _PhocTestFixture {
@@ -144,6 +150,10 @@ PhocTestXdgToplevelSurface *
                                                         const char                *title,
                                                         guint32                    color);
 void            phoc_test_xdg_toplevel_free (PhocTestXdgToplevelSurface *xs);
+void            phoc_test_xdg_toplevel_set_ack_configure_callback (PhocTestXdgToplevelSurface  *xs,
+                                                                   PhocXdgAckConfigureCallback  callback,
+                                                                   gpointer                     data,
+                                                                   GDestroyNotify               data_free_func);
 void            phoc_test_xdg_update_buffer (PhocTestClientGlobals      *globals,
                                              PhocTestXdgToplevelSurface *xs,
                                              guint32                     color);

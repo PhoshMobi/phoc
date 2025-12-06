@@ -880,12 +880,13 @@ xdg_toplevel_handle_configure (void *data, struct xdg_toplevel *xdg_toplevel,
 }
 
 static void
-xdg_surface_handle_configure (void *data, struct xdg_surface *xdg_surface,
-                              uint32_t serial)
+xdg_surface_handle_configure (void *data, struct xdg_surface *xdg_surface, uint32_t serial)
 {
   PhocTestXdgToplevelSurface *xs = data;
 
   g_debug ("Configured %p serial %d", xdg_surface, serial);
+  if (xs->ack_configure.callback)
+    (*xs->ack_configure.callback) (xs, xs->ack_configure.data);
   xdg_surface_ack_configure (xs->xdg_surface, serial);
   xs->configured = TRUE;
 }
@@ -1003,12 +1004,39 @@ phoc_test_xdg_toplevel_new_with_buffer (PhocTestClientGlobals *globals,
 void
 phoc_test_xdg_toplevel_free (PhocTestXdgToplevelSurface *xs)
 {
+
+  phoc_test_xdg_toplevel_set_ack_configure_callback (xs, NULL, NULL, NULL);
   xdg_toplevel_destroy (xs->xdg_toplevel);
   xdg_surface_destroy (xs->xdg_surface);
   wl_surface_destroy (xs->wl_surface);
   phoc_test_buffer_free (&xs->buffer);
   g_free (xs->title);
   g_free (xs);
+}
+
+/**
+ * phoc_test_xdg_toplevel_set_ack_configure_callback:
+ * @xs: The toplevel
+ * @callback: The callback
+ * @data: The data to pass to the callback
+ * @data_free_func: Callback to destroy `data`
+ *
+ * Add a callback to be called before sending the `ack_configure`.
+ * If a callback is already present it will be replaced and the
+ * `destroy_notify` handle invoked to free the data.
+ */
+void
+phoc_test_xdg_toplevel_set_ack_configure_callback (PhocTestXdgToplevelSurface  *xs,
+                                                   PhocXdgAckConfigureCallback  callback,
+                                                   gpointer                     data,
+                                                   GDestroyNotify               data_free_func)
+{
+  if (xs->ack_configure.data_free_func && xs->ack_configure.data)
+    (*xs->ack_configure.data_free_func) (xs->ack_configure.data);
+
+  xs->ack_configure.callback = callback;
+  xs->ack_configure.data = data;
+  xs->ack_configure.data_free_func = data_free_func;
 }
 
 void
