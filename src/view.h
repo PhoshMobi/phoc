@@ -1,6 +1,5 @@
 #pragma once
 
-#include "view-child-private.h"
 
 #include <stdbool.h>
 #include <wlr/config.h>

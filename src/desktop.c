@@ -1633,7 +1633,7 @@ phoc_desktop_get_saved_outputs_state (PhocDesktop *self, const char *output_iden
 /**
  * phoc_desktop_get_workspace_manager:
  * @self: the desktop
-
+ *
  * Get the workspace manager
  *
  * Returns:(transfer none): The workspace manager
@@ -1651,7 +1651,7 @@ phoc_desktop_get_workspace_manager (PhocDesktop *self)
 /**
  * phoc_desktop_get_active_workspace:
  * @self: the desktop
-
+ *
  * Get the workspace manager
  *
  * Returns:(transfer none): The workspace manager

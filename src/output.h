@@ -160,7 +160,7 @@ gboolean    phoc_output_damage_region (PhocOutput *self, const pixman_region32_t
 
 void        phoc_output_update_shell_reveal (PhocOutput *self);
 void        phoc_output_force_shell_reveal (PhocOutput *self, gboolean force);
-gboolean    phoc_output_is_builtin (PhocOutput *output);
+gboolean    phoc_output_is_builtin (PhocOutput *self);
 gboolean    phoc_output_is_match (PhocOutput *self,
                                   const char *make,
                                   const char *model,

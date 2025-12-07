@@ -1,20 +1,23 @@
 /*
  * Copyright (C) 2020 Purism SPC
- *               2025 The Phosh Developers
+ *               2025 Phosh.mobi e.V.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 #include "server.h"
 
-#include <glib.h>
 #include "gtk-shell-client-protocol.h"
-#include "xdg-shell-client-protocol.h"
-#include "xdg-decoration-unstable-v1-client-protocol.h"
+#include "phoc-layer-shell-effects-unstable-v1-client-protocol.h"
 #include "wlr-foreign-toplevel-management-unstable-v1-client-protocol.h"
 #include "wlr-layer-shell-unstable-v1-client-protocol.h"
 #include "wlr-screencopy-unstable-v1-client-protocol.h"
+#include "xdg-decoration-unstable-v1-client-protocol.h"
+#include "xdg-shell-client-protocol.h"
+
+/* Needs wlr-screencopy-unstable */
 #include "phosh-private-client-protocol.h"
-#include "phoc-layer-shell-effects-unstable-v1-client-protocol.h"
+
+#include <glib.h>
 
 #pragma once
 
