@@ -225,7 +225,7 @@ foreign_toplevel_handle_title (void                                   *data,
                                const char                             *title)
 {
   PhocTestForeignToplevel *toplevel = data;
-  toplevel->title = g_strdup (title);
+  g_set_str (&toplevel->title, title);
   g_debug ("Got toplevel's title: %p %s", toplevel, title);
 }
 
@@ -1004,7 +1004,6 @@ phoc_test_xdg_toplevel_new_with_buffer (PhocTestClientGlobals *globals,
 void
 phoc_test_xdg_toplevel_free (PhocTestXdgToplevelSurface *xs)
 {
-
   phoc_test_xdg_toplevel_set_ack_configure_callback (xs, NULL, NULL, NULL);
   xdg_toplevel_destroy (xs->xdg_toplevel);
   xdg_surface_destroy (xs->xdg_surface);
