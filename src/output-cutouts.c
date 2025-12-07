@@ -57,6 +57,7 @@ output_cutouts_set_compatibles (PhocOutputCutouts *self, const char *const *comp
   if (self->compatibles && g_strv_equal ((const char *const *)self->compatibles, compatibles))
     return;
 
+  g_clear_pointer (&self->compatibles, g_strfreev);
   self->compatibles = g_strdupv ((GStrv)compatibles);
   info = gm_device_info_new ((const char * const *)self->compatibles);
   panel = gm_device_info_get_display_panel (info);
