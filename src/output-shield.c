@@ -139,7 +139,8 @@ stop_render (PhocOutputShield *self)
   if (self->spinner)
     phoc_bling_unmap (PHOC_BLING (self->spinner));
 
-  g_clear_signal_handler (&self->render_end_id, renderer);
+  if (renderer)
+    g_clear_signal_handler (&self->render_end_id, renderer);
 }
 
 
