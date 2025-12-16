@@ -640,7 +640,6 @@ phoc_server_setup (PhocServer     *self,
 
   if (!socket) {
     g_warning ("Unable to open wayland socket: %s", strerror (errno));
-    wlr_backend_destroy (self->backend);
     return FALSE;
   }
 
@@ -648,8 +647,6 @@ phoc_server_setup (PhocServer     *self,
 
   if (!wlr_backend_start (self->backend)) {
     g_warning ("Failed to start backend");
-    wlr_backend_destroy (self->backend);
-    wl_display_destroy (self->wl_display);
     return FALSE;
   }
 
