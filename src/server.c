@@ -614,11 +614,11 @@ phoc_server_get_default (void)
  * Returns: %TRUE on success, %FALSE otherwise
  */
 gboolean
-phoc_server_setup (PhocServer      *self,
-                   PhocConfig      *config,
-                   const char      *exec,
-                   GMainLoop       *mainloop,
-                   PhocServerFlags  flags)
+phoc_server_setup (PhocServer     *self,
+                   PhocConfig     *config,
+                   const char     *exec,
+                   GMainLoop      *mainloop,
+                   PhocServerFlags flags)
 {
   const char *socket = NULL;
 
