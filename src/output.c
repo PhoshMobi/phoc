@@ -52,7 +52,6 @@ enum {
 static guint signals[N_SIGNALS];
 
 typedef struct _PhocOutputPrivate {
-  PhocRenderer     *renderer;
   PhocOutputShield *shield;
 
   GSList  *frame_callbacks; /* (element-type: PhocOutputFrameCallbackInfo) */
@@ -292,7 +291,6 @@ phoc_output_animatable_interface_init (PhocAnimatableInterface *iface)
 static void
 phoc_output_init (PhocOutput *self)
 {
-  PhocServer *server = phoc_server_get_default ();
   PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
 
   priv->frame_callback_next_id = 1;
@@ -309,8 +307,6 @@ phoc_output_init (PhocOutput *self)
   wl_list_init (&self->output_destroy.link);
 
   priv->scale_filter = PHOC_OUTPUT_SCALE_FILTER_AUTO;
-
-  priv->renderer = g_object_ref (phoc_server_get_renderer (server));
 
   g_signal_connect_object (phoc_layout_transaction_get_default (),
                            "notify::active",
@@ -571,6 +567,7 @@ build_debug_damage_tracking (PhocOutput *self)
 PHOC_TRACE_NO_INLINE static void
 phoc_output_draw (PhocOutput *self)
 {
+  PhocServer *server = phoc_server_get_default ();
   PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
   struct wlr_output *wlr_output = self->wlr_output;
   bool needs_frame, scanned_out = false;
@@ -625,7 +622,7 @@ phoc_output_draw (PhocOutput *self)
     .alpha = 1.0,
     .render_pass = render_pass,
   };
-  phoc_renderer_render_output (priv->renderer, self, &render_context);
+  phoc_renderer_render_output (phoc_server_get_renderer (server), self, &render_context);
 
   pixman_region32_fini (&buffer_damage);
 
@@ -645,7 +642,7 @@ phoc_output_draw (PhocOutput *self)
  out:
   wlr_output_state_finish (&pending);
 
-  flags = phoc_server_get_debug_flags (phoc_server_get_default ());
+  flags = phoc_server_get_debug_flags (server);
   if (G_UNLIKELY (flags & PHOC_SERVER_DEBUG_FLAG_DAMAGE_WHOLE))
     phoc_output_damage_whole (self);
 }
@@ -1094,8 +1091,10 @@ phoc_output_initable_init (GInitable    *initable,
 static void
 phoc_output_finalize (GObject *object)
 {
+  PhocServer *server = phoc_server_get_default ();
   PhocOutput *self = PHOC_OUTPUT (object);
   PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
+  PhocRenderer *renderer = phoc_server_get_renderer (server);
 
   self->wlr_output->data = NULL;
   self->wlr_output = NULL;
@@ -1114,10 +1113,11 @@ phoc_output_finalize (GObject *object)
   for (int i = 0; i < G_N_ELEMENTS (priv->layer_surfaces); i++)
     g_clear_pointer (&priv->layer_surfaces[i], g_queue_free);
 
-  g_clear_signal_handler (&priv->render_cutouts_id, priv->renderer);
-  g_clear_object (&priv->renderer);
+  if (renderer) {
+    g_clear_signal_handler (&priv->render_cutouts_id, renderer);
+    g_clear_pointer (&priv->cutouts_texture, wlr_texture_destroy);
+  }
   g_clear_object (&priv->cutouts);
-  g_clear_pointer (&priv->cutouts_texture, wlr_texture_destroy);
   g_clear_object (&priv->shield);
   g_clear_object (&self->desktop);
 
