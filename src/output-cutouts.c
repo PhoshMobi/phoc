@@ -52,7 +52,7 @@ static void
 phoc_output_cutouts_update (PhocOutputCutouts *self)
 {
   GListModel *cutouts;
-  uint32_t radius;
+  GArray *radii;
 
   pixman_region32_clear (&self->cutouts);
 
@@ -68,9 +68,10 @@ phoc_output_cutouts_update (PhocOutputCutouts *self)
                                 bounds->x, bounds->y, bounds->width, bounds->height);
   }
 
-  radius = gm_display_panel_get_border_radius (self->panel);
+  radii = gm_display_panel_get_corner_radii (self->panel);
   g_array_remove_range (self->corners, 0, self->corners->len);
   for (int i = 0; i < PHOC_NUM_CORNERS; i++) {
+    int radius = g_array_index (radii, int, i);
     PhocCutoutCorner corner = { .radius = radius, .position = i };
 
     g_array_append_val (self->corners, corner);
