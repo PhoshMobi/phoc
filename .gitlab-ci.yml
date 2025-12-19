@@ -51,6 +51,7 @@ variables:
         xcb-util-wm-dev libseat-dev hwdata-dev libdisplay-info-dev
   XVFB_RUN: xvfb-run -s -noreset
   DEBIAN_IMAGE: $CI_REGISTRY/world/phosh/phoc/debian:v0.0.2025-11-05
+  SID_PKGS: libgmobile-dev
 
 .build: &build
   script:

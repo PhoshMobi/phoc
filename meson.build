@@ -46,7 +46,7 @@ xkbcommon = dependency('xkbcommon')
 math = cc.find_library('m')
 gmobile_dep = dependency(
   'gmobile',
-  version: '>= 0.1.0',
+  version: '>= 0.6.0.beta1',
   fallback: ['gmobile', 'gmobile_dep'],
   default_options: ['examples=false', 'introspection=false', 'gtk_doc=false', 'tests=false'],
 )
