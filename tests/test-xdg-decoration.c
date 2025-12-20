@@ -29,6 +29,7 @@ test_client_xdg_decoration_server_side (PhocTestClientGlobals *globals, gpointer
   wl_display_dispatch (globals->display);
 
   phoc_test_xdg_update_buffer (globals, xs, color);
+  wl_display_flush (globals->display);
 
   phoc_assert_screenshot (globals, "test-xdg-decoration-server-side-1.png");
 
