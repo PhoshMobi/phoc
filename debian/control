@@ -18,7 +18,7 @@ Build-Depends:
  pkgconf,
  wayland-protocols,
  libxcb1-dev,
- libwlroots-0.18-dev <!pkg.phoc.embedwlroots>,
+ libwlroots-0.19-dev <!pkg.phoc.embedwlroots>,
  xwayland (>= 1.23.0),
 # For wlroots subproject build
  glslang-tools <pkg.phoc.embedwlroots>,
@@ -85,5 +85,5 @@ Breaks:
 Description: Wayland compositor for mobile phones
  Tiny wayland compositor based on wlroots for use on mobile phones like the
  Librem 5.
- . 
+ .
  You likely want to use Phosh (the phone shell) with it.
