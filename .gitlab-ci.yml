@@ -1,7 +1,7 @@
 ---
 include:
-  - project: 'guidog/meta-phosh'
-    ref: '5cd8a2143477b1cb3197944773143bf02fae01d6'
+  - project: 'World/Phosh/meta-phosh'
+    ref: '834fc8558c7e2517f9aa96506ec9ca9fbf9e566f'
     file: '/ci/phosh-common-jobs.yml'
   - project: 'Infrastructure/freedesktop-ci-templates'
     ref: 'd03cddbcff35f26861429fc816c00323f48e99af'
@@ -51,6 +51,7 @@ variables:
         xcb-util-wm-dev libseat-dev hwdata-dev libdisplay-info-dev
   XVFB_RUN: xvfb-run -s -noreset
   DEBIAN_IMAGE: $CI_REGISTRY/world/phosh/phoc/debian:v0.0.2025-11-05
+  SID_PKGS: libgmobile-dev
 
 .build: &build
   script:

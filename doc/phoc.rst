@@ -67,6 +67,7 @@ ENVIRONMENT VARIABLES
       - ``auto-maximize``: Maximize toplevels
       - ``damage-tracking``: Debug damage tracking
       - ``damage-whole``: Damage whole output on each frame
+      - ``fake-builtin``: Handle virtual outputs like builtin displays
       - ``no-quit``: Don't quit when session ends
       - ``touch-points``: Debug touch points
       - ``layer-shell``: Debug layer shell

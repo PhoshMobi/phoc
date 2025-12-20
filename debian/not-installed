@@ -4,3 +4,4 @@ usr/lib/*/libgmobile.*
 usr/lib/*/pkgconfig/gmobile.pc
 usr/lib/*/libwlroots-0.??.*
 usr/lib/*/pkgconfig/wlroots-0.??.pc
+usr/lib/udev/*/61-gmobile*
