@@ -2686,3 +2686,133 @@ phoc_output_get_cutout_boxes (PhocOutput *self, PhocView *view, pixman_region32_
 
   return ret;
 }
+
+/**
+ * transformed_corner_pos:
+ * @pos: The corner position on the physical panel
+ * @transform: The current output transform
+ *
+ * Get the corner position on the logical output
+ *
+ * Returns: The logical corner position
+ */
+static PhocCornerPosition
+transformed_corner_pos (PhocCornerPosition pos, enum wl_output_transform transform)
+{
+  switch (transform) {
+  case WL_OUTPUT_TRANSFORM_NORMAL:
+  case WL_OUTPUT_TRANSFORM_FLIPPED:
+    break;
+  case WL_OUTPUT_TRANSFORM_90:
+  case WL_OUTPUT_TRANSFORM_FLIPPED_90:
+    pos += 1;
+    break;
+  case WL_OUTPUT_TRANSFORM_180:
+  case WL_OUTPUT_TRANSFORM_FLIPPED_180:
+    pos += 2;
+    break;
+  case WL_OUTPUT_TRANSFORM_270:
+  case WL_OUTPUT_TRANSFORM_FLIPPED_270:
+    pos += 3;
+    break;
+  default:
+    g_assert_not_reached ();
+  }
+  pos %= 4;
+
+  if (transform >= WL_OUTPUT_TRANSFORM_FLIPPED) {
+    /* Flip left and right */
+    pos = 2 * (pos / 2) + (pos + 1) % 2;
+  }
+
+  return pos;
+}
+
+/**
+ * phoc_output_get_cutout_corners:
+ * @self: The output
+ * @view: The view to check
+ *
+ * Get the cutout corners if the surfaces touches the screen edge
+ *
+ * Returns: (transfer full)(nullable)(element-type PhocCutoutCorner):
+ *     The overlapping rounded corners
+ */
+GArray *
+phoc_output_get_cutout_corners (PhocOutput *self, PhocView *view)
+{
+  PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
+  enum wl_output_transform transform;
+  GArray *corners;
+  struct wlr_box view_box;
+  int width, height;
+
+  g_assert (PHOC_IS_OUTPUT (self));
+
+  if (!priv->cutouts)
+    return NULL;
+
+  if (!phoc_output_cutouts_get_corners (priv->cutouts))
+    return NULL;
+
+  view_box = phoc_view_get_pending_box (view);
+  view_box.x -= self->lx;
+  view_box.y -= self->ly;
+
+  transform = wlr_output_transform_invert (self->wlr_output->transform);
+  wlr_output_effective_resolution (self->wlr_output, &width, &height);
+
+  /* TODO: we can calculate and cache this on transform / mode changes
+   * in `phoc_output_handle_commit` */
+
+  corners = g_array_new (FALSE, FALSE, sizeof (PhocCutoutCorner));
+  if (view_box.x == 0 && view_box.y == 0) {
+    PhocCornerPosition pos = transformed_corner_pos (PHOC_CORNER_TOP_LEFT, transform);
+    const PhocCutoutCorner *corner = phoc_output_cutouts_get_corner (priv->cutouts, pos);
+    if (corner) {
+      PhocCutoutCorner scaled = *corner;
+
+      scaled.radius /= self->wlr_output->scale;
+      scaled.position = PHOC_CORNER_TOP_LEFT;
+      g_array_append_val (corners, scaled);
+    }
+  }
+
+  if (view_box.x + view_box.width == width && view_box.y == 0) {
+    PhocCornerPosition pos = transformed_corner_pos (PHOC_CORNER_TOP_RIGHT, transform);
+    const PhocCutoutCorner *corner = phoc_output_cutouts_get_corner (priv->cutouts, pos);
+    if (corner) {
+      PhocCutoutCorner scaled = *corner;
+
+      scaled.radius /= self->wlr_output->scale;
+      scaled.position = PHOC_CORNER_TOP_RIGHT;
+      g_array_append_val (corners, scaled);
+    }
+  }
+
+  if (view_box.x + view_box.width == width && view_box.y + view_box.height == height) {
+    PhocCornerPosition pos = transformed_corner_pos (PHOC_CORNER_BOTTOM_RIGHT, transform);
+    const PhocCutoutCorner *corner = phoc_output_cutouts_get_corner (priv->cutouts, pos);
+    if (corner) {
+      PhocCutoutCorner scaled = *corner;
+
+      scaled.radius /= self->wlr_output->scale;
+      scaled.position = PHOC_CORNER_BOTTOM_RIGHT;
+      g_array_append_val (corners, scaled);
+    }
+  }
+
+  if (view_box.x == 0 && view_box.y + view_box.height == height) {
+    PhocCornerPosition pos = transformed_corner_pos (PHOC_CORNER_BOTTOM_LEFT, transform);
+    const PhocCutoutCorner *corner = phoc_output_cutouts_get_corner (priv->cutouts, pos);
+    if (corner) {
+      PhocCutoutCorner scaled = *corner;
+
+      scaled.radius /= self->wlr_output->scale;
+      scaled.position = PHOC_CORNER_BOTTOM_LEFT;
+      g_array_append_val (corners, scaled);
+    }
+  }
+
+  return corners;
+}
