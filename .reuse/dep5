@@ -109,6 +109,7 @@ Files:
  doc/phoc.rst
  doc/phoc.toml.in
  doc/phoc-outputs-states.rst
+ examples/shaders/embed.sh
  gcovr.cfg
  tools/*
  meson.build

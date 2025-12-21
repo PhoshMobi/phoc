@@ -2,8 +2,10 @@ wayland_egl = dependency('wayland-egl')
 wayland_cursor = dependency('wayland-cursor')
 egl = dependency('egl', required: false, disabler: true)
 glesv2 = dependency('glesv2', required: false, disabler: true)
+glslang = find_program('glslang', 'glslangValidator', native: true, required: false, disabler: true)
 
 subdir('ptk')
+subdir('shaders')
 
 executable(
   'layer-shell-effects',
