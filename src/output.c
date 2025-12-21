@@ -1062,17 +1062,15 @@ phoc_output_initable_init (GInitable    *initable,
 
   update_output_manager_config (self->desktop);
 
-  if (phoc_server_check_debug_flags (server, PHOC_SERVER_DEBUG_FLAG_CUTOUTS) &&
-      phoc_output_is_builtin (self)) {
+  if (phoc_output_is_builtin (self)) {
     priv->cutouts = phoc_output_cutouts_new (phoc_server_get_compatibles (server));
-    if (priv->cutouts) {
+
+    if (phoc_server_check_debug_flags (server, PHOC_SERVER_DEBUG_FLAG_CUTOUTS)) {
       g_message ("Adding cutouts overlay");
       priv->cutouts_texture = phoc_output_cutouts_get_cutouts_texture (priv->cutouts);
       priv->render_cutouts_id = g_signal_connect_swapped (renderer, "render-end",
                                                           G_CALLBACK (render_cutouts),
                                                           self);
-    } else {
-      g_warning ("Could not create cutout overlay");
     }
   }
 
@@ -2624,4 +2622,67 @@ phoc_output_set_fullscreen_view (PhocOutput *self, PhocView *view)
   phoc_output_damage_whole (self);
   if (view)
     phoc_output_force_shell_reveal (self, false);
+}
+
+/**
+ * phoc_output_get_cutout_boxes:
+ * @self: The output
+ * @view: The view to check
+ * @overlap: (inout): A (already initialized) region that gets the overlap.
+ *
+ * Checks whether view overlaps with any cutouts of the output.
+ *
+ * Returns: `TRUE` if there is any overlap, otherwise `FALSE`.
+ */
+gboolean
+phoc_output_get_cutout_boxes (PhocOutput *self, PhocView *view, pixman_region32_t *overlap)
+{
+  PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
+  const pixman_region32_t *cutouts;
+  pixman_region32_t transformed_cutouts, scaled_cutouts;
+  struct wlr_box view_box;
+  gboolean ret;
+
+  g_assert (PHOC_IS_OUTPUT (self));
+  g_assert (overlap);
+
+  if (!priv->cutouts)
+    return FALSE;
+
+  cutouts = phoc_output_cutouts_get_region (priv->cutouts);
+  if (pixman_region32_empty (cutouts))
+    return FALSE;
+
+  pixman_region32_clear (overlap);
+
+  view_box = phoc_view_get_pending_box (view);
+  view_box.x -= self->lx;
+  view_box.y -= self->ly;
+
+  /* TODO: we can calculate and cache this on transform / mode changes
+   * in `phoc_output_handle_commit` */
+
+  pixman_region32_init (&transformed_cutouts);
+  wlr_region_transform (&transformed_cutouts,
+                        cutouts,
+                        self->wlr_output->transform,
+                        self->wlr_output->width,
+                        self->wlr_output->height);
+
+  pixman_region32_init (&scaled_cutouts);
+  wlr_region_scale (&scaled_cutouts, &transformed_cutouts, 1.0 / self->wlr_output->scale);
+  pixman_region32_fini (&transformed_cutouts);
+
+  ret = pixman_region32_intersect_rect (overlap,
+                                        &scaled_cutouts,
+                                        view_box.x,
+                                        view_box.y,
+                                        view_box.width,
+                                        view_box.height);
+  pixman_region32_fini (&scaled_cutouts);
+
+  /* Transform to surface local coordinates */
+  pixman_region32_translate (overlap, -view_box.x, -view_box.y);
+
+  return ret;
 }

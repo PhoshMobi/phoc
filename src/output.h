@@ -195,5 +195,8 @@ enum wlr_scale_filter_mode
 void       phoc_output_add_bling (PhocOutput *self, PhocBling *bling);
 void       phoc_output_remove_bling (PhocOutput *self, PhocBling *bling);
 GSList *   phoc_output_get_blings (PhocOutput *self);
+gboolean   phoc_output_get_cutout_boxes   (PhocOutput        *self,
+                                           PhocView          *view,
+                                           pixman_region32_t *overlap);
 
 G_END_DECLS
