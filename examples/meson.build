@@ -12,6 +12,12 @@ executable(
 )
 
 executable(
+  'ptk-demo',
+  sources: ['ptk-demo.c', 'ptk-demo-subsurface.c', 'egl-common.c'],
+  dependencies: ptk_dep,
+)
+
+executable(
   'phosh-private',
   sources: ['phosh-private.c', client_protos_headers, protos_sources],
   dependencies: [glib, wayland_client],
