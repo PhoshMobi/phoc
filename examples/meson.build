@@ -15,7 +15,13 @@ executable(
 
 executable(
   'ptk-demo',
-  sources: ['ptk-demo.c', 'ptk-demo-subsurface.c', 'egl-common.c'],
+  sources: [
+    'ptk-demo.c',
+    'ptk-demo-subsurface.c',
+    'ptk-demo-cutout.c',
+    'egl-common.c',
+    shader_headers,
+  ],
   dependencies: ptk_dep,
 )
 

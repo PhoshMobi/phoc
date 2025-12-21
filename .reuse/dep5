@@ -115,6 +115,8 @@ Files:
  doc/phoc.rst
  doc/phoc.toml.in
  doc/phoc-outputs-states.rst
+ examples/shaders/cutout-rect.frag
+ examples/shaders/cutout-rect.vert
  examples/shaders/embed.sh
  gcovr.cfg
  tools/*
