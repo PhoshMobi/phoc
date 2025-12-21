@@ -26,6 +26,7 @@ wayland_protocols = [
 
 wayland_client_protocols = [[wl_protocol_dir, 'staging/ext-idle-notify/ext-idle-notify-v1.xml']]
 
+protos_inc_dir = include_directories('.')
 protos_sources = []
 server_protos_headers = []
 client_protos_headers = []
