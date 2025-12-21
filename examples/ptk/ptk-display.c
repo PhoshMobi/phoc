@@ -14,8 +14,6 @@
 #include "ptk-toplevel.h"
 #include "../egl-common.h"
 
-#include "xdg-shell-client-protocol.h"
-
 #include <glib.h>
 
 #include <wayland-client.h>
@@ -404,6 +402,9 @@ handle_global (void               *data,
   } else if (strcmp (interface, xdg_wm_base_interface.name) == 0) {
     display->xdg_wm_base = wl_registry_bind (registry, name, &xdg_wm_base_interface, 1);
     xdg_wm_base_add_listener (display->xdg_wm_base, &xdg_wm_base_listener, NULL);
+  } else if (strcmp (interface, xx_cutouts_manager_v1_interface.name) == 0) {
+    display->xx_cutouts_manager_v1 = wl_registry_bind (registry, name,
+                                                       &xx_cutouts_manager_v1_interface, 1);
   }
 }
 
