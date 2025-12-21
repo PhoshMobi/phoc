@@ -58,8 +58,7 @@ typedef struct _PhocOutputPrivate {
   gint     frame_callback_next_id;
   gint64   last_frame_us;
 
-  PhocOutputCutouts *cutouts;
-  gulong   render_cutouts_id;
+  PhocOutputCutouts  *cutouts;
   struct wlr_texture *cutouts_texture;
 
   gboolean shell_revealed;
@@ -369,25 +368,6 @@ phoc_output_handle_destroy (struct wl_listener *listener, void *data)
 
 
 static void
-render_cutouts (PhocOutput *self, PhocRenderContext *ctx)
-{
-  PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
-
-  g_assert (PHOC_IS_OUTPUT (self));
-
-  if (priv->cutouts_texture) {
-    struct wlr_texture *texture = priv->cutouts_texture;
-
-    wlr_render_pass_add_texture (ctx->render_pass, &(struct wlr_render_texture_options) {
-        .texture = texture,
-        .transform = WL_OUTPUT_TRANSFORM_NORMAL,
-        .filter_mode = phoc_output_get_texture_filter_mode (ctx->output),
-    });
-  }
-}
-
-
-static void
 phoc_output_handle_damage (struct wl_listener *listener, void *user_data)
 {
   PhocOutputPrivate *priv = wl_container_of (listener, priv, damage);
@@ -564,6 +544,22 @@ build_debug_damage_tracking (PhocOutput *self)
 }
 
 
+static void
+render_cutouts (PhocOutput *self, PhocRenderContext *ctx)
+{
+  PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
+
+  if (!priv->cutouts_texture)
+    return;
+
+  wlr_render_pass_add_texture (ctx->render_pass, &(struct wlr_render_texture_options) {
+    .texture = priv->cutouts_texture,
+    .transform = WL_OUTPUT_TRANSFORM_NORMAL,
+    .filter_mode = phoc_output_get_texture_filter_mode (ctx->output),
+  });
+}
+
+
 PHOC_TRACE_NO_INLINE static void
 phoc_output_draw (PhocOutput *self)
 {
@@ -623,6 +619,7 @@ phoc_output_draw (PhocOutput *self)
     .render_pass = render_pass,
   };
   phoc_renderer_render_output (phoc_server_get_renderer (server), self, &render_context);
+  render_cutouts (self, &render_context);
 
   pixman_region32_fini (&buffer_damage);
 
@@ -986,7 +983,6 @@ phoc_output_set_layout_pos (PhocOutput *self, PhocOutputConfig *output_config)
 static void
 phoc_output_enable_render_cutouts (PhocOutput *self, gboolean enable)
 {
-  PhocRenderer *renderer = phoc_server_get_renderer (phoc_server_get_default ());
   PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
   gboolean is_enabled = !!priv->cutouts_texture;
 
@@ -996,13 +992,8 @@ phoc_output_enable_render_cutouts (PhocOutput *self, gboolean enable)
   if (enable) {
     g_debug ("Adding cutouts overlay");
     priv->cutouts_texture = phoc_output_cutouts_get_cutouts_texture (priv->cutouts);
-    priv->render_cutouts_id = g_signal_connect_swapped (renderer, "render-end",
-                                                        G_CALLBACK (render_cutouts),
-                                                        self);
   } else {
     g_clear_pointer (&priv->cutouts_texture, wlr_texture_destroy);
-    if (renderer)
-      g_clear_signal_handler (&priv->render_cutouts_id, renderer);
   }
 
   phoc_output_damage_whole (self);
