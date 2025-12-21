@@ -188,12 +188,13 @@ move_resize (PhocView *view, double x, double y, uint32_t width, uint32_t height
   if (update_y)
     y = y + height - constrained_height;
 
-  view->pending_move_resize.update_x = update_x;
-  view->pending_move_resize.update_y = update_y;
-  view->pending_move_resize.x = x;
-  view->pending_move_resize.y = y;
-  view->pending_move_resize.width = constrained_width;
-  view->pending_move_resize.height = constrained_height;
+  phoc_view_set_pending_box (view,
+                             update_x,
+                             update_y,
+                             x,
+                             y,
+                             constrained_width,
+                             constrained_height);
 
   wlr_xwayland_surface_configure (xwayland_surface, x, y, constrained_width, constrained_height);
 }

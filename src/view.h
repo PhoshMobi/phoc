@@ -1,5 +1,6 @@
 #pragma once
 
+#include "phoc-types.h"
 
 #include <stdbool.h>
 #include <wlr/config.h>
@@ -155,6 +156,7 @@ gboolean              phoc_view_is_fullscreen (PhocView *self);
 void                  phoc_view_update_decorated (PhocView *view, bool decorated);
 void                  phoc_view_arrange (PhocView *self, PhocOutput *output, gboolean center);
 void                  phoc_view_get_box (PhocView *self, struct wlr_box *box);
+PhocBox               phoc_view_get_pending_box (PhocView *self);
 void                  phoc_view_get_geometry (PhocView *self, struct wlr_box *box);
 void                  phoc_view_move (PhocView *self, double x, double y);
 bool                  phoc_view_move_to_next_output (PhocView *view, enum wlr_direction direction);
