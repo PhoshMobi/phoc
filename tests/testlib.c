@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2020 Purism SPC
- *               2025 Phosh.mobi e.V.
+ *               2025-2026 Phosh.mobi e.V.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -8,7 +8,7 @@
  */
 
 #include "testlib.h"
-#include "server.h"
+#include "server-private.h"
 #include <wayland-client.h>
 
 #include <cairo.h>
@@ -533,6 +533,7 @@ phoc_test_client_run (int timeout, PhocTestClientIface *iface, gpointer data)
     config = phoc_config_new_from_file (TEST_PHOC_INI);
 
   phoc_server_set_debug_flags (server, iface->debug_flags);
+  phoc_server_set_compatibles (server, iface->compatibles);
   g_assert_true (PHOC_IS_SERVER (server));
   g_assert_true (config);
   g_assert_true (phoc_server_setup (server, config, NULL, loop, PHOC_SERVER_FLAG_NONE));

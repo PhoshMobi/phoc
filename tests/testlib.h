@@ -97,6 +97,7 @@ typedef struct PhocTestClientIface {
   PhocServerDebugFlags debug_flags;
   gboolean             xwayland;
   PhocTestOutputConfig output_config;
+  const char * const  *compatibles;
 } PhocTestClientIface;
 
 typedef struct _PhocTestXdgToplevelSurface PhocTestXdgToplevelSurface;
