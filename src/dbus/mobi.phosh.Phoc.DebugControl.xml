@@ -11,6 +11,13 @@
 
   <interface name="mobi.phosh.Phoc.DebugControl">
     <!--
+        Cutouts:
+
+        Whether the compositor renders cutout information.
+    -->
+    <property name="Cutouts" type="b" access="readwrite"/>
+
+    <!--
         TouchPoints:
 
         Whether the compositor highlights touch points.

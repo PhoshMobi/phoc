@@ -983,6 +983,45 @@ phoc_output_set_layout_pos (PhocOutput *self, PhocOutputConfig *output_config)
 }
 
 
+static void
+phoc_output_enable_render_cutouts (PhocOutput *self, gboolean enable)
+{
+  PhocRenderer *renderer = phoc_server_get_renderer (phoc_server_get_default ());
+  PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
+  gboolean is_enabled = !!priv->cutouts_texture;
+
+  if (is_enabled == !!enable)
+    return;
+
+  if (enable) {
+    g_debug ("Adding cutouts overlay");
+    priv->cutouts_texture = phoc_output_cutouts_get_cutouts_texture (priv->cutouts);
+    priv->render_cutouts_id = g_signal_connect_swapped (renderer, "render-end",
+                                                        G_CALLBACK (render_cutouts),
+                                                        self);
+  } else {
+    g_clear_pointer (&priv->cutouts_texture, wlr_texture_destroy);
+    if (renderer)
+      g_clear_signal_handler (&priv->render_cutouts_id, renderer);
+  }
+
+  phoc_output_damage_whole (self);
+}
+
+
+static void
+on_server_debug_flags_changed (PhocOutput *self, GParamSpec *pspec, PhocServer *server)
+{
+  gboolean enable;
+
+  g_assert (PHOC_IS_OUTPUT (self));
+  g_assert (PHOC_IS_SERVER (server));
+
+  enable = phoc_server_get_debug_flags (server) & PHOC_SERVER_DEBUG_FLAG_CUTOUTS;
+  phoc_output_enable_render_cutouts (self, enable);
+}
+
+
 static gboolean
 phoc_output_initable_init (GInitable    *initable,
                            GCancellable *cancellable,
@@ -1065,13 +1104,14 @@ phoc_output_initable_init (GInitable    *initable,
   if (phoc_output_is_builtin (self)) {
     priv->cutouts = phoc_output_cutouts_new (phoc_server_get_compatibles (server));
 
-    if (phoc_server_check_debug_flags (server, PHOC_SERVER_DEBUG_FLAG_CUTOUTS)) {
-      g_message ("Adding cutouts overlay");
-      priv->cutouts_texture = phoc_output_cutouts_get_cutouts_texture (priv->cutouts);
-      priv->render_cutouts_id = g_signal_connect_swapped (renderer, "render-end",
-                                                          G_CALLBACK (render_cutouts),
-                                                          self);
-    }
+    if (phoc_server_check_debug_flags (server, PHOC_SERVER_DEBUG_FLAG_CUTOUTS))
+      phoc_output_enable_render_cutouts (self, TRUE);
+
+    g_signal_connect_object (server,
+                             "notify::debug-flags",
+                             G_CALLBACK (on_server_debug_flags_changed),
+                             self,
+                             G_CONNECT_SWAPPED);
   }
 
   g_message ("Output '%s' added ('%s'/'%s'/'%s'), "
@@ -1089,10 +1129,8 @@ phoc_output_initable_init (GInitable    *initable,
 static void
 phoc_output_finalize (GObject *object)
 {
-  PhocServer *server = phoc_server_get_default ();
   PhocOutput *self = PHOC_OUTPUT (object);
   PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
-  PhocRenderer *renderer = phoc_server_get_renderer (server);
 
   self->wlr_output->data = NULL;
   self->wlr_output = NULL;
@@ -1111,10 +1149,8 @@ phoc_output_finalize (GObject *object)
   for (int i = 0; i < G_N_ELEMENTS (priv->layer_surfaces); i++)
     g_clear_pointer (&priv->layer_surfaces[i], g_queue_free);
 
-  if (renderer) {
-    g_clear_signal_handler (&priv->render_cutouts_id, renderer);
-    g_clear_pointer (&priv->cutouts_texture, wlr_texture_destroy);
-  }
+  phoc_output_enable_render_cutouts (self, FALSE);
+
   g_clear_object (&priv->cutouts);
   g_clear_object (&priv->shield);
   g_clear_object (&self->desktop);
