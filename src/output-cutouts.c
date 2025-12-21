@@ -52,7 +52,7 @@ static void
 phoc_output_cutouts_update (PhocOutputCutouts *self)
 {
   GListModel *cutouts;
-  GArray *radii;
+  g_autoptr (GArray) radii = NULL;
 
   pixman_region32_clear (&self->cutouts);
 
