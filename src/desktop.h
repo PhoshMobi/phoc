@@ -6,7 +6,9 @@
 #include "phosh-private.h"
 #include "view.h"
 #include "workspace-manager.h"
+#include "xx-cutouts-v1.h"
 #include "xwayland-surface.h"
+
 
 #include <time.h>
 #include <wayland-server-core.h>
@@ -179,5 +181,7 @@ void                    phoc_desktop_save_outputs_state          (PhocDesktop *s
 PhocOutputConfig *      phoc_desktop_get_saved_outputs_state     (PhocDesktop *self,
                                                                   const char  *output_identifier);
 
-PhocWorkspaceManager *  phoc_desktop_get_workspace_manager       (PhocDesktop *self);
-PhocWorkspace *         phoc_desktop_get_active_workspace        (PhocDesktop *self);
+PhocWorkspaceManager *phoc_desktop_get_workspace_manager         (PhocDesktop *self);
+PhocWorkspace *       phoc_desktop_get_active_workspace          (PhocDesktop *self);
+
+PhocXxCutoutsManager *phoc_desktop_get_xx_cutouts_manager        (PhocDesktop *self);

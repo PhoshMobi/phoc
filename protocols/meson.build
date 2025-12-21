@@ -22,6 +22,7 @@ wayland_protocols = [
   ['wlr-layer-shell-unstable-v1.xml'],
   ['wlr-output-power-management-unstable-v1.xml'],
   ['wlr-screencopy-unstable-v1.xml'],
+  ['xx-cutouts-v1.xml'],
 ]
 
 wayland_client_protocols = [[wl_protocol_dir, 'staging/ext-idle-notify/ext-idle-notify-v1.xml']]

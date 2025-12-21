@@ -18,6 +18,12 @@ Files:
 Copyright: See individual files
 License: MIT
 
+# Imported from wayland-protocols
+Files:
+ protocols/xx-cutouts-v1.xml
+Copyright: See individual files
+License: MIT
+
 # Imported from GTK
 Files:
  protocols/gtk-shell.xml

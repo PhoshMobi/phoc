@@ -373,6 +373,9 @@ registry_handle_global (void               *data,
   } else if (!g_strcmp0 (interface, zxdg_decoration_manager_v1_interface.name)) {
     globals->decoration_manager = wl_registry_bind (registry, name,
                                                     &zxdg_decoration_manager_v1_interface, 1);
+  } else if (!g_strcmp0 (interface, xx_cutouts_manager_v1_interface.name)) {
+    globals->cutouts_manager = wl_registry_bind (registry, name,
+                                                 &xx_cutouts_manager_v1_interface, 1);
   }
 }
 
@@ -422,6 +425,7 @@ wl_client_run (GTask *task, gpointer source, gpointer data, GCancellable *cancel
   else
     success = TRUE;
 
+  g_clear_pointer (&globals.cutouts_manager, xx_cutouts_manager_v1_destroy);
   g_clear_pointer (&globals.decoration_manager, zxdg_decoration_manager_v1_destroy);
   wl_proxy_destroy ((struct wl_proxy *)globals.gtk_shell1);
   wl_proxy_destroy ((struct wl_proxy *)globals.phosh);
