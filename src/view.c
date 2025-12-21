@@ -2747,6 +2747,17 @@ phoc_view_set_visibility (PhocView *self, gboolean visibility)
 }
 
 
+struct wlr_ext_foreign_toplevel_handle_v1 *
+phoc_view_get_ext_foreign_toplevel_handle (PhocView *self)
+{
+  PhocViewPrivate *priv = phoc_view_get_instance_private (self);
+
+  g_assert (PHOC_IS_VIEW (self));
+
+  return priv->ext_foreign_toplevel_v1_handle;
+}
+
+
 void
 phoc_view_set_modal (PhocView *self, gboolean modal)
 {

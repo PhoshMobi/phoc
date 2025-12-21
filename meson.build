@@ -164,6 +164,11 @@ config_h.set_quoted('PHOC_VERSION', meson.project_version())
 config_h.set('PHOC_XWAYLAND', have_xwayland, description: 'Whether xwayland is enabled')
 config_h.set('PHOC_USE_DTRACE', use_dtrace, description: 'Whether tracing via dtrace/stp is enabled')
 config_h.set('PHOC_USE_SYSPROF', use_sysprof, description: 'Whether tracing via sysprof is enabled')
+config_h.set(
+  'PHOC_HAVE_PIDFD',
+  cc.has_header('sys/pidfd.h'),
+  description: 'Whether pidfd support is available',
+)
 
 phoc_config_h = configure_file(output: 'phoc-config.h', configuration: config_h)
 

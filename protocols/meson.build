@@ -16,6 +16,7 @@ wayland_protocols = [
   [wl_protocol_dir, 'unstable/xdg-decoration/xdg-decoration-unstable-v1.xml'],
   ['gtk-shell.xml'],
   ['phoc-device-state-unstable-v1.xml'],
+  ['phoc-foreign-toplevel-pidfd-v1.xml'],
   ['phoc-layer-shell-effects-unstable-v1.xml'],
   ['phosh-private.xml'],
   ['wlr-foreign-toplevel-management-unstable-v1.xml'],

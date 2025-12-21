@@ -4,6 +4,7 @@
 #include "gtk-shell.h"
 #include "layer-shell-effects.h"
 #include "phosh-private.h"
+#include "toplevel-pidfd.h"
 #include "view.h"
 #include "workspace-manager.h"
 #include "xx-cutouts-v1.h"
@@ -192,3 +193,5 @@ PhocWorkspaceManager *phoc_desktop_get_workspace_manager         (PhocDesktop *s
 PhocWorkspace *       phoc_desktop_get_active_workspace          (PhocDesktop *self);
 
 PhocXxCutoutsManager *phoc_desktop_get_xx_cutouts_manager        (PhocDesktop *self);
+PhocToplevelPidfdManager *
+                      phoc_desktop_get_toplevel_pidfd_manager    (PhocDesktop *self);

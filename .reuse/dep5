@@ -33,6 +33,7 @@ License: LGPL-2.1-or-later
 # Phoc's protocols have explicit license text
 Files:
  protocols/phoc-device-state-unstable-v1.xml
+ protocols/phoc-foreign-toplevel-pidfd-v1.xml
  protocols/phoc-layer-shell-effects-unstable-v1.xml
  protocols/phosh-private.xml
 Copyright: See individual files

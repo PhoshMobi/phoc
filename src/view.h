@@ -232,5 +232,7 @@ void                  phoc_view_insert_bling (PhocView *self, PhocBling *bling);
 void                  phoc_view_remove_bling (PhocView *self, PhocBling *bling);
 GSList *              phoc_view_get_blings (PhocView *self);
 PhocView *            phoc_view_get_modal_dialog (PhocView *self);
+struct wlr_ext_foreign_toplevel_handle_v1 *
+                      phoc_view_get_ext_foreign_toplevel_handle (PhocView *self);
 
 G_END_DECLS
