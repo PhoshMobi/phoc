@@ -1,3 +1,100 @@
+phoc (0.52~rc1) experimental; urgency=medium
+
+  * input-method-relay: Inform the input method that we submitted preedit.
+    When we submit preedit on focus change we need to
+    let the input method know that this happened, otherwise
+    it may send the same preedit again.
+    Closes: https://gitlab.com/schmiddi-on-mobile/flare/-/issues/272#note_2900347912
+  * desktop: Drop device-state. We handle it on the seat
+  * data: Let schema file match app-id.
+    We don't bother renaming the settings keys
+  * main: Sort debug flags alphabetically
+  * view: Document get_box()
+    Rename `view` to `self` while at that. Old code got this wrong.
+  * output-cutouts: Rename from cutouts-overlay.
+    We want the class to not only provide the texture but
+    also the provide the cutout information for the associated
+    output so use a better name.
+    Also update the copyright as I'm the only author here so far.
+  * output-cutouts: Rename source file.
+    We do this in a separate commit to it becomes an (almost) pure
+    rename.
+  * output-cutouts: Drop unneeded output argument
+  * tests: Drop gint use.
+    We prefer `int`
+  * build: Don't add prefix twice.
+    We already have it in datadir
+  * view: Declare variable in loop.
+    Also gets rid of a gint use
+  * tests/decoration: Fix variable naming.
+    We don't get the manager but a decoration *from* the manager, name
+    the variable like that.
+  * view: Don't include child private header.
+    Private headers shouldn't be included in public ones 🤓.
+  * output: Simplify is_builtin()
+    An assignment makes this easier to read. Switch to `self` like
+    elsewhere (to clean up this old code).
+  * output-shield: Don't access NULL renderer.
+    In shell mode we want to make sure we don't access the output shield
+    on server shutdown as it is already gone.
+    Fixes: 10dedabd8 ("server: Dispose renderer first")
+  * server: Fix cleanup in error case
+    `phoc_server_setup()` doesn't need to do any cleanup as that is done
+    on dispose. Doing so twice causes problems.
+    This fixes a crash when the Wayland socket can't be created, e.g.
+    ```
+    XDG_RUNTIME_DIR=/doesnotexist phoc  -E "..."
+    ```
+  * ci: Update shared scripts to 834fc85
+  * build: Use on newer gmobile.
+    We want a version with support for different corner radii
+  * testlib: Ease box comparisons
+  * testlib: Allow to set ack_configure callback.
+    This allows us to send parts in the configure / ack_configure
+    sequence of a toplevel.
+  * testlib: Don't leak title when set multiple times
+  * output: Only add cutout to builtin outputs
+  * output: Add debug option to fake builtin displays.
+    For nested development it is useful to make an output behave
+    like a built-in one. Add a debug flag similar to what we did
+    for phosh a while back. Due to our current test setup we
+    assume all nested displays are built in, not just the first.
+  * output-cutouts: Don't leak compatibles when set multiple times.
+    We don't do that atm but better to have it correct
+  * output-cutouts: Allow to get region with cutout information.
+    We use that to build the texture too.
+  * output-cutouts: Allow to get corner information.
+    We use that for rendering too so that when gmobile picks
+    up more flexible corner handling it will work out of the box.
+  * output-cutouts: Handle different corner radii
+  * tests/xdg-decoration: Flush display before taking screenshot.
+    Sometime the decorations aren't there yet. Flush all events giving
+    the compositor a bit more time. This makes the test stable for me with:
+    ```
+    meson test -j 1 --print-errorlogs --repeat=10000 -C _build xdg-decoration
+    ```
+  * ci: Update shared scripts to feaba37
+  * outpout-cutouts: Don't leak corner array
+  * debug-control: Sort flags alphabetically
+  * examples/egl: Fix indent
+  * ptk: Phoc tiny/toy/trivial/toolkit.
+    Some helpers to create demos more easily
+  * examples: Add demo using ptk.
+    This app will gather different some things we want to run ever so often
+    for testing. We start with a small demo to add subsurfaces.
+  * examples: Allow to build shaders.
+    Taken from wlroots which is MIT licensed.
+  * output: Don't track renderer.
+    Get the renderer from the server. This allows us to only free
+    the wlr-texture for the cutouts when the renderer is still alive
+    avoiding a crash on shutdown otherwise.
+    Fixes: 10dedabd8 ("server: Dispose renderer first")
+  * packaging: Bump wlroots dependency.
+    We're building with embedded wlroots for testing so didn't
+    notice.
+
+ -- Guido Günther <agx@sigxcpu.org>  Thu, 25 Dec 2025 12:39:23 +0100
+
 phoc (0.51.0) experimental; urgency=medium
 
   [ Gotam Gorabh ]

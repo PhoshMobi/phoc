@@ -1,3 +1,15 @@
+phoc 0.52~rc1
+-------------
+Released December 2025
+* Fix preedit related issue that made preedit reappear in e.g. Chatty or Flare
+* cutouts: Handle different corner radii
+* Internal cleanups preparing for xdg-cutouts support
+* Fix some shutdown corner case crashes
+* Issues fixed:
+    * https://gitlab.com/schmiddi-on-mobile/flare/-/issues/272#note_2900347912
+* Contributors:
+    * Guido Günther
+
 phoc 0.51.0
 -----------
 Released November 2025
