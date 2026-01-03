@@ -1,3 +1,9 @@
+phoc (0.52.0) experimental; urgency=medium
+
+  * build: Use released gmobile
+
+ -- Guido Günther <agx@sigxcpu.org>  Sat, 03 Jan 2026 11:25:09 +0100
+
 phoc (0.52~rc1) experimental; urgency=medium
 
   * input-method-relay: Inform the input method that we submitted preedit.
