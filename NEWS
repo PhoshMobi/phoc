@@ -1,6 +1,6 @@
-phoc 0.52~rc1
--------------
-Released December 2025
+phoc 0.52.0
+-----------
+Released January 2026
 * Fix preedit related issue that made preedit reappear in e.g. Chatty or Flare
 * cutouts: Handle different corner radii
 * Internal cleanups preparing for xdg-cutouts support
