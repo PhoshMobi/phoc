@@ -49,7 +49,7 @@ wl_pointer_enter (void              *data,
   PtkSurface *surface = NULL;
 
   wl_surface_attach (display_private.cursor_surface, wl_cursor_image_get_buffer (image), 0, 0);
-  wl_surface_damage (display_private.cursor_surface, 1, 0, image->width, image->height);
+  wl_surface_damage (display_private.cursor_surface, 0, 0, image->width, image->height);
   wl_surface_commit (display_private.cursor_surface);
   wl_pointer_set_cursor (wl_pointer,
                          serial,
