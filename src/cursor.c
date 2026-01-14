@@ -2011,7 +2011,7 @@ phoc_cursor_set_name (PhocCursor *self, struct wl_client *client, const char *na
 /**
  * phoc_cursor_set_image:
  * @self: The cursor
- * @client: The client to set the image force
+ * @client: The client to set the image for
  * @surface: The image surface to use
  * @hotspot_x: The x coordinate of the hotspot on the surface
  * @hotspot_y: The y coordinate of the hotspot on the surface
