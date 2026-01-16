@@ -368,11 +368,10 @@ phoc_view_destroy_toplevel_handle (PhocView *self)
   wl_list_remove (&priv->toplevel_handle_request_activate.link);
   wl_list_remove (&priv->toplevel_handle_request_fullscreen.link);
   wl_list_remove (&priv->toplevel_handle_request_close.link);
-  wlr_foreign_toplevel_handle_v1_destroy (priv->toplevel_handle);
-  priv->toplevel_handle = NULL;
 
-  wlr_ext_foreign_toplevel_handle_v1_destroy (priv->ext_foreign_toplevel_v1_handle);
-  priv->ext_foreign_toplevel_v1_handle = NULL;
+  g_clear_pointer (&priv->toplevel_handle, wlr_foreign_toplevel_handle_v1_destroy);
+  g_clear_pointer (&priv->ext_foreign_toplevel_v1_handle,
+                   wlr_ext_foreign_toplevel_handle_v1_destroy);
 }
 
 
