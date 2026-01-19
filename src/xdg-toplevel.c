@@ -7,7 +7,7 @@
  * Author: Guido Günther <agx@sigxcpu.org>
  */
 
-#define G_LOG_DOMAIN "phoc-xdg-surface"
+#define G_LOG_DOMAIN "phoc-xdg-toplevel"
 
 #include "phoc-config.h"
 

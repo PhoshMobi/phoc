@@ -328,19 +328,20 @@ view_create_foreign_toplevel_handle (PhocView *self)
   g_assert (priv->toplevel_handle);
 
   priv->toplevel_handle_request_maximize.notify = handle_toplevel_handle_request_maximize;
-  wl_signal_add(&priv->toplevel_handle->events.request_maximize,
-                &priv->toplevel_handle_request_maximize);
+  wl_signal_add (&priv->toplevel_handle->events.request_maximize,
+                 &priv->toplevel_handle_request_maximize);
 
   priv->toplevel_handle_request_activate.notify = handle_toplevel_handle_request_activate;
-  wl_signal_add(&priv->toplevel_handle->events.request_activate,
-                &priv->toplevel_handle_request_activate);
+  wl_signal_add (&priv->toplevel_handle->events.request_activate,
+                 &priv->toplevel_handle_request_activate);
 
   priv->toplevel_handle_request_fullscreen.notify = handle_toplevel_handle_request_fullscreen;
-  wl_signal_add(&priv->toplevel_handle->events.request_fullscreen,
-                &priv->toplevel_handle_request_fullscreen);
+  wl_signal_add (&priv->toplevel_handle->events.request_fullscreen,
+                 &priv->toplevel_handle_request_fullscreen);
 
   priv->toplevel_handle_request_close.notify = handle_toplevel_handle_request_close;
-  wl_signal_add(&priv->toplevel_handle->events.request_close, &priv->toplevel_handle_request_close);
+  wl_signal_add (&priv->toplevel_handle->events.request_close,
+                 &priv->toplevel_handle_request_close);
 
   priv->toplevel_handle->data = self;
 
@@ -367,11 +368,10 @@ phoc_view_destroy_toplevel_handle (PhocView *self)
   wl_list_remove (&priv->toplevel_handle_request_activate.link);
   wl_list_remove (&priv->toplevel_handle_request_fullscreen.link);
   wl_list_remove (&priv->toplevel_handle_request_close.link);
-  wlr_foreign_toplevel_handle_v1_destroy (priv->toplevel_handle);
-  priv->toplevel_handle = NULL;
 
-  wlr_ext_foreign_toplevel_handle_v1_destroy (priv->ext_foreign_toplevel_v1_handle);
-  priv->ext_foreign_toplevel_v1_handle = NULL;
+  g_clear_pointer (&priv->toplevel_handle, wlr_foreign_toplevel_handle_v1_destroy);
+  g_clear_pointer (&priv->ext_foreign_toplevel_v1_handle,
+                   wlr_ext_foreign_toplevel_handle_v1_destroy);
 }
 
 

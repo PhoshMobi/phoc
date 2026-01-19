@@ -1277,13 +1277,13 @@ phoc_desktop_is_privileged_protocol (PhocDesktop *self, const struct wl_global *
   priv = phoc_desktop_get_instance_private (self);
 
   is_priv = (
-    global == phoc_phosh_private_get_global (priv->phosh) ||
     global == phoc_layer_shell_effects_get_global (priv->layer_shell_effects) ||
+    global == phoc_phosh_private_get_global (priv->phosh) ||
     global == priv->data_control_manager_v1->global ||
-    global == self->ext_foreign_toplevel_list_v1->global ||
+    global == priv->ext_image_copy_capture_manager_v1->global ||
     global == priv->screencopy_manager_v1->global ||
     global == self->export_dmabuf_manager_v1->global ||
-    global == priv->ext_image_copy_capture_manager_v1->global ||
+    global == self->ext_foreign_toplevel_list_v1->global ||
     global == self->foreign_toplevel_manager_v1->global ||
     global == self->gamma_control_manager_v1->global ||
     global == self->input_method->global ||
