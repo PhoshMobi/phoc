@@ -381,6 +381,7 @@ phoc_server_initable_init (GInitable    *initable,
     return FALSE;
   }
   wl_display_set_global_filter (self->wl_display, phoc_server_filter_globals, self);
+  wl_display_set_default_max_buffer_size (self->wl_display, 1024 * 1024);
 
   self->backend = wlr_backend_autocreate (wl_display_get_event_loop (self->wl_display),
                                           &self->session);
