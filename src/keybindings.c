@@ -154,6 +154,34 @@ handle_cycle_windows_backwards (PhocSeat *seat, GVariant *param)
 
 
 static void
+handle_cycle_workspace_windows (PhocSeat *seat, GVariant *param)
+{
+  PhocView *view;
+  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
+  PhocWorkspaceManager *manager = phoc_desktop_get_workspace_manager (desktop);
+  PhocWorkspace *workspace = phoc_workspace_manager_get_active (manager);
+
+  view = phoc_workspace_cycle (workspace, TRUE);
+  if (view)
+    phoc_seat_set_focus_view (seat, view);
+}
+
+
+static void
+handle_cycle_workspace_windows_backwards (PhocSeat *seat, GVariant *param)
+{
+  PhocView *view;
+  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
+  PhocWorkspaceManager *manager = phoc_desktop_get_workspace_manager (desktop);
+  PhocWorkspace *workspace = phoc_workspace_manager_get_active (manager);
+
+  view = phoc_workspace_cycle (workspace, FALSE);
+  if (view)
+    phoc_seat_set_focus_view (seat, view);
+}
+
+
+static void
 handle_close (PhocSeat *seat, GVariant *param)
 {
   PhocView *view = phoc_seat_get_focus_view (seat);
