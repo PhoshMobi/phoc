@@ -918,7 +918,8 @@ phoc_view_restore (PhocView *self)
 void
 phoc_view_set_fullscreen (PhocView *view, bool fullscreen, PhocOutput *output)
 {
-  PhocInput *input = phoc_server_get_input (phoc_server_get_default ());
+  PhocServer *server = phoc_server_get_default ();
+  PhocInput *input = phoc_server_get_input (server);
   PhocViewPrivate *priv = phoc_view_get_instance_private (view);
 
   g_assert (PHOC_IS_VIEW (view));
@@ -941,7 +942,7 @@ phoc_view_set_fullscreen (PhocView *view, bool fullscreen, PhocOutput *output)
   phoc_view_get_geometry (view, &view_geom);
 
   if (fullscreen) {
-    PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
+    PhocDesktop *desktop = phoc_server_get_desktop (server);
 
     if (output == NULL)
       output = phoc_view_get_output (view);
@@ -990,8 +991,7 @@ phoc_view_set_fullscreen (PhocView *view, bool fullscreen, PhocOutput *output)
     phoc_view_auto_maximize (view);
   }
 
-  phoc_server_set_linux_dmabuf_surface_feedback (phoc_server_get_default (),
-                                                 view, priv->fullscreen_output, fullscreen);
+  phoc_server_set_linux_dmabuf_surface_feedback (server, view, priv->fullscreen_output, fullscreen);
 }
 
 
