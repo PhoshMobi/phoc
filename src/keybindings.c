@@ -752,6 +752,12 @@ phoc_keybindings_constructed (GObject *object)
   phoc_add_keybinding (self, self->settings,
                        "switch-applications-backward", handle_cycle_windows_backwards,
                        NULL);
+  phoc_add_keybinding (self, self->settings,
+                       "switch-windows", handle_cycle_workspace_windows,
+                       NULL);
+  phoc_add_keybinding (self, self->settings,
+                       "switch-windows-backward", handle_cycle_workspace_windows_backwards,
+                       NULL);
   phoc_add_keybinding (self, self->settings,"unmaximize", handle_unmaximize, NULL);
   phoc_add_keybinding (self, self->settings,
                        "switch-input-source", handle_switch_input_source,
