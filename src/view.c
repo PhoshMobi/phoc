@@ -919,13 +919,11 @@ void
 phoc_view_set_fullscreen (PhocView *view, bool fullscreen, PhocOutput *output)
 {
   PhocInput *input = phoc_server_get_input (phoc_server_get_default ());
-  PhocViewPrivate *priv;
+  PhocViewPrivate *priv = phoc_view_get_instance_private (view);
 
   g_assert (PHOC_IS_VIEW (view));
-  priv = phoc_view_get_instance_private (view);
 
   bool was_fullscreen = phoc_view_is_fullscreen (view);
-
   if (was_fullscreen != fullscreen) {
     /* Don't allow unfocused surfaces to make themselves fullscreen */
     if (fullscreen && phoc_view_is_mapped (view) && !phoc_input_view_has_focus (input, view)) {
