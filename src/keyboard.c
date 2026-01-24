@@ -71,6 +71,7 @@ struct _PhocKeyboard {
   GSettings         *keyboard_settings;
   struct xkb_keymap *keymap;
   GnomeXkbInfo      *xkbinfo;
+  PhocKeybindings   *keybindings;
 
   gboolean           wakeup_key_default;
   GHashTable        *wakeup_keys;
@@ -262,7 +263,6 @@ keyboard_execute_binding (PhocKeyboard              *self,
                           size_t                     keysyms_len,
                           enum wl_keyboard_key_state state)
 {
-  PhocConfig *config = phoc_server_get_config (phoc_server_get_default ());
   PhocSeat *seat = phoc_input_device_get_seat (PHOC_INPUT_DEVICE (self));
 
   if (state != WL_KEYBOARD_KEY_STATE_PRESSED)
@@ -275,7 +275,7 @@ keyboard_execute_binding (PhocKeyboard              *self,
   }
 
   size_t n = pressed_keysyms_length (pressed_keysyms);
-  if (phoc_keybindings_handle_pressed (config->keybindings, modifiers, pressed_keysyms, n, seat))
+  if (phoc_keybindings_handle_pressed (self->keybindings, modifiers, pressed_keysyms, n, seat))
     return true;
 
   return false;
@@ -661,6 +661,7 @@ phoc_keyboard_dispose (GObject *object)
   g_clear_object (&self->input_settings);
   g_clear_object (&self->keyboard_settings);
   g_clear_object (&self->xkbinfo);
+  g_clear_object (&self->keybindings);
 
   G_OBJECT_CLASS (phoc_keyboard_parent_class)->dispose (object);
 }
@@ -837,6 +838,7 @@ phoc_keyboard_class_init (PhocKeyboardClass *klass)
 static void
 phoc_keyboard_init (PhocKeyboard *self)
 {
+  self->keybindings = phoc_keybindings_new ();
 }
 
 
