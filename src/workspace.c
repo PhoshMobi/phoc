@@ -114,6 +114,39 @@ phoc_workspace_move_view_to_top (PhocWorkspace *self, PhocView *view)
 }
 
 /**
+ * phoc_workspace_cycle:
+ * @self: the workspace
+ * @forward: Whether to cycle forward or backward through the views
+ *
+ * Cycles and re-arranges the current workspace views for focusing.
+ * Depending on `forward` it cycles either forward or backward.
+ *
+ * Returns:(transfer none): The PhocView to be focused, or NULL.
+ */
+PhocView *
+phoc_workspace_cycle (PhocWorkspace *self, gboolean forward)
+{
+  GList *link;
+  PhocView *view;
+
+  if (g_queue_get_length (self->views) < 2)
+    return NULL;
+
+  if (forward) {
+    /* Move the last view first */
+    link = g_queue_pop_tail_link (self->views);
+    g_queue_push_head_link (self->views, link);
+  } else {
+    /* Move the first view to the end */
+    link = g_queue_pop_head_link (self->views);
+    g_queue_push_tail_link (self->views, link);
+  }
+
+  view = g_queue_peek_head (self->views);
+  return view;
+}
+
+/**
  * phoc_workspace_get_views:
  * @self: the workspace
  *

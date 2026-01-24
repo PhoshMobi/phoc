@@ -46,5 +46,7 @@ PhocView *              phoc_workspace_get_view_by_index         (PhocWorkspace 
 void                    phoc_workspace_for_each_view             (PhocWorkspace *self,
                                                                   PhocWorkspaceViewIter view_iter,
                                                                   gpointer       user_data);
+PhocView *              phoc_workspace_cycle                     (PhocWorkspace *self,
+                                                                  gboolean forward);
 
 G_END_DECLS
