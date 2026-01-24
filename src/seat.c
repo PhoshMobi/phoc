@@ -1453,6 +1453,12 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
   }
 #endif
 
+  PhocView *prev_focus = phoc_seat_get_focus_view (seat);
+  if (view && view == prev_focus) {
+    g_debug ("View %p already focused", view);
+    return;
+  }
+
   if (view && unfullscreen) {
     PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
     PhocOutput *output;
@@ -1467,12 +1473,6 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
         phoc_output_set_fullscreen_view (output, NULL);
       }
     }
-  }
-
-  PhocView *prev_focus = phoc_seat_get_focus_view (seat);
-  if (view && view == prev_focus) {
-    g_debug ("View %p already focused", view);
-    return;
   }
 
 #ifdef PHOC_XWAYLAND
