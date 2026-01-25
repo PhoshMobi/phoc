@@ -45,25 +45,25 @@ enum {
 static GParamSpec *props[PROP_LAST_PROP];
 
 typedef struct _PhocSeatPrivate {
-  PhocInput             *input;
-  PhocDeviceState       *device_state;
-  char                  *name;
+  PhocInput       *input;
+  PhocDeviceState *device_state;
+  char *name;
 
   /* Focus order: The first element in the queue is the currently
    * focused view, the one after that the view that was previously
    * focused and so on */
-  GQueue                *views; /* (element-type: PhocSeatView) */
+  GQueue           *views; /* (element-type: PhocSeatView) */
   /* Whether a view on this seat has focus */
-  bool                   has_focus;
+  bool              has_focus;
 
-  struct wl_client      *exclusive_client;
+  struct wl_client *exclusive_client;
 
-  GHashTable            *input_mapping_settings;
+  GHashTable       *input_mapping_settings;
 
-  uint32_t               last_button_serial;
-  uint32_t               last_touch_serial;
+  uint32_t          last_button_serial;
+  uint32_t          last_touch_serial;
 
-  gint64                 last_event_ts;
+  gint64            last_event_ts;
 } PhocSeatPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (PhocSeat, phoc_seat, G_TYPE_OBJECT)
