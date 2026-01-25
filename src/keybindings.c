@@ -34,21 +34,19 @@ typedef void (*PhocKeyHandlerFunc) (PhocSeat *seat, GVariant *param);
  * A keybinding represents a handler with params that will be
  * invoked on the given keybinding combinations.
  */
-typedef struct
-{
-  char               *name;
-  PhocKeyHandlerFunc  func;
-  GVariant           *param;
+typedef struct {
+  char     *name;
+  PhocKeyHandlerFunc func;
+  GVariant *param;
 
-  GSList             *combos;
+  GSList   *combos;
 } PhocKeybinding;
 
 
-typedef struct _PhocKeybindings
-{
-  GObject parent;
+typedef struct _PhocKeybindings {
+  GObject    parent;
 
-  GSList *bindings;
+  GSList    *bindings;
   GSettings *settings;
   GSettings *mutter_settings;
 } PhocKeybindings;
@@ -543,7 +541,7 @@ phoc_keybindings_parse_accelerator (const char *accelerator)
       }
     } else {
       if (len >= 4 && is_keycode (accelerator)) {
-        //keycode = strtoul (accelerator, NULL, 16);
+        // keycode = strtoul (accelerator, NULL, 16);
         g_warning ("Unhandled keycode accelerator'");
         goto out;
       } else if (strcmp (accelerator, "Above_Tab") == 0) {
@@ -672,11 +670,11 @@ on_keybinding_setting_changed (PhocKeybindings *self,
 
 
 static gboolean
-phoc_add_keybinding (PhocKeybindings    *self,
-                     GSettings          *settings,
-                     const char         *name,
-                     PhocKeyHandlerFunc  func,
-                     GVariant           *param)
+phoc_add_keybinding (PhocKeybindings   *self,
+                     GSettings         *settings,
+                     const char        *name,
+                     PhocKeyHandlerFunc func,
+                     GVariant          *param)
 {
   g_autofree char *signal_name = NULL;
   PhocKeybinding *binding;
