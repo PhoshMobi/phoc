@@ -797,16 +797,16 @@ phoc_keyboard_constructed (GObject *object)
   self->xkbinfo = gnome_xkb_info_new ();
 
   g_object_connect (self->input_settings,
-    "swapped-signal::changed::sources", G_CALLBACK (on_input_setting_changed), self,
-    "swapped-signal::changed::xkb-options", G_CALLBACK (on_input_setting_changed), self,
-    NULL);
+                    "swapped-signal::changed::sources", on_input_setting_changed, self,
+                    "swapped-signal::changed::xkb-options", on_input_setting_changed, self,
+                    NULL);
   on_input_setting_changed (self, NULL, self->input_settings);
 
   g_object_connect (self->keyboard_settings,
-    "swapped-signal::changed::repeat", G_CALLBACK (on_keyboard_setting_changed), self,
-    "swapped-signal::changed::repeat-interval", G_CALLBACK (on_keyboard_setting_changed), self,
-    "swapped-signal::changed::delay", G_CALLBACK (on_keyboard_setting_changed), self,
-    NULL);
+                    "swapped-signal::changed::repeat", on_keyboard_setting_changed, self,
+                    "swapped-signal::changed::repeat-interval", on_keyboard_setting_changed, self,
+                    "swapped-signal::changed::delay", on_keyboard_setting_changed, self,
+                    NULL);
   on_keyboard_setting_changed (self, NULL, self->keyboard_settings);
 }
 
