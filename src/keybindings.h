@@ -29,6 +29,8 @@ typedef struct {
   xkb_keysym_t keysym;
 } PhocKeyCombo;
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PhocKeyCombo, g_free)
+
 /**
  * PhocKeybindingsContext:
  *
@@ -56,6 +58,7 @@ gboolean                phoc_keybindings_handle_pressed (PhocKeybindings *self,
                                                          PhocSeat        *seat);
 void                    phoc_keybindings_set_context (PhocKeybindings        *self,
                                                       PhocKeybindingsContext *context);
-PhocKeyCombo *          phoc_keybindings_parse_accelerator (const char *accelerator);
+PhocKeyCombo *          phoc_keybindings_parse_accelerator (const char             *accelerator,
+                                                            PhocKeybindingsContext *context);
 
 G_END_DECLS
