@@ -28,29 +28,34 @@
 
 typedef void (*PhocKeyHandlerFunc) (PhocSeat *seat, GVariant *param);
 
+G_DEFINE_BOXED_TYPE (PhocKeybindingsContext,
+                     phoc_keybindings_context,
+                     phoc_keybindings_context_copy,
+                     phoc_keybindings_context_free)
+
 /**
  * PhocKeybinding:
  *
  * A keybinding represents a handler with params that will be
  * invoked on the given keybinding combinations.
  */
-typedef struct
-{
-  char               *name;
-  PhocKeyHandlerFunc  func;
-  GVariant           *param;
+typedef struct {
+  char     *name;
+  PhocKeyHandlerFunc func;
+  GVariant *param;
 
-  GSList             *combos;
+  GSList   *combos;
 } PhocKeybinding;
 
 
-typedef struct _PhocKeybindings
-{
-  GObject parent;
+typedef struct _PhocKeybindings {
+  GObject    parent;
 
-  GSList *bindings;
+  GSList    *bindings;
   GSettings *settings;
   GSettings *mutter_settings;
+
+  PhocKeybindingsContext *context;
 } PhocKeybindings;
 
 G_DEFINE_TYPE (PhocKeybindings, phoc_keybindings, G_TYPE_OBJECT);
@@ -463,13 +468,13 @@ is_keycode (const char *string)
 }
 
 /**
- * phoc_parse_accelerator: (skip)
+ * phoc_keybindings_parse_accelerator: (skip)
  *
  * Parse strings representing keybindings into modifier
  * and symbols.
  */
 PhocKeyCombo *
-phoc_parse_accelerator (const char *accelerator)
+phoc_keybindings_parse_accelerator (const char *accelerator, PhocKeybindingsContext *context)
 {
   PhocKeyCombo *combo;
   xkb_keysym_t keyval;
@@ -543,7 +548,7 @@ phoc_parse_accelerator (const char *accelerator)
       }
     } else {
       if (len >= 4 && is_keycode (accelerator)) {
-        //keycode = strtoul (accelerator, NULL, 16);
+        // keycode = strtoul (accelerator, NULL, 16);
         g_warning ("Unhandled keycode accelerator'");
         goto out;
       } else if (strcmp (accelerator, "Above_Tab") == 0) {
@@ -649,7 +654,7 @@ phoc_keybindings_update_accelerators (PhocKeybindings    *self,
     PhocKeyCombo *combo;
 
     g_debug ("New keybinding %s for %s", name, accelerators[i]);
-    combo = phoc_parse_accelerator (accelerators[i]);
+    combo = phoc_keybindings_parse_accelerator (accelerators[i], NULL);
     if (combo)
       keybinding->combos = g_slist_append (keybinding->combos, combo);
   }
@@ -672,11 +677,11 @@ on_keybinding_setting_changed (PhocKeybindings *self,
 
 
 static gboolean
-phoc_add_keybinding (PhocKeybindings    *self,
-                     GSettings          *settings,
-                     const char         *name,
-                     PhocKeyHandlerFunc  func,
-                     GVariant           *param)
+phoc_add_keybinding (PhocKeybindings   *self,
+                     GSettings         *settings,
+                     const char        *name,
+                     PhocKeyHandlerFunc func,
+                     GVariant          *param)
 {
   g_autofree char *signal_name = NULL;
   PhocKeybinding *binding;
@@ -716,6 +721,7 @@ phoc_keybindings_finalize (GObject *object)
 {
   PhocKeybindings *self = PHOC_KEYBINDINGS (object);
 
+  g_clear_pointer (&self->context, phoc_keybindings_context_free);
   g_clear_object (&self->settings);
   g_clear_object (&self->mutter_settings);
 
@@ -897,4 +903,45 @@ phoc_keybindings_handle_pressed (PhocKeybindings *self,
 
   (*keybinding->func) (seat, keybinding->param);
   return TRUE;
+}
+
+
+void
+phoc_keybindings_set_context (PhocKeybindings *self, PhocKeybindingsContext *context)
+{
+  g_assert (PHOC_IS_KEYBINDINGS (self));
+
+  g_clear_pointer (&self->context, phoc_keybindings_context_free);
+
+  if (context == NULL)
+    return;
+
+  self->context = phoc_keybindings_context_copy (context);
+}
+
+
+PhocKeybindingsContext *
+phoc_keybindings_context_new (void)
+{
+  return g_new0 (PhocKeybindingsContext, 1);
+}
+
+
+void
+phoc_keybindings_context_free (PhocKeybindingsContext *context)
+{
+  g_free (context);
+}
+
+
+PhocKeybindingsContext *
+phoc_keybindings_context_copy (PhocKeybindingsContext *context)
+{
+  g_autoptr (PhocKeybindingsContext) copy = phoc_keybindings_context_new ();
+
+  g_assert (context);
+
+  copy->above_tab_keysym = context->above_tab_keysym;
+
+  return g_steal_pointer (&copy);
 }
