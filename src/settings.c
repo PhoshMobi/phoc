@@ -269,7 +269,6 @@ phoc_config_new_from_keyfile (GKeyFile *keyfile)
 
   config->xwayland = true;
   config->xwayland_lazy = true;
-  config->keybindings = phoc_keybindings_new ();
 
   sections = g_key_file_get_groups (keyfile, NULL);
   for (int i = 0; i < g_strv_length (sections); i++) {
@@ -381,7 +380,6 @@ void
 phoc_config_destroy (PhocConfig *config)
 {
   g_slist_free_full (config->outputs, (GDestroyNotify)phoc_output_config_destroy);
-  g_object_unref (config->keybindings);
 
   g_free (config->socket);
   g_free (config->config_path);

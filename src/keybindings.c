@@ -573,6 +573,20 @@ phoc_parse_accelerator (const char *accelerator)
 }
 
 
+static PhocKeybinding *
+phoc_keybinding_new (const char *name, PhocKeyHandlerFunc func, GVariant *param)
+{
+  PhocKeybinding *binding = g_new0 (PhocKeybinding, 1);
+
+  binding->name = g_strdup (name);
+  binding->func = func;
+  if (param)
+    binding->param = g_variant_ref_sink (param);
+
+  return binding;
+}
+
+
 static void
 phoc_keybinding_free (PhocKeybinding *keybinding)
 {
@@ -611,25 +625,18 @@ keybinding_by_key_combo (const PhocKeybinding *keybinding, const PhocKeyCombo *c
 
 
 static void
-on_keybinding_setting_changed (PhocKeybindings *self,
-                               const char      *key,
-                               GSettings       *settings)
+phoc_keybindings_update_accelerators (PhocKeybindings    *self,
+                                      const char         *name,
+                                      const char * const *accelerators)
 {
-  g_auto(GStrv) accelerators = NULL;
   PhocKeybinding *keybinding;
   GSList *elem;
-  int i;
-
-  g_return_if_fail (PHOC_IS_KEYBINDINGS (self));
-  g_return_if_fail (G_IS_SETTINGS (settings));
-
-  accelerators = g_settings_get_strv (settings, key);
 
   elem = g_slist_find_custom (self->bindings,
-                              key,
+                              name,
                               (GCompareFunc)keybinding_by_name);
   if (!elem) {
-    g_warning ("Changed keybinding %s not known", key);
+    g_warning ("Changed keybinding %s not known", name);
     return;
   }
 
@@ -638,14 +645,29 @@ on_keybinding_setting_changed (PhocKeybindings *self,
   g_slist_free_full (keybinding->combos, g_free);
   keybinding->combos = NULL;
 
-  for (i = 0; accelerators && accelerators[i]; i++) {
+  for (int i = 0; accelerators && accelerators[i]; i++) {
     PhocKeyCombo *combo;
 
-    g_debug ("New keybinding %s for %s", key, accelerators[i]);
+    g_debug ("New keybinding %s for %s", name, accelerators[i]);
     combo = phoc_parse_accelerator (accelerators[i]);
     if (combo)
       keybinding->combos = g_slist_append (keybinding->combos, combo);
   }
+}
+
+
+static void
+on_keybinding_setting_changed (PhocKeybindings *self,
+                               const char      *name,
+                               GSettings       *settings)
+{
+  g_auto (GStrv) accelerators = NULL;
+
+  g_return_if_fail (PHOC_IS_KEYBINDINGS (self));
+  g_return_if_fail (G_IS_SETTINGS (settings));
+
+  accelerators = g_settings_get_strv (settings, name);
+  phoc_keybindings_update_accelerators (self, name, (const char * const *) accelerators);
 }
 
 
@@ -664,11 +686,7 @@ phoc_add_keybinding (PhocKeybindings    *self,
     return FALSE;
   }
 
-  binding = g_new0 (PhocKeybinding, 1);
-  binding->name = g_strdup (name);
-  binding->func = func;
-  if (param)
-    binding->param = g_variant_ref_sink (param);
+  binding = phoc_keybinding_new (name, func, param);
 
   signal_name = g_strdup_printf ("changed::%s", name);
   g_signal_connect_swapped (settings, signal_name,

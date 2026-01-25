@@ -1,6 +1,5 @@
 #pragma once
 
-#include "keybindings.h"
 #include "output.h"
 
 #include <xf86drmMode.h>
@@ -43,8 +42,6 @@ typedef struct _PhocOutputConfig {
 typedef struct _PhocConfig {
   bool             xwayland;
   bool             xwayland_lazy;
-
-  PhocKeybindings *keybindings;
 
   GSList          *outputs;
 
