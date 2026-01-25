@@ -540,6 +540,7 @@ on_input_setting_changed (PhocKeyboard *self,
                           const char   *key,
                           GSettings    *settings)
 {
+  g_autoptr (PhocKeybindingsContext) context = phoc_keybindings_context_new ();
   g_auto (GStrv) xkb_options = NULL;
   g_autoptr (GVariant) sources = NULL;
   GVariantIter iter;
@@ -588,6 +589,8 @@ on_input_setting_changed (PhocKeyboard *self,
   g_debug ("Switching to layout %s %s", layout, variant);
 
   set_xkb_keymap (self, layout, variant, xkb_options_string);
+
+  phoc_keybindings_set_context (self->keybindings, context);
 }
 
 
