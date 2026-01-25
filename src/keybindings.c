@@ -28,6 +28,11 @@
 
 typedef void (*PhocKeyHandlerFunc) (PhocSeat *seat, GVariant *param);
 
+G_DEFINE_BOXED_TYPE (PhocKeybindingsContext,
+                     phoc_keybindings_context,
+                     phoc_keybindings_context_copy,
+                     phoc_keybindings_context_free)
+
 /**
  * PhocKeybinding:
  *
@@ -49,6 +54,8 @@ typedef struct _PhocKeybindings {
   GSList    *bindings;
   GSettings *settings;
   GSettings *mutter_settings;
+
+  PhocKeybindingsContext *context;
 } PhocKeybindings;
 
 G_DEFINE_TYPE (PhocKeybindings, phoc_keybindings, G_TYPE_OBJECT);
@@ -714,6 +721,7 @@ phoc_keybindings_finalize (GObject *object)
 {
   PhocKeybindings *self = PHOC_KEYBINDINGS (object);
 
+  g_clear_pointer (&self->context, phoc_keybindings_context_free);
   g_clear_object (&self->settings);
   g_clear_object (&self->mutter_settings);
 
@@ -895,4 +903,45 @@ phoc_keybindings_handle_pressed (PhocKeybindings *self,
 
   (*keybinding->func) (seat, keybinding->param);
   return TRUE;
+}
+
+
+void
+phoc_keybindings_set_context (PhocKeybindings *self, PhocKeybindingsContext *context)
+{
+  g_assert (PHOC_IS_KEYBINDINGS (self));
+
+  g_clear_pointer (&self->context, phoc_keybindings_context_free);
+
+  if (context == NULL)
+    return;
+
+  self->context = phoc_keybindings_context_copy (context);
+}
+
+
+PhocKeybindingsContext *
+phoc_keybindings_context_new (void)
+{
+  return g_new0 (PhocKeybindingsContext, 1);
+}
+
+
+void
+phoc_keybindings_context_free (PhocKeybindingsContext *context)
+{
+  g_free (context);
+}
+
+
+PhocKeybindingsContext *
+phoc_keybindings_context_copy (PhocKeybindingsContext *context)
+{
+  g_autoptr (PhocKeybindingsContext) copy = phoc_keybindings_context_new ();
+
+  g_assert (context);
+
+  copy->above_tab_keysym = context->above_tab_keysym;
+
+  return g_steal_pointer (&copy);
 }
