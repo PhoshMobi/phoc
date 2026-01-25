@@ -15,12 +15,15 @@
 /**
  * PhocWorkspace:
  *
- * A workspace grouping a set of windows on an output
+ * A workspace groups a set of [class@View]s on an output layout.
  */
 
 struct _PhocWorkspace {
   GObject  parent;
 
+  /* Render order: the first element in the queue is the topmost view,
+   * the last one the one at the bottom. This is different from focus
+   * order */
   GQueue  *views;
 };
 G_DEFINE_TYPE (PhocWorkspace, phoc_workspace, G_TYPE_OBJECT)
@@ -132,6 +135,7 @@ phoc_workspace_cycle (PhocWorkspace *self, gboolean forward)
   if (g_queue_get_length (self->views) < 2)
     return NULL;
 
+  // FIXME: Use focus order instead of render order
   if (forward) {
     /* Move the last view first */
     link = g_queue_pop_tail_link (self->views);
@@ -150,10 +154,10 @@ phoc_workspace_cycle (PhocWorkspace *self, gboolean forward)
  * phoc_workspace_get_views:
  * @self: the workspace
  *
- * Get the current views. Don't manipulate the queue directly. This is
- * only meant for reading.
+ * Get the current views in render order. Don't manipulate the queue
+ * directly. This is only meant for reading.
  *
- * Returns:(transfer none): The views.
+ * Returns:(transfer none): The views in render order
  */
 GQueue *
 phoc_workspace_get_views (PhocWorkspace *self)

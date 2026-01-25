@@ -49,8 +49,9 @@ typedef struct _PhocSeatPrivate {
   PhocDeviceState       *device_state;
   char                  *name;
 
-  /* The first element in the queue is the currently focused view, the
-   * one after that the view that was previously focused and so on */
+  /* Focus order: The first element in the queue is the currently
+   * focused view, the one after that the view that was previously
+   * focused and so on */
   GQueue                *views; /* (element-type: PhocSeatView) */
   /* Whether a view on this seat has focus */
   bool                   has_focus;
@@ -2133,4 +2134,3 @@ phoc_seat_add_shortcuts_inhibit (PhocSeat                                   *sel
                             G_CALLBACK (on_shortcuts_inhibit_destroy),
                             self);
 }
-
