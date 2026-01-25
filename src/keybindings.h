@@ -60,5 +60,6 @@ void                    phoc_keybindings_set_context (PhocKeybindings        *se
                                                       PhocKeybindingsContext *context);
 PhocKeyCombo *          phoc_keybindings_parse_accelerator (const char             *accelerator,
                                                             PhocKeybindingsContext *context);
+void                    phoc_keybindings_load_settings (PhocKeybindings *self);
 
 G_END_DECLS

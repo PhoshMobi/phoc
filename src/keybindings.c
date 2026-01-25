@@ -552,8 +552,12 @@ phoc_keybindings_parse_accelerator (const char *accelerator, PhocKeybindingsCont
         g_warning ("Unhandled keycode accelerator'");
         goto out;
       } else if (strcmp (accelerator, "Above_Tab") == 0) {
-        g_warning ("Unhandled key 'Above_Tab'");
-        return FALSE;
+        if (context && context->above_tab_keysym != XKB_KEY_NoSymbol) {
+          keyval = context->above_tab_keysym;
+        } else {
+          g_warning ("Unhandled key 'Above_Tab'");
+          return FALSE;
+        }
       } else {
         keyval = xkb_keysym_from_name (accelerator, XKB_KEYSYM_CASE_INSENSITIVE);
         if (keyval == XKB_KEY_NoSymbol) {
@@ -654,7 +658,7 @@ phoc_keybindings_update_accelerators (PhocKeybindings    *self,
     PhocKeyCombo *combo;
 
     g_debug ("New keybinding %s for %s", name, accelerators[i]);
-    combo = phoc_keybindings_parse_accelerator (accelerators[i], NULL);
+    combo = phoc_keybindings_parse_accelerator (accelerators[i], self->context);
     if (combo)
       keybinding->combos = g_slist_append (keybinding->combos, combo);
   }
@@ -729,14 +733,12 @@ phoc_keybindings_finalize (GObject *object)
 }
 
 
-static void
-phoc_keybindings_constructed (GObject *object)
+void
+phoc_keybindings_load_settings (PhocKeybindings *self)
 {
-  PhocKeybindings *self = PHOC_KEYBINDINGS (object);
+  g_slist_free_full (self->bindings, (GDestroyNotify)phoc_keybinding_free);
+  self->bindings = NULL;
 
-  G_OBJECT_CLASS (phoc_keybindings_parent_class)->constructed (object);
-
-  self->settings = g_settings_new (KEYBINDINGS_SCHEMA_ID);
   phoc_add_keybinding (self, self->settings, "always-on-top", handle_always_on_top, NULL);
   phoc_add_keybinding (self, self->settings, "close", handle_close, NULL);
   phoc_add_keybinding (self, self->settings, "cycle-windows", handle_cycle_windows, NULL);
@@ -829,7 +831,6 @@ phoc_keybindings_constructed (GObject *object)
                        "move-to-workspace-right", handle_move_to_workspace_relative,
                        g_variant_new_int32 (+1));
 
-  self->mutter_settings = g_settings_new (MUTTER_KEYBINDINGS_SCHEMA_ID);
   phoc_add_keybinding (self, self->mutter_settings,
                        "toggle-tiled-left", handle_tile,
                        g_variant_new_int32 (PHOC_VIEW_TILE_LEFT));
@@ -844,7 +845,6 @@ phoc_keybindings_class_init (PhocKeybindingsClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->constructed = phoc_keybindings_constructed;
   object_class->dispose = phoc_keybindings_dispose;
   object_class->finalize = phoc_keybindings_finalize;
 }
@@ -854,6 +854,8 @@ static void
 phoc_keybindings_init (PhocKeybindings *self)
 {
   self->bindings = NULL;
+  self->settings = g_settings_new (KEYBINDINGS_SCHEMA_ID);
+  self->mutter_settings = g_settings_new (MUTTER_KEYBINDINGS_SCHEMA_ID);
 }
 
 
