@@ -19,12 +19,12 @@
  */
 
 struct _PhocWorkspace {
-  GObject  parent;
+  GObject parent;
 
   /* Render order: the first element in the queue is the topmost view,
    * the last one the one at the bottom. This is different from focus
    * order */
-  GQueue  *views;
+  GQueue *views;
 };
 G_DEFINE_TYPE (PhocWorkspace, phoc_workspace, G_TYPE_OBJECT)
 
