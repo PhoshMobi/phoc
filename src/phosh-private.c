@@ -221,7 +221,7 @@ phoc_phosh_private_keyboard_event_grab_accelerator_request (struct wl_client   *
   gint64 *new_key;
 
   PhocPhoshPrivateKeyboardEventData *kbevent = phoc_phosh_private_keyboard_event_from_resource (resource);
-  g_autofree PhocKeyCombo *combo = phoc_parse_accelerator (accelerator);
+  g_autofree PhocKeyCombo *combo = phoc_keybindings_parse_accelerator (accelerator);
 
   if (kbevent == NULL)
     return;

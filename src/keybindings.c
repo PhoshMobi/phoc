@@ -463,13 +463,13 @@ is_keycode (const char *string)
 }
 
 /**
- * phoc_parse_accelerator: (skip)
+ * phoc_keybindings_parse_accelerator: (skip)
  *
  * Parse strings representing keybindings into modifier
  * and symbols.
  */
 PhocKeyCombo *
-phoc_parse_accelerator (const char *accelerator)
+phoc_keybindings_parse_accelerator (const char *accelerator)
 {
   PhocKeyCombo *combo;
   xkb_keysym_t keyval;
@@ -649,7 +649,7 @@ phoc_keybindings_update_accelerators (PhocKeybindings    *self,
     PhocKeyCombo *combo;
 
     g_debug ("New keybinding %s for %s", name, accelerators[i]);
-    combo = phoc_parse_accelerator (accelerators[i]);
+    combo = phoc_keybindings_parse_accelerator (accelerators[i]);
     if (combo)
       keybinding->combos = g_slist_append (keybinding->combos, combo);
   }
