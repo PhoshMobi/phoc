@@ -488,6 +488,19 @@ handle_map (struct wl_listener *listener, void *data)
   view->box.width = surface->surface->current.width;
   view->box.height = surface->surface->current.height;
 
+  /* Update saved surface size if not yet set so we don't restore a 1x1 window */
+  if (phoc_view_is_fullscreen (view) && (view->saved.width == 1 && view->saved.height == 1)) {
+    PhocOutput *output = phoc_view_get_fullscreen_output (view);
+
+    view->saved.width = view->box.width;
+    view->saved.height = view->box.height;
+
+    if (output) {
+      view->saved.x = MAX (0, (output->wlr_output->width - view->saved.width) / 2);
+      view->saved.y = MAX (0, (output->wlr_output->height - view->saved.height) / 2);
+    }
+  }
+
   self->surface_commit.notify = handle_surface_commit;
   wl_signal_add (&surface->surface->events.commit, &self->surface_commit);
 
