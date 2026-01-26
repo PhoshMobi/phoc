@@ -1529,7 +1529,9 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
     PhocTabletPad *pad;
     wl_list_for_each (pad, &seat->tablet_pads, link) {
       if (pad->tablet)
-        wlr_tablet_v2_tablet_pad_notify_enter (pad->tablet_v2_pad, pad->tablet->tablet_v2, view->wlr_surface);
+        wlr_tablet_v2_tablet_pad_notify_enter (pad->tablet_v2_pad,
+                                               pad->tablet->tablet_v2,
+                                               view->wlr_surface);
     }
   } else {
     wlr_seat_keyboard_notify_enter (seat->seat, view->wlr_surface, NULL, 0, NULL);
