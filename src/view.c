@@ -98,7 +98,7 @@ G_DEFINE_TYPE_WITH_CODE (PhocView, phoc_view, G_TYPE_OBJECT,
 
 #define PHOC_VIEW_SELF(p) PHOC_PRIV_CONTAINER(PHOC_VIEW, PhocView, (p))
 
-static bool view_center (PhocView *view, PhocOutput *output);
+static bool view_center (PhocView *self, PhocOutput *output);
 
 /* {{{ PhocChildRoot interface */
 
@@ -1126,27 +1126,27 @@ phoc_view_tile (PhocView *self, PhocViewTileDirection direction, PhocOutput *out
 
 
 static bool
-view_center (PhocView *view, PhocOutput *output)
+view_center (PhocView *self, PhocOutput *output)
 {
   PhocInput *input = phoc_server_get_input (phoc_server_get_default ());
   PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
+  const struct wlr_output_layout_output *l_output;
   struct wlr_box box, geom;
   PhocViewPrivate *priv;
-
-  g_assert (PHOC_IS_VIEW (view));
-  priv = phoc_view_get_instance_private (view);
-  phoc_view_get_box (view, &box);
-  phoc_view_get_geometry (view, &geom);
-
-  if (!phoc_view_is_floating (view))
-    return false;
-
-  PhocSeat *seat = phoc_input_get_last_active_seat (input);
+  PhocSeat *seat;
   PhocCursor *cursor;
 
-  if (!seat)
+  g_assert (PHOC_IS_VIEW (self));
+  priv = phoc_view_get_instance_private (self);
+  phoc_view_get_box (self, &box);
+  phoc_view_get_geometry (self, &geom);
+
+  if (!phoc_view_is_floating (self))
     return false;
 
+  seat = phoc_input_get_last_active_seat (input);
+  if (!seat)
+    return false;
   cursor = phoc_seat_get_cursor (seat);
 
   if (!output) {
@@ -1159,8 +1159,7 @@ view_center (PhocView *view, PhocOutput *output)
     output = PHOC_OUTPUT (wlr_output->data);
   }
 
-  const struct wlr_output_layout_output *l_output = wlr_output_layout_get (desktop->layout,
-                                                                           output->wlr_output);
+  l_output = wlr_output_layout_get (desktop->layout, output->wlr_output);
   struct wlr_box usable_area = output->usable_area;
 
   double view_x = (double)(usable_area.width - box.width) / 2 +
@@ -1169,18 +1168,18 @@ view_center (PhocView *view, PhocOutput *output)
     usable_area.y + l_output->y - geom.y * priv->scale;
 
   g_debug ("moving view to %f %f", view_x, view_y);
-  phoc_view_move (view, view_x / priv->scale, view_y / priv->scale);
+  phoc_view_move (self, view_x / priv->scale, view_y / priv->scale);
 
   if (!desktop->maximize) {
     // TODO: fitting floating oversized windows requires more work (!228)
     return true;
   }
 
-  if (view->box.width > output->usable_area.width ||
-      view->box.height > output->usable_area.height) {
-    phoc_view_resize (view,
-                      MIN (view->box.width, output->usable_area.width),
-                      MIN (view->box.height, output->usable_area.height));
+  if (self->box.width > output->usable_area.width ||
+      self->box.height > output->usable_area.height) {
+    phoc_view_resize (self,
+                      MIN (self->box.width, output->usable_area.width),
+                      MIN (self->box.height, output->usable_area.height));
   }
 
   return true;
