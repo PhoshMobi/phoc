@@ -44,14 +44,16 @@ static struct wl_egl_window *egl_window;
 static struct wlr_egl_surface *egl_surface;
 static struct wl_callback *frame_callback;
 
-static uint32_t layer = ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND;
-static uint32_t anchor;
-static uint32_t width = 256, height = 256;
+static uint32_t layer = ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY;
+static uint32_t anchor = (ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP |
+                          ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
+                          ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
+static uint32_t width = 0, height = 350;
 static uint32_t handle;
 static int32_t  unfolded_margin;
-static int32_t  folded_margin;
-static uint32_t exclusive;
-static double   threshold = 1.0;
+static int32_t  folded_margin = -300;
+static uint32_t exclusive = 50;
+static double   threshold = 0.5;
 static bool     use_alpha = false;
 static bool     run_display = true;
 static int      cur_x = -1, cur_y = -1;
@@ -480,6 +482,7 @@ static const struct wl_registry_listener registry_listener = {
 static gboolean
 parse_anchor (char *arg)
 {
+  static bool cleared_default;
   struct {
     char    *name;
     uint32_t value;
@@ -489,6 +492,12 @@ parse_anchor (char *arg)
     { "left", ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT },
     { "right", ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT },
   };
+
+  /* Clear the default anchor */
+  if (!cleared_default) {
+    anchor = 0;
+    cleared_default = true;
+  }
 
   for (int i = 0; i < G_N_ELEMENTS (anchors); i++) {
     if (strcmp (arg, anchors[i].name) == 0) {
