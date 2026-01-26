@@ -2,11 +2,6 @@
 
 #include "phoc-config.h"
 
-#define _POSIX_C_SOURCE 200112L
-#include <assert.h>
-#include <stdlib.h>
-#include <time.h>
-#include <wayland-server-core.h>
 #include "cursor.h"
 #include "input.h"
 #include "seat.h"
