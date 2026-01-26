@@ -475,6 +475,33 @@ static const struct wl_registry_listener registry_listener = {
   .global_remove = handle_global_remove,
 };
 
+
+
+static gboolean
+parse_anchor (char *arg)
+{
+  struct {
+    char    *name;
+    uint32_t value;
+  } anchors[] = {
+    { "top", ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP },
+    { "bottom", ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM },
+    { "left", ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT },
+    { "right", ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT },
+  };
+
+  for (int i = 0; i < G_N_ELEMENTS (anchors); i++) {
+    if (strcmp (arg, anchors[i].name) == 0) {
+      anchor |= anchors[i].value;
+      return true;
+    }
+  }
+
+  g_critical ("invalid anchor %s", arg);
+  return false;
+}
+
+
 int
 main (int argc, char **argv)
 {
@@ -526,30 +553,10 @@ main (int argc, char **argv)
       }
       break;
     }
-    case 'a': {
-      struct {
-        char    *name;
-        uint32_t value;
-      } anchors[] = {
-        { "top", ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP },
-        { "bottom", ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM },
-        { "left", ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT },
-        { "right", ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT },
-      };
-      found = false;
-      for (size_t i = 0; i < sizeof (anchors) / sizeof (anchors[0]); ++i) {
-        if (strcmp (optarg, anchors[i].name) == 0) {
-          anchor |= anchors[i].value;
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        g_critical ("invalid anchor %s", optarg);
+    case 'a':
+      if (!parse_anchor (optarg))
         return 1;
-      }
       break;
-    }
     case 't':
       threshold = atof (optarg);
       break;
