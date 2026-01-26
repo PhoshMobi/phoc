@@ -6,6 +6,8 @@
  * Author: Guido Günther <agx@sigxcpu.org>
  */
 
+#define G_LOG_DOMAIN "phoc-desktop-xwayland"
+
 #include "cursor.h"
 #include "desktop.h"
 #include "desktop-xwayland.h"
