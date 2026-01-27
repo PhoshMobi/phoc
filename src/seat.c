@@ -1095,6 +1095,18 @@ handle_tablet_pad_button (struct wl_listener *listener, void *data)
                                           (enum zwp_tablet_pad_v2_button_state)event->state);
 }
 
+
+static void
+phoc_seat_tablet_pads_set_focus (PhocSeat *self, struct wlr_surface *wlr_surface)
+{
+  for (GSList *l = self->tablet_pads; l; l = l->next) {
+    PhocTabletPad *tablet_pad = PHOC_TABLET_PAD (l->data);
+
+    phoc_tablet_pad_set_focus (tablet_pad, wlr_surface);
+  }
+}
+
+
 static void
 seat_add_tablet_pad (PhocSeat *self, struct wlr_input_device *device)
 {
@@ -1516,26 +1528,17 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
 
   /* An existing keyboard grab might try to deny setting focus, so cancel it */
   wlr_seat_keyboard_end_grab (seat->seat);
-
   struct wlr_keyboard *keyboard = wlr_seat_get_keyboard (seat->seat);
   if (keyboard) {
     wlr_seat_keyboard_notify_enter (seat->seat, view->wlr_surface,
                                     keyboard->keycodes, keyboard->num_keycodes,
                                     &keyboard->modifiers);
-    /* FIXME: Move this to a better place */
-    for (GSList *l = seat->tablet_pads; l; l = l->next) {
-      PhocTabletPad *pad = l->data;
-
-      if (pad->tablet)
-        wlr_tablet_v2_tablet_pad_notify_enter (pad->tablet_v2_pad,
-                                               pad->tablet->tablet_v2,
-                                               view->wlr_surface);
-    }
   } else {
     wlr_seat_keyboard_notify_enter (seat->seat, view->wlr_surface, NULL, 0, NULL);
   }
 
   g_debug ("Focused view %p", view);
+  phoc_seat_tablet_pads_set_focus (seat, view->wlr_surface);
   phoc_cursor_update_focus (seat->cursor);
   phoc_input_method_relay_set_focus (&seat->im_relay, view->wlr_surface);
 
