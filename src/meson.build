@@ -108,6 +108,8 @@ sources = files(
   'surface.h',
   'switch.c',
   'switch.h',
+  'tablet-pad.c',
+  'tablet-pad.h',
   'tablet.c',
   'tablet.h',
   'touch-point.c',
