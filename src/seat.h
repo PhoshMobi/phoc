@@ -25,7 +25,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (PhocSeat, phoc_seat, PHOC, SEAT, GObject)
 
 typedef struct _PhocCursor PhocCursor;
-typedef struct _PhocTablet PhocTablet;
 
 /**
  * PhocSeat:

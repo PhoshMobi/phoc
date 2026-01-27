@@ -18,11 +18,11 @@ G_BEGIN_DECLS
  *
  * A tablet input device
  */
-struct _PhocTablet {
+typedef struct _PhocTablet {
   PhocInputDevice parent;
 
   struct wlr_tablet_v2_tablet *tablet_v2;
-};
+} PhocTablet;
 
 
 typedef struct _PhocTabletTool {
