@@ -1011,11 +1011,6 @@ handle_tablet_pad_destroy (struct wl_listener *listener, void *data)
   wl_list_remove (&tablet_pad->attach.link);
 
   self->tablet_pads = g_slist_remove (self->tablet_pads, tablet_pad);
-
-  wl_list_remove (&tablet_pad->button.link);
-  wl_list_remove (&tablet_pad->strip.link);
-  wl_list_remove (&tablet_pad->ring.link);
-
   g_object_unref (tablet_pad);
 
   seat_update_capabilities (self);
@@ -1057,44 +1052,6 @@ handle_tablet_pad_attach (struct wl_listener *listener, void *data)
   attach_tablet_pad (pad, tool);
 }
 
-static void
-handle_tablet_pad_ring (struct wl_listener *listener, void *data)
-{
-  PhocTabletPad *pad = wl_container_of (listener, pad, ring);
-  struct wlr_tablet_pad_ring_event *event = data;
-
-  wlr_tablet_v2_tablet_pad_notify_ring (pad->tablet_v2_pad,
-                                        event->ring, event->position,
-                                        event->source == WLR_TABLET_PAD_RING_SOURCE_FINGER,
-                                        event->time_msec);
-}
-
-static void
-handle_tablet_pad_strip (struct wl_listener *listener, void *data)
-{
-  PhocTabletPad *pad = wl_container_of (listener, pad, strip);
-  struct wlr_tablet_pad_strip_event *event = data;
-
-  wlr_tablet_v2_tablet_pad_notify_strip (pad->tablet_v2_pad,
-                                         event->strip, event->position,
-                                         event->source == WLR_TABLET_PAD_STRIP_SOURCE_FINGER,
-                                         event->time_msec);
-}
-
-static void
-handle_tablet_pad_button (struct wl_listener *listener, void *data)
-{
-  PhocTabletPad *pad = wl_container_of (listener, pad, button);
-  struct wlr_tablet_pad_button_event *event = data;
-
-  wlr_tablet_v2_tablet_pad_notify_mode (pad->tablet_v2_pad,
-                                        event->group, event->mode, event->time_msec);
-
-  wlr_tablet_v2_tablet_pad_notify_button (pad->tablet_v2_pad,
-                                          event->button, event->time_msec,
-                                          (enum zwp_tablet_pad_v2_button_state)event->state);
-}
-
 
 static void
 phoc_seat_tablet_pads_set_focus (PhocSeat *self, struct wlr_surface *wlr_surface)
@@ -1110,7 +1067,6 @@ phoc_seat_tablet_pads_set_focus (PhocSeat *self, struct wlr_surface *wlr_surface
 static void
 seat_add_tablet_pad (PhocSeat *self, struct wlr_input_device *device)
 {
-  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
   struct wlr_tablet_pad *wlr_tablet_pad = wlr_tablet_pad_from_input_device (device);
   PhocTabletPad *tablet_pad;
 
@@ -1122,19 +1078,6 @@ seat_add_tablet_pad (PhocSeat *self, struct wlr_input_device *device)
 
   tablet_pad->attach.notify = handle_tablet_pad_attach;
   wl_signal_add (&wlr_tablet_pad->events.attach_tablet, &tablet_pad->attach);
-
-  tablet_pad->button.notify = handle_tablet_pad_button;
-  wl_signal_add (&wlr_tablet_pad->events.button, &tablet_pad->button);
-
-  tablet_pad->strip.notify = handle_tablet_pad_strip;
-  wl_signal_add (&wlr_tablet_pad->events.strip, &tablet_pad->strip);
-
-  tablet_pad->ring.notify = handle_tablet_pad_ring;
-  wl_signal_add (&wlr_tablet_pad->events.ring, &tablet_pad->ring);
-
-  wl_list_init (&tablet_pad->tablet_destroy.link);
-
-  tablet_pad->tablet_v2_pad = wlr_tablet_pad_create (desktop->tablet_v2, self->seat, device);
 
   /* Search for a sibling tablet */
   if (!wlr_input_device_is_libinput (device)) {
