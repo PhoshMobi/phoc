@@ -1005,7 +1005,7 @@ static void
 handle_tablet_pad_destroy (struct wl_listener *listener, void *data)
 {
   PhocTabletPad *tablet_pad = wl_container_of (listener, tablet_pad, device_destroy);
-  PhocSeat *seat = tablet_pad->seat;
+  PhocSeat *self = tablet_pad->seat;
 
   wl_list_remove (&tablet_pad->device_destroy.link);
   wl_list_remove (&tablet_pad->tablet_destroy.link);
@@ -1017,7 +1017,7 @@ handle_tablet_pad_destroy (struct wl_listener *listener, void *data)
   wl_list_remove (&tablet_pad->ring.link);
   free (tablet_pad);
 
-  seat_update_capabilities (seat);
+  seat_update_capabilities (self);
 }
 
 static void
@@ -1096,7 +1096,7 @@ handle_tablet_pad_button (struct wl_listener *listener, void *data)
 }
 
 static void
-seat_add_tablet_pad (PhocSeat *seat, struct wlr_input_device *device)
+seat_add_tablet_pad (PhocSeat *self, struct wlr_input_device *device)
 {
   PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
   PhocTabletPad *tablet_pad = g_new0 (PhocTabletPad, 1);
@@ -1104,8 +1104,8 @@ seat_add_tablet_pad (PhocSeat *seat, struct wlr_input_device *device)
 
   device->data = tablet_pad;
   tablet_pad->device = device;
-  tablet_pad->seat = seat;
-  wl_list_insert (&seat->tablet_pads, &tablet_pad->link);
+  tablet_pad->seat = self;
+  wl_list_insert (&self->tablet_pads, &tablet_pad->link);
 
   tablet_pad->device_destroy.notify = handle_tablet_pad_destroy;
   wl_signal_add (&tablet_pad->device->events.destroy,
@@ -1126,7 +1126,7 @@ seat_add_tablet_pad (PhocSeat *seat, struct wlr_input_device *device)
 
   wl_list_init (&tablet_pad->tablet_destroy.link);
 
-  tablet_pad->tablet_v2_pad = wlr_tablet_pad_create (desktop->tablet_v2, seat->seat, device);
+  tablet_pad->tablet_v2_pad = wlr_tablet_pad_create (desktop->tablet_v2, self->seat, device);
 
   /* Search for a sibling tablet */
   if (!wlr_input_device_is_libinput (device)) {
@@ -1137,7 +1137,7 @@ seat_add_tablet_pad (PhocSeat *seat, struct wlr_input_device *device)
   struct libinput_device_group *group =
     libinput_device_get_device_group (wlr_libinput_get_device_handle (device));
 
-  for (GSList *elem = seat->tablets; elem; elem = elem->next) {
+  for (GSList *elem = self->tablets; elem; elem = elem->next) {
     PhocInputDevice *input_device = PHOC_INPUT_DEVICE (elem->data);
 
     if (!phoc_input_device_get_is_libinput (input_device))
@@ -1152,49 +1152,48 @@ seat_add_tablet_pad (PhocSeat *seat, struct wlr_input_device *device)
 }
 
 static void
-on_tablet_destroy (PhocSeat *seat, PhocTablet *tablet)
+on_tablet_destroy (PhocSeat *self, PhocTablet *tablet)
 {
   PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
-  PhocSeatPrivate *priv = phoc_seat_get_instance_private (seat);
+  PhocSeatPrivate *priv = phoc_seat_get_instance_private (self);
   struct wlr_input_device *device = phoc_input_device_get_device (PHOC_INPUT_DEVICE (tablet));
 
   g_assert (PHOC_IS_TABLET (tablet));
   g_debug ("Removing tablet device: %s", device->name);
-  wlr_cursor_detach_input_device (seat->cursor->cursor, device);
+  wlr_cursor_detach_input_device (self->cursor->cursor, device);
   g_hash_table_remove (priv->input_mapping_settings, tablet);
   g_hash_table_remove (desktop->input_output_map, device->name);
 
-  seat->tablets = g_slist_remove (seat->tablets, tablet);
+  self->tablets = g_slist_remove (self->tablets, tablet);
   g_object_unref (tablet);
 
-  seat_update_capabilities (seat);
+  seat_update_capabilities (self);
 }
 
 static void
-seat_add_tablet_tool (PhocSeat                *seat,
-                      struct wlr_input_device *device)
+seat_add_tablet_tool (PhocSeat *self, struct wlr_input_device *device)
 {
   PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
 
   if (!wlr_input_device_is_libinput (device))
     return;
 
-  PhocTablet *tablet = phoc_tablet_new (device, seat);
-  seat->tablets = g_slist_prepend (seat->tablets, tablet);
+  PhocTablet *tablet = phoc_tablet_new (device, self);
+  self->tablets = g_slist_prepend (self->tablets, tablet);
   g_signal_connect_swapped (tablet, "device-destroy",
                             G_CALLBACK (on_tablet_destroy),
-                            seat);
+                            self);
 
-  wlr_cursor_attach_input_device (seat->cursor->cursor, device);
-  phoc_seat_add_input_mapping_settings (seat, PHOC_INPUT_DEVICE (tablet));
+  wlr_cursor_attach_input_device (self->cursor->cursor, device);
+  phoc_seat_add_input_mapping_settings (self, PHOC_INPUT_DEVICE (tablet));
 
-  tablet->tablet_v2 = wlr_tablet_create (desktop->tablet_v2, seat->seat, device);
+  tablet->tablet_v2 = wlr_tablet_create (desktop->tablet_v2, self->seat, device);
 
   struct libinput_device_group *group =
     libinput_device_get_device_group (wlr_libinput_get_device_handle (device));
   PhocTabletPad *pad;
 
-  wl_list_for_each (pad, &seat->tablet_pads, link) {
+  wl_list_for_each (pad, &self->tablet_pads, link) {
     if (!wlr_input_device_is_libinput (pad->device))
       continue;
 
