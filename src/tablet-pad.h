@@ -17,7 +17,6 @@
 G_BEGIN_DECLS
 
 typedef struct _PhocTabletPad {
-  struct wl_list           link;
   struct wlr_tablet_v2_tablet_pad *tablet_v2_pad;
 
   PhocSeat                *seat;

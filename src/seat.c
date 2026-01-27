@@ -1009,7 +1009,8 @@ handle_tablet_pad_destroy (struct wl_listener *listener, void *data)
   wl_list_remove (&tablet_pad->device_destroy.link);
   wl_list_remove (&tablet_pad->tablet_destroy.link);
   wl_list_remove (&tablet_pad->attach.link);
-  wl_list_remove (&tablet_pad->link);
+
+  self->tablet_pads = g_slist_remove (self->tablet_pads, tablet_pad);
 
   wl_list_remove (&tablet_pad->button.link);
   wl_list_remove (&tablet_pad->strip.link);
@@ -1104,7 +1105,8 @@ seat_add_tablet_pad (PhocSeat *self, struct wlr_input_device *device)
   device->data = tablet_pad;
   tablet_pad->device = device;
   tablet_pad->seat = self;
-  wl_list_insert (&self->tablet_pads, &tablet_pad->link);
+
+  self->tablet_pads = g_slist_prepend (self->tablet_pads, tablet_pad);
 
   tablet_pad->device_destroy.notify = handle_tablet_pad_destroy;
   wl_signal_add (&tablet_pad->device->events.destroy,
@@ -1190,9 +1192,10 @@ seat_add_tablet_tool (PhocSeat *self, struct wlr_input_device *device)
 
   struct libinput_device_group *group =
     libinput_device_get_device_group (wlr_libinput_get_device_handle (device));
-  PhocTabletPad *pad;
 
-  wl_list_for_each (pad, &self->tablet_pads, link) {
+  for (GSList *l = self->tablet_pads; l; l = l->next) {
+    PhocTabletPad *pad = l->data;
+
     if (!wlr_input_device_is_libinput (pad->device))
       continue;
 
@@ -1524,8 +1527,9 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
                                     keyboard->keycodes, keyboard->num_keycodes,
                                     &keyboard->modifiers);
     /* FIXME: Move this to a better place */
-    PhocTabletPad *pad;
-    wl_list_for_each (pad, &seat->tablet_pads, link) {
+    for (GSList *l = seat->tablet_pads; l; l = l->next) {
+      PhocTabletPad *pad = l->data;
+
       if (pad->tablet)
         wlr_tablet_v2_tablet_pad_notify_enter (pad->tablet_v2_pad,
                                                pad->tablet->tablet_v2,
@@ -1946,7 +1950,6 @@ phoc_seat_init (PhocSeat *self)
 {
   PhocSeatPrivate *priv = phoc_seat_get_instance_private (self);
 
-  wl_list_init (&self->tablet_pads);
   priv->views = g_queue_new ();
 
   self->touch_id = -1;

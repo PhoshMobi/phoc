@@ -60,7 +60,7 @@ typedef struct _PhocSeat {
   GSList                         *switches;  /* (element-type PhocSwitch) */
   GSList                         *touch;     /* (element-type PhocTouch) */
   GSList                         *tablets;   /* (element-type PhocTablet) */
-  struct wl_list                  tablet_pads;
+  GSList                         *tablet_pads; /* (element-type PhocTabletPads) */
 
   struct wl_listener              request_set_selection;
   struct wl_listener              request_set_primary_selection;
