@@ -30,6 +30,7 @@
 #include "seat.h"
 #include "server.h"
 #include "tablet.h"
+#include "tablet-pad.h"
 #include "input-method-relay.h"
 #include "touch.h"
 #include "xwayland-surface.h"

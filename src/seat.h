@@ -85,40 +85,6 @@ typedef struct _PhocSeatView {
 } PhocSeatView;
 
 
-typedef struct _PhocTabletPad {
-  struct wl_list                   link;
-  struct wlr_tablet_v2_tablet_pad *tablet_v2_pad;
-
-  PhocSeat                        *seat;
-  struct wlr_input_device         *device;
-
-  struct wl_listener               device_destroy;
-  struct wl_listener               attach;
-  struct wl_listener               button;
-  struct wl_listener               ring;
-  struct wl_listener               strip;
-
-  PhocTablet                      *tablet;
-  struct wl_listener               tablet_destroy;
-} PhocTabletPad;
-
-
-typedef struct _PhocTabletTool {
-  struct wl_list                    link;
-  struct wl_list                    tool_link;
-  struct wlr_tablet_v2_tablet_tool *tablet_v2_tool;
-
-  PhocSeat                         *seat;
-  double                            tilt_x, tilt_y;
-
-  struct wl_listener                set_cursor;
-  struct wl_listener                tool_destroy;
-
-  PhocTablet                       *current_tablet;
-  struct wl_listener                tablet_destroy;
-} PhocTabletTool;
-
-
 typedef struct PhocPointerConstraint {
   struct wlr_pointer_constraint_v1 *constraint;
 
