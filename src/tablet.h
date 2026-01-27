@@ -24,21 +24,6 @@ typedef struct _PhocTablet {
   struct wlr_tablet_v2_tablet *tablet_v2;
 } PhocTablet;
 
-
-typedef struct _PhocTabletTool {
-  struct wlr_tablet_v2_tablet_tool *tablet_v2_tool;
-
-  PhocSeat          *seat;
-  double             tilt_x, tilt_y;
-
-  struct wl_listener set_cursor;
-  struct wl_listener tool_destroy;
-
-  PhocTablet        *current_tablet;
-  struct wl_listener tablet_destroy;
-} PhocTabletTool;
-
-
 #define PHOC_TYPE_TABLET (phoc_tablet_get_type ())
 
 G_DECLARE_FINAL_TYPE (PhocTablet, phoc_tablet, PHOC, TABLET, PhocInputDevice);

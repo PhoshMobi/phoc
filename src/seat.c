@@ -30,6 +30,7 @@
 #include "server.h"
 #include "tablet.h"
 #include "tablet-pad.h"
+#include "tablet-tool.h"
 #include "input-method-relay.h"
 #include "touch.h"
 #include "xwayland-surface.h"
@@ -380,16 +381,6 @@ handle_tool_tip (struct wl_listener *listener, void *data)
   phoc_seat_notify_activity (cursor->seat);
 }
 
-static void
-handle_tablet_tool_destroy (struct wl_listener *listener, void *data)
-{
-  PhocTabletTool *tool = wl_container_of (listener, tool, tool_destroy);
-
-  wl_list_remove (&tool->tool_destroy.link);
-  wl_list_remove (&tool->set_cursor.link);
-
-  free (tool);
-}
 
 static void
 handle_tool_button (struct wl_listener *listener, void *data)
@@ -405,62 +396,23 @@ handle_tool_button (struct wl_listener *listener, void *data)
   phoc_seat_notify_activity (cursor->seat);
 }
 
-static void
-handle_tablet_tool_set_cursor (struct wl_listener *listener, void *data)
-{
-  PhocTabletTool *tool = wl_container_of (listener, tool, set_cursor);
-  struct wlr_tablet_v2_event_cursor *event = data;
-  struct wlr_surface *focused_surface = event->seat_client->seat->pointer_state.focused_surface;
-  struct wl_client *focused_client = NULL;
-  gboolean has_focused = focused_surface != NULL && focused_surface->resource != NULL;
-
-  phoc_seat_notify_activity (tool->seat);
-
-  if (has_focused)
-    focused_client = wl_resource_get_client (focused_surface->resource);
-
-  if (event->seat_client->client != focused_client ||
-      phoc_cursor_get_mode (tool->seat->cursor) != PHOC_CURSOR_PASSTHROUGH) {
-    g_debug ("Denying request to set cursor from unfocused client");
-    return;
-  }
-
-  phoc_cursor_set_image (tool->seat->cursor,
-                         focused_client,
-                         event->surface,
-                         event->hotspot_x,
-                         event->hotspot_y);
-}
 
 static void
 handle_tool_proximity (struct wl_listener *listener, void *data)
 {
-  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
   PhocCursor *cursor = wl_container_of (listener, cursor, tool_proximity);
   struct wlr_tablet_tool_proximity_event *event = data;
-  struct wlr_tablet_tool *tool = event->tool;
+  struct wlr_tablet_tool *wlr_tool = event->tool;
 
   phoc_seat_notify_activity (cursor->seat);
 
-  if (!tool->data) {
-    PhocTabletTool *phoc_tool = g_new0 (PhocTabletTool, 1);
-
-    phoc_tool->seat = cursor->seat;
-    tool->data = phoc_tool;
-    phoc_tool->tablet_v2_tool = wlr_tablet_tool_create (desktop->tablet_v2,
-                                                        cursor->seat->seat,
-                                                        tool);
-
-    phoc_tool->tool_destroy.notify = handle_tablet_tool_destroy;
-    wl_signal_add (&tool->events.destroy, &phoc_tool->tool_destroy);
-
-    phoc_tool->set_cursor.notify = handle_tablet_tool_set_cursor;
-    wl_signal_add (&phoc_tool->tablet_v2_tool->events.set_cursor, &phoc_tool->set_cursor);
-  }
+  if (wlr_tool->data == NULL)
+    phoc_tablet_tool_new (wlr_tool, cursor->seat);
 
   if (event->state == WLR_TABLET_TOOL_PROXIMITY_OUT) {
-    PhocTabletTool *phoc_tool = tool->data;
-    wlr_tablet_v2_tablet_tool_notify_proximity_out (phoc_tool->tablet_v2_tool);
+    PhocTabletTool *tool = wlr_tool->data;
+
+    wlr_tablet_v2_tablet_tool_notify_proximity_out (tool->tablet_v2_tool);
 
     /* Clear cursor image if there's no pointing device. */
     if (phoc_seat_has_pointer (cursor->seat) == FALSE)
@@ -469,8 +421,12 @@ handle_tool_proximity (struct wl_listener *listener, void *data)
     return;
   }
 
-  handle_tablet_tool_position (cursor, event->tablet->base.data, event->tool,
-                               true, true, event->x, event->y, 0, 0);
+  handle_tablet_tool_position (cursor,
+                               event->tablet->base.data,
+                               event->tool,
+                               true, true,
+                               event->x, event->y,
+                               0, 0);
 }
 
 
