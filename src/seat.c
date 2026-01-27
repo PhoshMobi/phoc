@@ -999,20 +999,6 @@ seat_add_touch (PhocSeat *seat, struct wlr_input_device *device)
   phoc_seat_add_input_mapping_settings (seat, PHOC_INPUT_DEVICE (touch));
 }
 
-static void
-handle_tablet_pad_destroy (struct wl_listener *listener, void *data)
-{
-  PhocTabletPad *tablet_pad = wl_container_of (listener, tablet_pad, device_destroy);
-  PhocSeat *self = phoc_input_device_get_seat (PHOC_INPUT_DEVICE (tablet_pad));
-
-  wl_list_remove (&tablet_pad->device_destroy.link);
-
-  self->tablet_pads = g_slist_remove (self->tablet_pads, tablet_pad);
-  g_object_unref (tablet_pad);
-
-  seat_update_capabilities (self);
-}
-
 
 static void
 phoc_seat_tablet_pads_set_focus (PhocSeat *self, struct wlr_surface *wlr_surface)
@@ -1026,15 +1012,28 @@ phoc_seat_tablet_pads_set_focus (PhocSeat *self, struct wlr_surface *wlr_surface
 
 
 static void
+on_tablet_pad_destroy (PhocTabletPad *tablet_pad)
+{
+  PhocSeat *self = phoc_input_device_get_seat (PHOC_INPUT_DEVICE (tablet_pad));
+
+  self->tablet_pads = g_slist_remove (self->tablet_pads, tablet_pad);
+  g_object_unref (tablet_pad);
+
+  seat_update_capabilities (self);
+}
+
+
+static void
 seat_add_tablet_pad (PhocSeat *self, struct wlr_input_device *device)
 {
   PhocTabletPad *tablet_pad;
 
   tablet_pad = phoc_tablet_pad_new (device, self);
-  self->tablet_pads = g_slist_prepend (self->tablet_pads, tablet_pad);
+  g_signal_connect (tablet_pad, "device-destroy",
+                    G_CALLBACK (on_tablet_pad_destroy),
+                    NULL);
 
-  tablet_pad->device_destroy.notify = handle_tablet_pad_destroy;
-  wl_signal_add (&device->events.destroy, &tablet_pad->device_destroy);
+  self->tablet_pads = g_slist_prepend (self->tablet_pads, tablet_pad);
 
   /* Search for a sibling tablet */
   if (!wlr_input_device_is_libinput (device)) {

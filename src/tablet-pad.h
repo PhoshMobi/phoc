@@ -22,7 +22,6 @@ typedef struct _PhocTabletPad {
   struct wlr_surface *current_surface;
   struct wlr_tablet_v2_tablet_pad *tablet_v2_pad;
 
-  struct wl_listener  device_destroy;
   struct wl_listener  attach;
   struct wl_listener  button;
   struct wl_listener  ring;
