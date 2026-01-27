@@ -15,10 +15,34 @@
 #include "tablet-pad.h"
 #include "server.h"
 
+#include <wlr/types/wlr_tablet_tool.h>
 #include <wlr/types/wlr_tablet_pad.h>
 
 
 G_DEFINE_FINAL_TYPE (PhocTabletPad, phoc_tablet_pad, PHOC_TYPE_INPUT_DEVICE);
+
+
+static void
+handle_pad_tablet_device_destroy (struct wl_listener *listener, void *data)
+{
+  PhocTabletPad *self = wl_container_of (listener, self, tablet_device_destroy);
+
+  self->tablet = NULL;
+
+  wl_list_remove (&self->tablet_device_destroy.link);
+  wl_list_init (&self->tablet_device_destroy.link);
+}
+
+
+static void
+handle_tablet_pad_attach (struct wl_listener *listener, void *data)
+{
+  PhocTabletPad *self = wl_container_of (listener, self, attach);
+  struct wlr_tablet_tool *wlr_tool = data;
+  PhocTablet *tablet = PHOC_TABLET (wlr_tool->data);
+
+  phoc_tablet_pad_attach_tablet (self, tablet);
+}
 
 
 static void
@@ -90,6 +114,9 @@ phoc_tablet_pad_constructed (GObject *object)
   self->ring.notify = handle_tablet_pad_ring;
   wl_signal_add (&wlr_tablet_pad->events.ring, &self->ring);
 
+  self->attach.notify = handle_tablet_pad_attach;
+  wl_signal_add (&wlr_tablet_pad->events.attach_tablet, &self->attach);
+
   self->tablet_v2_pad = wlr_tablet_pad_create (desktop->tablet_v2, seat->seat, device);
 }
 
@@ -101,9 +128,13 @@ phoc_tablet_pad_finalize (GObject *object)
 
   phoc_tablet_pad_set_focus (self, NULL);
 
+  wl_list_remove (&self->attach.link);
+
   wl_list_remove (&self->button.link);
   wl_list_remove (&self->strip.link);
   wl_list_remove (&self->ring.link);
+
+  wl_list_remove (&self->tablet_device_destroy.link);
 
   G_OBJECT_CLASS (phoc_tablet_pad_parent_class)->finalize (object);
 }
@@ -122,7 +153,7 @@ phoc_tablet_pad_class_init (PhocTabletPadClass *klass)
 static void
 phoc_tablet_pad_init (PhocTabletPad *self)
 {
-  wl_list_init (&self->tablet_destroy.link);
+  wl_list_init (&self->tablet_device_destroy.link);
 }
 
 
@@ -164,4 +195,27 @@ phoc_tablet_pad_set_focus (PhocTabletPad *self, struct wlr_surface *wlr_surface)
   self->current_surface = wlr_surface;
   self->surface_destroy.notify = handle_tablet_pad_surface_destroy;
   wl_signal_add (&wlr_surface->events.destroy, &self->surface_destroy);
+}
+
+
+void
+phoc_tablet_pad_attach_tablet (PhocTabletPad *self, PhocTablet *tablet)
+{
+  struct wlr_input_device *device;
+  struct wlr_input_device *tablet_device;
+
+  g_assert (PHOC_IS_TABLET_PAD (self));
+  g_assert (PHOC_IS_TABLET (tablet));
+
+  device = phoc_input_device_get_device (PHOC_INPUT_DEVICE (self));
+  tablet_device = phoc_input_device_get_device (PHOC_INPUT_DEVICE (tablet));
+
+  g_debug ("Attaching tablet pad '%s' to tablet '%s'", device->name, tablet_device->name);
+
+  self->tablet = tablet;
+
+  /* TODO: should use PhocInputDevice's "device-destroy" signal */
+  wl_list_remove (&self->tablet_device_destroy.link);
+  self->tablet_device_destroy.notify = handle_pad_tablet_device_destroy;
+  wl_signal_add (&device->events.destroy, &self->tablet_device_destroy);
 }

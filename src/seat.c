@@ -20,7 +20,6 @@
 #include <wlr/types/wlr_primary_selection.h>
 #include <wlr/types/wlr_tablet_v2.h>
 #include <wlr/types/wlr_xcursor_manager.h>
-#include <wlr/types/wlr_tablet_pad.h>
 
 #include "cursor.h"
 #include "device-state.h"
@@ -1007,49 +1006,11 @@ handle_tablet_pad_destroy (struct wl_listener *listener, void *data)
   PhocSeat *self = phoc_input_device_get_seat (PHOC_INPUT_DEVICE (tablet_pad));
 
   wl_list_remove (&tablet_pad->device_destroy.link);
-  wl_list_remove (&tablet_pad->tablet_destroy.link);
-  wl_list_remove (&tablet_pad->attach.link);
 
   self->tablet_pads = g_slist_remove (self->tablet_pads, tablet_pad);
   g_object_unref (tablet_pad);
 
   seat_update_capabilities (self);
-}
-
-static void
-handle_pad_tool_destroy (struct wl_listener *listener, void *data)
-{
-  PhocTabletPad *pad = wl_container_of (listener, pad, tablet_destroy);
-
-  pad->tablet = NULL;
-
-  wl_list_remove (&pad->tablet_destroy.link);
-  wl_list_init (&pad->tablet_destroy.link);
-}
-
-static void
-attach_tablet_pad (PhocTabletPad *pad,
-                   PhocTablet    *tool)
-{
-  struct wlr_input_device *device = phoc_input_device_get_device (PHOC_INPUT_DEVICE (tool));
-
-  g_debug ("Attaching tablet pad '%s' to tablet tool '%s'", device->name, device->name);
-
-  pad->tablet = tool;
-
-  wl_list_remove (&pad->tablet_destroy.link);
-  pad->tablet_destroy.notify = handle_pad_tool_destroy;
-  wl_signal_add (&device->events.destroy, &pad->tablet_destroy);
-}
-
-static void
-handle_tablet_pad_attach (struct wl_listener *listener, void *data)
-{
-  PhocTabletPad *pad = wl_container_of (listener, pad, attach);
-  struct wlr_tablet_tool *wlr_tool = data;
-  PhocTablet *tool = wlr_tool->data;
-
-  attach_tablet_pad (pad, tool);
 }
 
 
@@ -1067,7 +1028,6 @@ phoc_seat_tablet_pads_set_focus (PhocSeat *self, struct wlr_surface *wlr_surface
 static void
 seat_add_tablet_pad (PhocSeat *self, struct wlr_input_device *device)
 {
-  struct wlr_tablet_pad *wlr_tablet_pad = wlr_tablet_pad_from_input_device (device);
   PhocTabletPad *tablet_pad;
 
   tablet_pad = phoc_tablet_pad_new (device, self);
@@ -1075,9 +1035,6 @@ seat_add_tablet_pad (PhocSeat *self, struct wlr_input_device *device)
 
   tablet_pad->device_destroy.notify = handle_tablet_pad_destroy;
   wl_signal_add (&device->events.destroy, &tablet_pad->device_destroy);
-
-  tablet_pad->attach.notify = handle_tablet_pad_attach;
-  wl_signal_add (&wlr_tablet_pad->events.attach_tablet, &tablet_pad->attach);
 
   /* Search for a sibling tablet */
   if (!wlr_input_device_is_libinput (device)) {
@@ -1096,7 +1053,7 @@ seat_add_tablet_pad (PhocSeat *self, struct wlr_input_device *device)
 
     struct libinput_device *li_dev = phoc_input_device_get_libinput_device_handle (input_device);
     if (libinput_device_get_device_group (li_dev) == group) {
-      attach_tablet_pad (tablet_pad, PHOC_TABLET (input_device));
+      phoc_tablet_pad_attach_tablet (tablet_pad, PHOC_TABLET (input_device));
       break;
     }
   }
@@ -1152,7 +1109,7 @@ seat_add_tablet_tool (PhocSeat *self, struct wlr_input_device *device)
 
     struct libinput_device *li_dev = wlr_libinput_get_device_handle (wlr_device);
     if (libinput_device_get_device_group (li_dev) == group)
-      attach_tablet_pad (PHOC_TABLET_PAD (pad_device), tablet);
+      phoc_tablet_pad_attach_tablet (PHOC_TABLET_PAD (pad_device), tablet);
   }
 }
 

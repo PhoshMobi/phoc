@@ -30,7 +30,7 @@ typedef struct _PhocTabletPad {
   struct wl_listener  surface_destroy;
 
   PhocTablet         *tablet;
-  struct wl_listener  tablet_destroy;
+  struct wl_listener  tablet_device_destroy;
 } PhocTabletPad;
 
 #define PHOC_TYPE_TABLET_PAD (phoc_tablet_pad_get_type ())
@@ -39,5 +39,6 @@ G_DECLARE_FINAL_TYPE (PhocTabletPad, phoc_tablet_pad, PHOC, TABLET_PAD, PhocInpu
 
 PhocTabletPad *phoc_tablet_pad_new (struct wlr_input_device *device, PhocSeat *seat);
 void           phoc_tablet_pad_set_focus (PhocTabletPad *self, struct wlr_surface *surface);
+void           phoc_tablet_pad_attach_tablet (PhocTabletPad *self, PhocTablet *tablet);
 
 G_END_DECLS
