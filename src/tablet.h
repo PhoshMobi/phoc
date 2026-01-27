@@ -26,8 +26,6 @@ typedef struct _PhocTablet {
 
 
 typedef struct _PhocTabletTool {
-  struct wl_list     link;
-  struct wl_list     tool_link;
   struct wlr_tablet_v2_tablet_tool *tablet_v2_tool;
 
   PhocSeat          *seat;

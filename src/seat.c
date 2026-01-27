@@ -385,9 +385,6 @@ handle_tablet_tool_destroy (struct wl_listener *listener, void *data)
 {
   PhocTabletTool *tool = wl_container_of (listener, tool, tool_destroy);
 
-  wl_list_remove (&tool->link);
-  wl_list_remove (&tool->tool_link);
-
   wl_list_remove (&tool->tool_destroy.link);
   wl_list_remove (&tool->set_cursor.link);
 
@@ -459,9 +456,6 @@ handle_tool_proximity (struct wl_listener *listener, void *data)
 
     phoc_tool->set_cursor.notify = handle_tablet_tool_set_cursor;
     wl_signal_add (&phoc_tool->tablet_v2_tool->events.set_cursor, &phoc_tool->set_cursor);
-
-    wl_list_init (&phoc_tool->link);
-    wl_list_init (&phoc_tool->tool_link);
   }
 
   if (event->state == WLR_TABLET_TOOL_PROXIMITY_OUT) {
