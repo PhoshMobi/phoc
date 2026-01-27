@@ -10,10 +10,7 @@
 #include "phoc-config.h"
 
 #define _POSIX_C_SOURCE 200112L
-#include <assert.h>
 #include <libinput.h>
-#include <stdlib.h>
-#include <string.h>
 #include <time.h>
 #include <wayland-server-core.h>
 #include <wlr/backend/libinput.h>
@@ -24,6 +21,7 @@
 #include <wlr/types/wlr_tablet_v2.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/types/wlr_tablet_pad.h>
+
 #include "cursor.h"
 #include "device-state.h"
 #include "keyboard.h"
