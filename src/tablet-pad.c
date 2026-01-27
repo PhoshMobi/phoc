@@ -19,6 +19,23 @@
 #include <wlr/types/wlr_tablet_pad.h>
 
 
+typedef struct _PhocTabletPad {
+  PhocInputDevice     parent;
+
+  struct wlr_surface *current_surface;
+  struct wlr_tablet_v2_tablet_pad *tablet_v2_pad;
+
+  struct wl_listener  attach;
+  struct wl_listener  button;
+  struct wl_listener  ring;
+  struct wl_listener  strip;
+  struct wl_listener  surface_destroy;
+
+  PhocTablet         *tablet;
+  struct wl_listener  tablet_device_destroy;
+} PhocTabletPad;
+
+
 G_DEFINE_FINAL_TYPE (PhocTabletPad, phoc_tablet_pad, PHOC_TYPE_INPUT_DEVICE);
 
 

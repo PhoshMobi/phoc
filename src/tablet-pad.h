@@ -16,22 +16,6 @@
 
 G_BEGIN_DECLS
 
-typedef struct _PhocTabletPad {
-  PhocInputDevice     parent;
-
-  struct wlr_surface *current_surface;
-  struct wlr_tablet_v2_tablet_pad *tablet_v2_pad;
-
-  struct wl_listener  attach;
-  struct wl_listener  button;
-  struct wl_listener  ring;
-  struct wl_listener  strip;
-  struct wl_listener  surface_destroy;
-
-  PhocTablet         *tablet;
-  struct wl_listener  tablet_device_destroy;
-} PhocTabletPad;
-
 #define PHOC_TYPE_TABLET_PAD (phoc_tablet_pad_get_type ())
 
 G_DECLARE_FINAL_TYPE (PhocTabletPad, phoc_tablet_pad, PHOC, TABLET_PAD, PhocInputDevice);
