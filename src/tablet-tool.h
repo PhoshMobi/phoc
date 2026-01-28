@@ -24,10 +24,6 @@ typedef struct _PhocTabletTool {
 
   struct wl_listener set_cursor;
   struct wl_listener tool_destroy;
-
-  PhocTablet        *current_tablet;
-  struct wl_listener tablet_destroy;
-
 } PhocTabletTool;
 
 PhocTabletTool *phoc_tablet_tool_new (struct wlr_tablet_tool *wlr_tool, PhocSeat *seat);
