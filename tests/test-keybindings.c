@@ -36,6 +36,14 @@ test_keybindings_parse (void)
   g_assert (combo);
   g_assert_cmpint (combo->modifiers, ==, WLR_MODIFIER_SHIFT);
   g_assert_cmpint (combo->keysym, ==, XKB_KEY_c);
+
+  /* The 'Above_Tab' accelerator keysym can be translated to a real keysym with the context */
+  g_free (combo);
+  context->above_tab_keysym = 0xa7;
+  combo = phoc_keybindings_parse_accelerator ("<alt>Above_Tab", context);
+  g_assert (combo);
+  g_assert_cmpint (combo->modifiers, ==, WLR_MODIFIER_ALT);
+  g_assert_cmpint (combo->keysym, ==, XKB_KEY_section);
 }
 
 

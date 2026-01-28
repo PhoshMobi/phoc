@@ -535,6 +535,30 @@ set_xkb_keymap (PhocKeyboard *self, const char *layout, const char *variant, con
 }
 
 
+#define BUFLEN 256
+static xkb_keysym_t
+get_above_tab_keysym (PhocKeyboard *keyboard)
+{
+  guint keycode = 0x29 /* KEY_GRAVE */ + 8;
+  const xkb_keysym_t *keysyms;
+  size_t keysyms_len;
+  uint32_t modifiers;
+  char namebuf[BUFLEN];
+
+  g_assert (PHOC_IS_KEYBOARD (keyboard));
+
+  keysyms_len = keyboard_keysyms_raw (keyboard, keycode, &keysyms, &modifiers);
+  if (keysyms_len < 1) {
+    g_warning ("No Above_Tab (keycode 0x%x) keysym entries in layout", keycode);
+    return XKB_KEY_NoSymbol;
+  }
+
+  xkb_keysym_get_name (keysyms[0], namebuf, BUFLEN);
+  g_debug ("Above_Tab set to keysym 0x%x (%s)", keysyms[0], namebuf);
+  return keysyms[0];
+}
+
+
 static void
 on_input_setting_changed (PhocKeyboard *self,
                           const char   *key,
@@ -590,7 +614,9 @@ on_input_setting_changed (PhocKeyboard *self,
 
   set_xkb_keymap (self, layout, variant, xkb_options_string);
 
+  context->above_tab_keysym = get_above_tab_keysym (self);
   phoc_keybindings_set_context (self->keybindings, context);
+  phoc_keybindings_load_settings (self->keybindings);
 }
 
 
