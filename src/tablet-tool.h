@@ -32,5 +32,7 @@ typedef struct _PhocTabletTool {
 
 PhocTabletTool *phoc_tablet_tool_new (struct wlr_tablet_tool *wlr_tool, PhocSeat *seat);
 void            phoc_tablet_tool_free (PhocTabletTool *self);
+void            phoc_tablet_set_tilt_x (PhocTabletTool *self, double tilt_x);
+void            phoc_tablet_set_tilt_y (PhocTabletTool *self, double tilt_y);
 
 G_END_DECLS

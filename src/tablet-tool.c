@@ -91,3 +91,17 @@ phoc_tablet_tool_free (PhocTabletTool *self)
 
   g_free (self);
 }
+
+
+void
+phoc_tablet_set_tilt_x (PhocTabletTool *self, double tilt_x)
+{
+  self->tilt_x = tilt_x;
+}
+
+
+void
+phoc_tablet_set_tilt_y (PhocTabletTool *self, double tilt_y)
+{
+  self->tilt_y = tilt_y;
+}

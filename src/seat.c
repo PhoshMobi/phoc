@@ -337,10 +337,10 @@ handle_tool_axis (struct wl_listener *listener, void *data)
     wlr_tablet_v2_tablet_tool_notify_distance (tool->tablet_v2_tool, event->distance);
 
   if (event->updated_axes & WLR_TABLET_TOOL_AXIS_TILT_X)
-    tool->tilt_x = event->tilt_x;
+    phoc_tablet_set_tilt_x (tool, event->tilt_x);
 
   if (event->updated_axes & WLR_TABLET_TOOL_AXIS_TILT_Y)
-    tool->tilt_y = event->tilt_y;
+    phoc_tablet_set_tilt_y (tool, event->tilt_y);
 
   if (event->updated_axes & (WLR_TABLET_TOOL_AXIS_TILT_X | WLR_TABLET_TOOL_AXIS_TILT_Y)) {
     wlr_tablet_v2_tablet_tool_notify_tilt (tool->tablet_v2_tool,
