@@ -260,7 +260,7 @@ handle_touch_motion (struct wl_listener *listener, void *data)
 static void
 handle_tablet_tool_position (PhocCursor             *cursor,
                              PhocTablet             *tablet,
-                             struct wlr_tablet_tool *tool,
+                             struct wlr_tablet_tool *wlr_tool,
                              bool                    change_x,
                              bool                    change_y,
                              double                  x,
@@ -274,7 +274,7 @@ handle_tablet_tool_position (PhocCursor             *cursor,
   if (!change_x && !change_y)
     return;
 
-  switch (tool->type) {
+  switch (wlr_tool->type) {
   case WLR_TABLET_TOOL_TYPE_MOUSE:
     /* They are 0 either way when they weren't modified */
     wlr_cursor_move (cursor->cursor, device, dx, dy);
@@ -290,24 +290,22 @@ handle_tablet_tool_position (PhocCursor             *cursor,
                                                              &sx,
                                                              &sy,
                                                              NULL);
-  PhocTabletTool *phoc_tool = tool->data;
+  PhocTabletTool *tool = wlr_tool->data;
 
   if (!surface) {
-    wlr_tablet_v2_tablet_tool_notify_proximity_out (phoc_tool->tablet_v2_tool);
+    wlr_tablet_v2_tablet_tool_notify_proximity_out (tool->tablet_v2_tool);
     /* XXX: TODO: Fallback pointer semantics */
     return;
   }
 
   if (!wlr_surface_accepts_tablet_v2 (surface, tablet->tablet_v2)) {
-    wlr_tablet_v2_tablet_tool_notify_proximity_out (phoc_tool->tablet_v2_tool);
+    wlr_tablet_v2_tablet_tool_notify_proximity_out (tool->tablet_v2_tool);
     /* XXX: TODO: Fallback pointer semantics */
     return;
   }
 
-  wlr_tablet_v2_tablet_tool_notify_proximity_in (phoc_tool->tablet_v2_tool,
-                                                 tablet->tablet_v2, surface);
-
-  wlr_tablet_v2_tablet_tool_notify_motion (phoc_tool->tablet_v2_tool, sx, sy);
+  wlr_tablet_v2_tablet_tool_notify_proximity_in (tool->tablet_v2_tool, tablet->tablet_v2, surface);
+  wlr_tablet_v2_tablet_tool_notify_motion (tool->tablet_v2_tool, sx, sy);
 }
 
 
@@ -315,12 +313,11 @@ static void
 handle_tool_axis (struct wl_listener *listener, void *data)
 {
   PhocCursor *cursor = wl_container_of (listener, cursor, tool_axis);
-
   struct wlr_tablet_tool_axis_event *event = data;
-  PhocTabletTool *phoc_tool = event->tool->data;
+  PhocTabletTool *tool = event->tool->data;
 
-  if (!phoc_tool) { // TODO: Should this be an assert?
-    g_debug ("Tool Axis, before proximity");
+  if (!tool) {
+    g_critical ("Tool Axis, before proximity");
     return;
   }
 
@@ -334,31 +331,31 @@ handle_tool_axis (struct wl_listener *listener, void *data)
                                event->x, event->y, event->dx, event->dy);
 
   if (event->updated_axes & WLR_TABLET_TOOL_AXIS_PRESSURE)
-    wlr_tablet_v2_tablet_tool_notify_pressure (phoc_tool->tablet_v2_tool, event->pressure);
+    wlr_tablet_v2_tablet_tool_notify_pressure (tool->tablet_v2_tool, event->pressure);
 
   if (event->updated_axes & WLR_TABLET_TOOL_AXIS_DISTANCE)
-    wlr_tablet_v2_tablet_tool_notify_distance (phoc_tool->tablet_v2_tool, event->distance);
+    wlr_tablet_v2_tablet_tool_notify_distance (tool->tablet_v2_tool, event->distance);
 
   if (event->updated_axes & WLR_TABLET_TOOL_AXIS_TILT_X)
-    phoc_tool->tilt_x = event->tilt_x;
+    tool->tilt_x = event->tilt_x;
 
   if (event->updated_axes & WLR_TABLET_TOOL_AXIS_TILT_Y)
-    phoc_tool->tilt_y = event->tilt_y;
+    tool->tilt_y = event->tilt_y;
 
   if (event->updated_axes & (WLR_TABLET_TOOL_AXIS_TILT_X | WLR_TABLET_TOOL_AXIS_TILT_Y)) {
-    wlr_tablet_v2_tablet_tool_notify_tilt (phoc_tool->tablet_v2_tool,
-                                           phoc_tool->tilt_x,
-                                           phoc_tool->tilt_y);
+    wlr_tablet_v2_tablet_tool_notify_tilt (tool->tablet_v2_tool,
+                                           tool->tilt_x,
+                                           tool->tilt_y);
   }
 
   if (event->updated_axes & WLR_TABLET_TOOL_AXIS_ROTATION)
-    wlr_tablet_v2_tablet_tool_notify_rotation (phoc_tool->tablet_v2_tool, event->rotation);
+    wlr_tablet_v2_tablet_tool_notify_rotation (tool->tablet_v2_tool, event->rotation);
 
   if (event->updated_axes & WLR_TABLET_TOOL_AXIS_SLIDER)
-    wlr_tablet_v2_tablet_tool_notify_slider (phoc_tool->tablet_v2_tool, event->slider);
+    wlr_tablet_v2_tablet_tool_notify_slider (tool->tablet_v2_tool, event->slider);
 
   if (event->updated_axes & WLR_TABLET_TOOL_AXIS_WHEEL)
-    wlr_tablet_v2_tablet_tool_notify_wheel (phoc_tool->tablet_v2_tool, event->wheel_delta, 0);
+    wlr_tablet_v2_tablet_tool_notify_wheel (tool->tablet_v2_tool, event->wheel_delta, 0);
 
   phoc_seat_notify_activity (cursor->seat);
 }
@@ -369,13 +366,13 @@ handle_tool_tip (struct wl_listener *listener, void *data)
 {
   PhocCursor *cursor = wl_container_of (listener, cursor, tool_tip);
   struct wlr_tablet_tool_tip_event *event = data;
-  PhocTabletTool *phoc_tool = event->tool->data;
+  PhocTabletTool *tool = event->tool->data;
 
   if (event->state == WLR_TABLET_TOOL_TIP_DOWN) {
-    wlr_tablet_v2_tablet_tool_notify_down (phoc_tool->tablet_v2_tool);
-    wlr_tablet_tool_v2_start_implicit_grab (phoc_tool->tablet_v2_tool);
+    wlr_tablet_v2_tablet_tool_notify_down (tool->tablet_v2_tool);
+    wlr_tablet_tool_v2_start_implicit_grab (tool->tablet_v2_tool);
   } else {
-    wlr_tablet_v2_tablet_tool_notify_up (phoc_tool->tablet_v2_tool);
+    wlr_tablet_v2_tablet_tool_notify_up (tool->tablet_v2_tool);
   }
 
   phoc_seat_notify_activity (cursor->seat);
@@ -387,9 +384,9 @@ handle_tool_button (struct wl_listener *listener, void *data)
 {
   PhocCursor *cursor = wl_container_of (listener, cursor, tool_button);
   struct wlr_tablet_tool_button_event *event = data;
-  PhocTabletTool *phoc_tool = event->tool->data;
+  PhocTabletTool *tool = event->tool->data;
 
-  wlr_tablet_v2_tablet_tool_notify_button (phoc_tool->tablet_v2_tool,
+  wlr_tablet_v2_tablet_tool_notify_button (tool->tablet_v2_tool,
                                            (enum zwp_tablet_pad_v2_button_state)event->button,
                                            (enum zwp_tablet_pad_v2_button_state)event->state);
 
