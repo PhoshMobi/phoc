@@ -449,6 +449,8 @@ send_pointer_button (PhocSeat                    *seat,
   serial = wlr_seat_pointer_notify_button (seat->seat, time, button, state);
   if (serial)
     phoc_seat_update_last_button_serial (seat, serial);
+  else
+    g_debug ("Got a 0 serial on pointer press/releas for %d", button);
 }
 
 

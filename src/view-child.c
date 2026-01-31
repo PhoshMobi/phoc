@@ -273,7 +273,6 @@ static void
 phoc_view_child_map_default (PhocViewChild *self)
 {
   PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
-  PhocInput *input = phoc_server_get_input (phoc_server_get_default ());
   PhocViewChildPrivate *priv = phoc_view_child_get_instance_private (self);
   PhocChildRoot *root = priv->root;
 
@@ -291,19 +290,15 @@ phoc_view_child_map_default (PhocViewChild *self)
     if (intersects)
       phoc_utils_wlr_surface_enter_output (priv->wlr_surface, output->wlr_output);
   }
-
-  phoc_input_update_cursor_focus (input);
 }
 
 
 static void
 phoc_view_child_unmap_default (PhocViewChild *self)
 {
-  PhocInput *input = phoc_server_get_input (phoc_server_get_default ());
   PhocViewChildPrivate *priv = phoc_view_child_get_instance_private (self);
 
   phoc_view_child_damage_whole (self);
-  phoc_input_update_cursor_focus (input);
   priv->mapped = false;
 }
 
