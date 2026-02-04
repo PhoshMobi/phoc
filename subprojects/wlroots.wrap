@@ -1,7 +1,7 @@
 [wrap-git]
 directory=wlroots-0.20.x
 url=https://gitlab.gnome.org/Infrastructure/Mirrors/lorry-mirrors/gitlab_freedesktop_org/wlroots/wlroots.git
-revision=84d603acc06a45dd3c3a4b2cf1fd08b2933ca2b5
+revision=0.20.0-rc1
 depth=1
 
 # Phoc specific patches
