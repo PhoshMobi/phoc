@@ -947,10 +947,17 @@ phoc_view_set_fullscreen (PhocView *view, bool fullscreen, PhocOutput *output)
     if (output == NULL)
       output = phoc_view_get_output (view);
 
-    if (was_fullscreen)
-      priv->fullscreen_output->fullscreen_view = NULL;
+    /* Nothing to do if old fullscreen output is the new one */
+    if (was_fullscreen && output == priv->fullscreen_output)
+      return;
 
-    view_save (view);
+    if (was_fullscreen) {
+      /* If switching fullscreen outputs clear the old one */
+      phoc_output_set_fullscreen_view (priv->fullscreen_output, NULL);
+    } else {
+      /* If not yet fullscreen save the non-fullscreen geometry */
+      view_save (view);
+    }
 
     struct wlr_box output_box;
     wlr_output_layout_get_box (desktop->layout, output->wlr_output, &output_box);
@@ -960,18 +967,15 @@ phoc_view_set_fullscreen (PhocView *view, bool fullscreen, PhocOutput *output)
                            output_box.width,
                            output_box.height);
 
-    output->fullscreen_view = view;
-    phoc_output_force_shell_reveal (output, false);
     priv->fullscreen_output = output;
-    phoc_output_damage_whole (output);
+    phoc_output_set_fullscreen_view (output, view);
   }
 
   if (was_fullscreen && !fullscreen) {
     PhocOutput *current_output = priv->fullscreen_output;
-    priv->fullscreen_output->fullscreen_view = NULL;
-    priv->fullscreen_output = NULL;
 
-    phoc_output_damage_whole (current_output);
+    priv->fullscreen_output = NULL;
+    phoc_output_set_fullscreen_view (current_output, NULL);
 
     if (priv->state == PHOC_VIEW_STATE_MAXIMIZED) {
       view_arrange_maximized (view, current_output);

@@ -1421,6 +1421,7 @@ void
 phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
 {
   PhocSeatPrivate *priv;
+  PhocOutput *fullscreen_output;
   bool unfullscreen = true;
 
   g_assert (PHOC_IS_SEAT (seat));
@@ -1452,6 +1453,12 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
   }
 #endif
 
+  PhocView *prev_focus = phoc_seat_get_focus_view (seat);
+  if (view && view == prev_focus) {
+    g_debug ("View %p already focused", view);
+    return;
+  }
+
   if (view && unfullscreen) {
     PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
     PhocOutput *output;
@@ -1462,15 +1469,10 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
       if (output->fullscreen_view &&
           output->fullscreen_view != view &&
           wlr_output_layout_intersects (desktop->layout, output->wlr_output, &box)) {
-        phoc_view_set_fullscreen (output->fullscreen_view, false, NULL);
+        /* View stays fullscreen but output won't render it on top of all other views */
+        phoc_output_set_fullscreen_view (output, NULL);
       }
     }
-  }
-
-  PhocView *prev_focus = phoc_seat_get_focus_view (seat);
-  if (view && view == prev_focus) {
-    g_debug ("View %p already focused", view);
-    return;
   }
 
 #ifdef PHOC_XWAYLAND
@@ -1527,7 +1529,9 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
     PhocTabletPad *pad;
     wl_list_for_each (pad, &seat->tablet_pads, link) {
       if (pad->tablet)
-        wlr_tablet_v2_tablet_pad_notify_enter (pad->tablet_v2_pad, pad->tablet->tablet_v2, view->wlr_surface);
+        wlr_tablet_v2_tablet_pad_notify_enter (pad->tablet_v2_pad,
+                                               pad->tablet->tablet_v2,
+                                               view->wlr_surface);
     }
   } else {
     wlr_seat_keyboard_notify_enter (seat->seat, view->wlr_surface, NULL, 0, NULL);
@@ -1536,6 +1540,11 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
   g_debug ("Focused view %p", view);
   phoc_cursor_update_focus (seat->cursor);
   phoc_input_method_relay_set_focus (&seat->im_relay, view->wlr_surface);
+
+  /* View was fullscreen on output, so scan it out like that again */
+  fullscreen_output = phoc_view_get_fullscreen_output (view);
+  if (fullscreen_output)
+    phoc_output_set_fullscreen_view (fullscreen_output, view);
 }
 
 /**

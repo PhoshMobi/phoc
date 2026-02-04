@@ -187,6 +187,7 @@ const char *phoc_output_get_identifier       (PhocOutput *self);
 void       phoc_output_transform_damage      (PhocOutput *self, pixman_region32_t *damage);
 void       phoc_output_transform_box         (PhocOutput *self, struct wlr_box *box);
 GSList    *phoc_output_get_debug_damage      (PhocOutput *self);
+void       phoc_output_set_fullscreen_view   (PhocOutput *self, PhocView *view);
 
 enum wlr_scale_filter_mode
            phoc_output_get_texture_filter_mode (PhocOutput *self);
