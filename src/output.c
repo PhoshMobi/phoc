@@ -54,9 +54,9 @@ static guint signals[N_SIGNALS];
 typedef struct _PhocOutputPrivate {
   PhocOutputShield *shield;
 
-  GSList  *frame_callbacks; /* (element-type: PhocOutputFrameCallbackInfo) */
-  gint     frame_callback_next_id;
-  gint64   last_frame_us;
+  GSList *frame_callbacks; /* (element-type: PhocOutputFrameCallbackInfo) */
+  gint    frame_callback_next_id;
+  gint64  last_frame_us;
 
   PhocOutputCutouts  *cutouts;
   struct wlr_texture *cutouts_texture;
