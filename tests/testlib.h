@@ -59,22 +59,22 @@ typedef struct _PhocTestOutput {
 
 
 struct _PhocTestClientGlobals {
-  struct wl_display *display;
-  struct wl_compositor *compositor;
-  struct wl_shm *shm;
-  struct xdg_wm_base *xdg_shell;
-  struct xx_cutouts_manager_v1 *cutouts_manager;
-  struct zwlr_layer_shell_v1 *layer_shell;
-  struct zphoc_layer_shell_effects_v1 *layer_shell_effects;
-  struct zwlr_screencopy_manager_v1 *screencopy_manager;
+  struct wl_display                       *display;
+  struct wl_compositor                    *compositor;
+  struct wl_shm                           *shm;
+  struct xdg_wm_base                      *xdg_shell;
+  struct xx_cutouts_manager_v1            *cutouts_manager;
+  struct zwlr_layer_shell_v1              *layer_shell;
+  struct zphoc_layer_shell_effects_v1     *layer_shell_effects;
+  struct zwlr_screencopy_manager_v1       *screencopy_manager;
   struct zwlr_foreign_toplevel_manager_v1 *foreign_toplevel_manager;
-  struct zxdg_decoration_manager_v1 *decoration_manager;
+  struct zxdg_decoration_manager_v1       *decoration_manager;
   GSList *foreign_toplevels;
-  struct phosh_private *phosh;
-  struct gtk_shell1   *gtk_shell1;
+  struct phosh_private                    *phosh;
+  struct gtk_shell1                       *gtk_shell1;
   /* TODO: handle multiple outputs */
-  PhocTestOutput       output;
-  PhocTestOutputConfig output_config;
+  PhocTestOutput                           output;
+  PhocTestOutputConfig                     output_config;
 
   GPtrArray *formats;
 };
@@ -97,7 +97,7 @@ typedef struct PhocTestClientIface {
   PhocTestClientFunc   client_run;
   PhocServerFlags      server_flags;
   PhocServerDebugFlags debug_flags;
-  gboolean             xwayland;
+  gboolean xwayland;
   PhocTestOutputConfig output_config;
   const char * const  *compatibles;
 } PhocTestClientIface;
