@@ -478,6 +478,30 @@ static const struct wl_registry_listener registry_listener = {
 };
 
 
+static bool
+parse_layers (char *arg)
+{
+  struct {
+    char                          *name;
+    enum zwlr_layer_shell_v1_layer value;
+  } layers[] = {
+    { "background", ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND },
+    { "bottom", ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM },
+    { "top", ZWLR_LAYER_SHELL_V1_LAYER_TOP },
+    { "overlay", ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY },
+  };
+
+  for (size_t i = 0; i < G_N_ELEMENTS (layers); i++) {
+    if (strcmp (arg, layers[i].name) == 0) {
+      layer = layers[i].value;
+      return true;
+    }
+  }
+
+  g_critical ("invalid layer %s", arg);
+  return false;
+}
+
 
 static gboolean
 parse_anchor (char *arg)
@@ -515,7 +539,6 @@ int
 main (int argc, char **argv)
 {
   char *namespace = "phoc-lse";
-  bool found;
   int c;
 
   while ((c = getopt (argc, argv, "u:f:e:w:h:H:l:a:t:A")) != -1) {
@@ -538,30 +561,10 @@ main (int argc, char **argv)
     case 'H':
       handle = atoi (optarg);
       break;
-    case 'l': {
-      struct {
-        char                          *name;
-        enum zwlr_layer_shell_v1_layer value;
-      } layers[] = {
-        { "background", ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND },
-        { "bottom", ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM },
-        { "top", ZWLR_LAYER_SHELL_V1_LAYER_TOP },
-        { "overlay", ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY },
-      };
-      found = false;
-      for (size_t i = 0; i < sizeof (layers) / sizeof (layers[0]); ++i) {
-        if (strcmp (optarg, layers[i].name) == 0) {
-          layer = layers[i].value;
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        g_critical ("invalid layer %s", optarg);
+    case 'l':
+      if (!parse_layers (optarg))
         return 1;
-      }
       break;
-    }
     case 'a':
       if (!parse_anchor (optarg))
         return 1;
