@@ -10,10 +10,7 @@
 #include "phoc-config.h"
 
 #define _POSIX_C_SOURCE 200112L
-#include <assert.h>
 #include <libinput.h>
-#include <stdlib.h>
-#include <string.h>
 #include <time.h>
 #include <wayland-server-core.h>
 #include <wlr/backend/libinput.h>
@@ -23,7 +20,7 @@
 #include <wlr/types/wlr_primary_selection.h>
 #include <wlr/types/wlr_tablet_v2.h>
 #include <wlr/types/wlr_xcursor_manager.h>
-#include <wlr/types/wlr_tablet_pad.h>
+
 #include "cursor.h"
 #include "device-state.h"
 #include "keyboard.h"
@@ -32,6 +29,8 @@
 #include "seat.h"
 #include "server.h"
 #include "tablet.h"
+#include "tablet-pad.h"
+#include "tablet-tool.h"
 #include "input-method-relay.h"
 #include "touch.h"
 #include "xwayland-surface.h"
@@ -261,7 +260,7 @@ handle_touch_motion (struct wl_listener *listener, void *data)
 static void
 handle_tablet_tool_position (PhocCursor             *cursor,
                              PhocTablet             *tablet,
-                             struct wlr_tablet_tool *tool,
+                             struct wlr_tablet_tool *wlr_tool,
                              bool                    change_x,
                              bool                    change_y,
                              double                  x,
@@ -275,7 +274,7 @@ handle_tablet_tool_position (PhocCursor             *cursor,
   if (!change_x && !change_y)
     return;
 
-  switch (tool->type) {
+  switch (wlr_tool->type) {
   case WLR_TABLET_TOOL_TYPE_MOUSE:
     /* They are 0 either way when they weren't modified */
     wlr_cursor_move (cursor->cursor, device, dx, dy);
@@ -291,24 +290,22 @@ handle_tablet_tool_position (PhocCursor             *cursor,
                                                              &sx,
                                                              &sy,
                                                              NULL);
-  PhocTabletTool *phoc_tool = tool->data;
+  PhocTabletTool *tool = wlr_tool->data;
 
   if (!surface) {
-    wlr_tablet_v2_tablet_tool_notify_proximity_out (phoc_tool->tablet_v2_tool);
+    wlr_tablet_v2_tablet_tool_notify_proximity_out (tool->tablet_v2_tool);
     /* XXX: TODO: Fallback pointer semantics */
     return;
   }
 
   if (!wlr_surface_accepts_tablet_v2 (surface, tablet->tablet_v2)) {
-    wlr_tablet_v2_tablet_tool_notify_proximity_out (phoc_tool->tablet_v2_tool);
+    wlr_tablet_v2_tablet_tool_notify_proximity_out (tool->tablet_v2_tool);
     /* XXX: TODO: Fallback pointer semantics */
     return;
   }
 
-  wlr_tablet_v2_tablet_tool_notify_proximity_in (phoc_tool->tablet_v2_tool,
-                                                 tablet->tablet_v2, surface);
-
-  wlr_tablet_v2_tablet_tool_notify_motion (phoc_tool->tablet_v2_tool, sx, sy);
+  wlr_tablet_v2_tablet_tool_notify_proximity_in (tool->tablet_v2_tool, tablet->tablet_v2, surface);
+  wlr_tablet_v2_tablet_tool_notify_motion (tool->tablet_v2_tool, sx, sy);
 }
 
 
@@ -316,12 +313,11 @@ static void
 handle_tool_axis (struct wl_listener *listener, void *data)
 {
   PhocCursor *cursor = wl_container_of (listener, cursor, tool_axis);
-
   struct wlr_tablet_tool_axis_event *event = data;
-  PhocTabletTool *phoc_tool = event->tool->data;
+  PhocTabletTool *tool = event->tool->data;
 
-  if (!phoc_tool) { // TODO: Should this be an assert?
-    g_debug ("Tool Axis, before proximity");
+  if (!tool) {
+    g_critical ("Tool Axis, before proximity");
     return;
   }
 
@@ -335,31 +331,31 @@ handle_tool_axis (struct wl_listener *listener, void *data)
                                event->x, event->y, event->dx, event->dy);
 
   if (event->updated_axes & WLR_TABLET_TOOL_AXIS_PRESSURE)
-    wlr_tablet_v2_tablet_tool_notify_pressure (phoc_tool->tablet_v2_tool, event->pressure);
+    wlr_tablet_v2_tablet_tool_notify_pressure (tool->tablet_v2_tool, event->pressure);
 
   if (event->updated_axes & WLR_TABLET_TOOL_AXIS_DISTANCE)
-    wlr_tablet_v2_tablet_tool_notify_distance (phoc_tool->tablet_v2_tool, event->distance);
+    wlr_tablet_v2_tablet_tool_notify_distance (tool->tablet_v2_tool, event->distance);
 
   if (event->updated_axes & WLR_TABLET_TOOL_AXIS_TILT_X)
-    phoc_tool->tilt_x = event->tilt_x;
+    phoc_tablet_set_tilt_x (tool, event->tilt_x);
 
   if (event->updated_axes & WLR_TABLET_TOOL_AXIS_TILT_Y)
-    phoc_tool->tilt_y = event->tilt_y;
+    phoc_tablet_set_tilt_y (tool, event->tilt_y);
 
   if (event->updated_axes & (WLR_TABLET_TOOL_AXIS_TILT_X | WLR_TABLET_TOOL_AXIS_TILT_Y)) {
-    wlr_tablet_v2_tablet_tool_notify_tilt (phoc_tool->tablet_v2_tool,
-                                           phoc_tool->tilt_x,
-                                           phoc_tool->tilt_y);
+    wlr_tablet_v2_tablet_tool_notify_tilt (tool->tablet_v2_tool,
+                                           tool->tilt_x,
+                                           tool->tilt_y);
   }
 
   if (event->updated_axes & WLR_TABLET_TOOL_AXIS_ROTATION)
-    wlr_tablet_v2_tablet_tool_notify_rotation (phoc_tool->tablet_v2_tool, event->rotation);
+    wlr_tablet_v2_tablet_tool_notify_rotation (tool->tablet_v2_tool, event->rotation);
 
   if (event->updated_axes & WLR_TABLET_TOOL_AXIS_SLIDER)
-    wlr_tablet_v2_tablet_tool_notify_slider (phoc_tool->tablet_v2_tool, event->slider);
+    wlr_tablet_v2_tablet_tool_notify_slider (tool->tablet_v2_tool, event->slider);
 
   if (event->updated_axes & WLR_TABLET_TOOL_AXIS_WHEEL)
-    wlr_tablet_v2_tablet_tool_notify_wheel (phoc_tool->tablet_v2_tool, event->wheel_delta, 0);
+    wlr_tablet_v2_tablet_tool_notify_wheel (tool->tablet_v2_tool, event->wheel_delta, 0);
 
   phoc_seat_notify_activity (cursor->seat);
 }
@@ -370,105 +366,50 @@ handle_tool_tip (struct wl_listener *listener, void *data)
 {
   PhocCursor *cursor = wl_container_of (listener, cursor, tool_tip);
   struct wlr_tablet_tool_tip_event *event = data;
-  PhocTabletTool *phoc_tool = event->tool->data;
+  PhocTabletTool *tool = event->tool->data;
 
   if (event->state == WLR_TABLET_TOOL_TIP_DOWN) {
-    wlr_tablet_v2_tablet_tool_notify_down (phoc_tool->tablet_v2_tool);
-    wlr_tablet_tool_v2_start_implicit_grab (phoc_tool->tablet_v2_tool);
+    wlr_tablet_v2_tablet_tool_notify_down (tool->tablet_v2_tool);
+    wlr_tablet_tool_v2_start_implicit_grab (tool->tablet_v2_tool);
   } else {
-    wlr_tablet_v2_tablet_tool_notify_up (phoc_tool->tablet_v2_tool);
+    wlr_tablet_v2_tablet_tool_notify_up (tool->tablet_v2_tool);
   }
 
   phoc_seat_notify_activity (cursor->seat);
 }
 
-static void
-handle_tablet_tool_destroy (struct wl_listener *listener, void *data)
-{
-  PhocTabletTool *tool = wl_container_of (listener, tool, tool_destroy);
-
-  wl_list_remove (&tool->link);
-  wl_list_remove (&tool->tool_link);
-
-  wl_list_remove (&tool->tool_destroy.link);
-  wl_list_remove (&tool->set_cursor.link);
-
-  free (tool);
-}
 
 static void
 handle_tool_button (struct wl_listener *listener, void *data)
 {
   PhocCursor *cursor = wl_container_of (listener, cursor, tool_button);
   struct wlr_tablet_tool_button_event *event = data;
-  PhocTabletTool *phoc_tool = event->tool->data;
+  PhocTabletTool *tool = event->tool->data;
 
-  wlr_tablet_v2_tablet_tool_notify_button (phoc_tool->tablet_v2_tool,
+  wlr_tablet_v2_tablet_tool_notify_button (tool->tablet_v2_tool,
                                            (enum zwp_tablet_pad_v2_button_state)event->button,
                                            (enum zwp_tablet_pad_v2_button_state)event->state);
 
   phoc_seat_notify_activity (cursor->seat);
 }
 
-static void
-handle_tablet_tool_set_cursor (struct wl_listener *listener, void *data)
-{
-  PhocTabletTool *tool = wl_container_of (listener, tool, set_cursor);
-  struct wlr_tablet_v2_event_cursor *event = data;
-  struct wlr_surface *focused_surface = event->seat_client->seat->pointer_state.focused_surface;
-  struct wl_client *focused_client = NULL;
-  gboolean has_focused = focused_surface != NULL && focused_surface->resource != NULL;
-
-  phoc_seat_notify_activity (tool->seat);
-
-  if (has_focused)
-    focused_client = wl_resource_get_client (focused_surface->resource);
-
-  if (event->seat_client->client != focused_client ||
-      phoc_cursor_get_mode (tool->seat->cursor) != PHOC_CURSOR_PASSTHROUGH) {
-    g_debug ("Denying request to set cursor from unfocused client");
-    return;
-  }
-
-  phoc_cursor_set_image (tool->seat->cursor,
-                         focused_client,
-                         event->surface,
-                         event->hotspot_x,
-                         event->hotspot_y);
-}
 
 static void
 handle_tool_proximity (struct wl_listener *listener, void *data)
 {
-  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
   PhocCursor *cursor = wl_container_of (listener, cursor, tool_proximity);
   struct wlr_tablet_tool_proximity_event *event = data;
-  struct wlr_tablet_tool *tool = event->tool;
+  struct wlr_tablet_tool *wlr_tool = event->tool;
 
   phoc_seat_notify_activity (cursor->seat);
 
-  if (!tool->data) {
-    PhocTabletTool *phoc_tool = g_new0 (PhocTabletTool, 1);
-
-    phoc_tool->seat = cursor->seat;
-    tool->data = phoc_tool;
-    phoc_tool->tablet_v2_tool = wlr_tablet_tool_create (desktop->tablet_v2,
-                                                        cursor->seat->seat,
-                                                        tool);
-
-    phoc_tool->tool_destroy.notify = handle_tablet_tool_destroy;
-    wl_signal_add (&tool->events.destroy, &phoc_tool->tool_destroy);
-
-    phoc_tool->set_cursor.notify = handle_tablet_tool_set_cursor;
-    wl_signal_add (&phoc_tool->tablet_v2_tool->events.set_cursor, &phoc_tool->set_cursor);
-
-    wl_list_init (&phoc_tool->link);
-    wl_list_init (&phoc_tool->tool_link);
-  }
+  if (wlr_tool->data == NULL)
+    phoc_tablet_tool_new (wlr_tool, cursor->seat);
 
   if (event->state == WLR_TABLET_TOOL_PROXIMITY_OUT) {
-    PhocTabletTool *phoc_tool = tool->data;
-    wlr_tablet_v2_tablet_tool_notify_proximity_out (phoc_tool->tablet_v2_tool);
+    PhocTabletTool *tool = wlr_tool->data;
+
+    wlr_tablet_v2_tablet_tool_notify_proximity_out (tool->tablet_v2_tool);
 
     /* Clear cursor image if there's no pointing device. */
     if (phoc_seat_has_pointer (cursor->seat) == FALSE)
@@ -477,8 +418,12 @@ handle_tool_proximity (struct wl_listener *listener, void *data)
     return;
   }
 
-  handle_tablet_tool_position (cursor, event->tablet->base.data, event->tool,
-                               true, true, event->x, event->y, 0, 0);
+  handle_tablet_tool_position (cursor,
+                               event->tablet->base.data,
+                               event->tool,
+                               true, true,
+                               event->x, event->y,
+                               0, 0);
 }
 
 
@@ -1001,132 +946,41 @@ seat_add_touch (PhocSeat *seat, struct wlr_input_device *device)
   phoc_seat_add_input_mapping_settings (seat, PHOC_INPUT_DEVICE (touch));
 }
 
+
 static void
-handle_tablet_pad_destroy (struct wl_listener *listener, void *data)
+phoc_seat_tablet_pads_set_focus (PhocSeat *self, struct wlr_surface *wlr_surface)
 {
-  PhocTabletPad *tablet_pad = wl_container_of (listener, tablet_pad, device_destroy);
-  PhocSeat *seat = tablet_pad->seat;
+  for (GSList *l = self->tablet_pads; l; l = l->next) {
+    PhocTabletPad *tablet_pad = PHOC_TABLET_PAD (l->data);
 
-  wl_list_remove (&tablet_pad->device_destroy.link);
-  wl_list_remove (&tablet_pad->tablet_destroy.link);
-  wl_list_remove (&tablet_pad->attach.link);
-  wl_list_remove (&tablet_pad->link);
-
-  wl_list_remove (&tablet_pad->button.link);
-  wl_list_remove (&tablet_pad->strip.link);
-  wl_list_remove (&tablet_pad->ring.link);
-  free (tablet_pad);
-
-  seat_update_capabilities (seat);
+    phoc_tablet_pad_set_focus (tablet_pad, wlr_surface);
+  }
 }
 
+
 static void
-handle_pad_tool_destroy (struct wl_listener *listener, void *data)
+on_tablet_pad_destroy (PhocTabletPad *tablet_pad)
 {
-  PhocTabletPad *pad = wl_container_of (listener, pad, tablet_destroy);
+  PhocSeat *self = phoc_input_device_get_seat (PHOC_INPUT_DEVICE (tablet_pad));
 
-  pad->tablet = NULL;
+  self->tablet_pads = g_slist_remove (self->tablet_pads, tablet_pad);
+  g_object_unref (tablet_pad);
 
-  wl_list_remove (&pad->tablet_destroy.link);
-  wl_list_init (&pad->tablet_destroy.link);
+  seat_update_capabilities (self);
 }
 
-static void
-attach_tablet_pad (PhocTabletPad *pad,
-                   PhocTablet    *tool)
-{
-  struct wlr_input_device *device = phoc_input_device_get_device (PHOC_INPUT_DEVICE (tool));
-
-  g_debug ("Attaching tablet pad \"%s\" to tablet tool \"%s\"",
-           pad->device->name, device->name);
-
-  pad->tablet = tool;
-
-  wl_list_remove (&pad->tablet_destroy.link);
-  pad->tablet_destroy.notify = handle_pad_tool_destroy;
-  wl_signal_add (&device->events.destroy, &pad->tablet_destroy);
-}
 
 static void
-handle_tablet_pad_attach (struct wl_listener *listener, void *data)
+seat_add_tablet_pad (PhocSeat *self, struct wlr_input_device *device)
 {
-  PhocTabletPad *pad = wl_container_of (listener, pad, attach);
-  struct wlr_tablet_tool *wlr_tool = data;
-  PhocTablet *tool = wlr_tool->data;
+  PhocTabletPad *tablet_pad;
 
-  attach_tablet_pad (pad, tool);
-}
+  tablet_pad = phoc_tablet_pad_new (device, self);
+  g_signal_connect (tablet_pad, "device-destroy",
+                    G_CALLBACK (on_tablet_pad_destroy),
+                    NULL);
 
-static void
-handle_tablet_pad_ring (struct wl_listener *listener, void *data)
-{
-  PhocTabletPad *pad = wl_container_of (listener, pad, ring);
-  struct wlr_tablet_pad_ring_event *event = data;
-
-  wlr_tablet_v2_tablet_pad_notify_ring (pad->tablet_v2_pad,
-                                        event->ring, event->position,
-                                        event->source == WLR_TABLET_PAD_RING_SOURCE_FINGER,
-                                        event->time_msec);
-}
-
-static void
-handle_tablet_pad_strip (struct wl_listener *listener, void *data)
-{
-  PhocTabletPad *pad = wl_container_of (listener, pad, strip);
-  struct wlr_tablet_pad_strip_event *event = data;
-
-  wlr_tablet_v2_tablet_pad_notify_strip (pad->tablet_v2_pad,
-                                         event->strip, event->position,
-                                         event->source == WLR_TABLET_PAD_STRIP_SOURCE_FINGER,
-                                         event->time_msec);
-}
-
-static void
-handle_tablet_pad_button (struct wl_listener *listener, void *data)
-{
-  PhocTabletPad *pad = wl_container_of (listener, pad, button);
-  struct wlr_tablet_pad_button_event *event = data;
-
-  wlr_tablet_v2_tablet_pad_notify_mode (pad->tablet_v2_pad,
-                                        event->group, event->mode, event->time_msec);
-
-  wlr_tablet_v2_tablet_pad_notify_button (pad->tablet_v2_pad,
-                                          event->button, event->time_msec,
-                                          (enum zwp_tablet_pad_v2_button_state)event->state);
-}
-
-static void
-seat_add_tablet_pad (PhocSeat *seat, struct wlr_input_device *device)
-{
-  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
-  PhocTabletPad *tablet_pad = g_new0 (PhocTabletPad, 1);
-  struct wlr_tablet_pad *wlr_tablet_pad = wlr_tablet_pad_from_input_device (device);
-
-  device->data = tablet_pad;
-  tablet_pad->device = device;
-  tablet_pad->seat = seat;
-  wl_list_insert (&seat->tablet_pads, &tablet_pad->link);
-
-  tablet_pad->device_destroy.notify = handle_tablet_pad_destroy;
-  wl_signal_add (&tablet_pad->device->events.destroy,
-                 &tablet_pad->device_destroy);
-
-  tablet_pad->attach.notify = handle_tablet_pad_attach;
-  wl_signal_add (&wlr_tablet_pad->events.attach_tablet,
-                 &tablet_pad->attach);
-
-  tablet_pad->button.notify = handle_tablet_pad_button;
-  wl_signal_add (&wlr_tablet_pad->events.button, &tablet_pad->button);
-
-  tablet_pad->strip.notify = handle_tablet_pad_strip;
-  wl_signal_add (&wlr_tablet_pad->events.strip, &tablet_pad->strip);
-
-  tablet_pad->ring.notify = handle_tablet_pad_ring;
-  wl_signal_add (&wlr_tablet_pad->events.ring, &tablet_pad->ring);
-
-  wl_list_init (&tablet_pad->tablet_destroy.link);
-
-  tablet_pad->tablet_v2_pad = wlr_tablet_pad_create (desktop->tablet_v2, seat->seat, device);
+  self->tablet_pads = g_slist_prepend (self->tablet_pads, tablet_pad);
 
   /* Search for a sibling tablet */
   if (!wlr_input_device_is_libinput (device)) {
@@ -1137,7 +991,7 @@ seat_add_tablet_pad (PhocSeat *seat, struct wlr_input_device *device)
   struct libinput_device_group *group =
     libinput_device_get_device_group (wlr_libinput_get_device_handle (device));
 
-  for (GSList *elem = seat->tablets; elem; elem = elem->next) {
+  for (GSList *elem = self->tablets; elem; elem = elem->next) {
     PhocInputDevice *input_device = PHOC_INPUT_DEVICE (elem->data);
 
     if (!phoc_input_device_get_is_libinput (input_device))
@@ -1145,62 +999,63 @@ seat_add_tablet_pad (PhocSeat *seat, struct wlr_input_device *device)
 
     struct libinput_device *li_dev = phoc_input_device_get_libinput_device_handle (input_device);
     if (libinput_device_get_device_group (li_dev) == group) {
-      attach_tablet_pad (tablet_pad, PHOC_TABLET (input_device));
+      phoc_tablet_pad_attach_tablet (tablet_pad, PHOC_TABLET (input_device));
       break;
     }
   }
 }
 
 static void
-on_tablet_destroy (PhocSeat *seat, PhocTablet *tablet)
+on_tablet_destroy (PhocSeat *self, PhocTablet *tablet)
 {
   PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
-  PhocSeatPrivate *priv = phoc_seat_get_instance_private (seat);
+  PhocSeatPrivate *priv = phoc_seat_get_instance_private (self);
   struct wlr_input_device *device = phoc_input_device_get_device (PHOC_INPUT_DEVICE (tablet));
 
   g_assert (PHOC_IS_TABLET (tablet));
   g_debug ("Removing tablet device: %s", device->name);
-  wlr_cursor_detach_input_device (seat->cursor->cursor, device);
+  wlr_cursor_detach_input_device (self->cursor->cursor, device);
   g_hash_table_remove (priv->input_mapping_settings, tablet);
   g_hash_table_remove (desktop->input_output_map, device->name);
 
-  seat->tablets = g_slist_remove (seat->tablets, tablet);
+  self->tablets = g_slist_remove (self->tablets, tablet);
   g_object_unref (tablet);
 
-  seat_update_capabilities (seat);
+  seat_update_capabilities (self);
 }
 
 static void
-seat_add_tablet_tool (PhocSeat                *seat,
-                      struct wlr_input_device *device)
+seat_add_tablet_tool (PhocSeat *self, struct wlr_input_device *device)
 {
   PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
 
   if (!wlr_input_device_is_libinput (device))
     return;
 
-  PhocTablet *tablet = phoc_tablet_new (device, seat);
-  seat->tablets = g_slist_prepend (seat->tablets, tablet);
+  PhocTablet *tablet = phoc_tablet_new (device, self);
+  self->tablets = g_slist_prepend (self->tablets, tablet);
   g_signal_connect_swapped (tablet, "device-destroy",
                             G_CALLBACK (on_tablet_destroy),
-                            seat);
+                            self);
 
-  wlr_cursor_attach_input_device (seat->cursor->cursor, device);
-  phoc_seat_add_input_mapping_settings (seat, PHOC_INPUT_DEVICE (tablet));
+  wlr_cursor_attach_input_device (self->cursor->cursor, device);
+  phoc_seat_add_input_mapping_settings (self, PHOC_INPUT_DEVICE (tablet));
 
-  tablet->tablet_v2 = wlr_tablet_create (desktop->tablet_v2, seat->seat, device);
+  tablet->tablet_v2 = wlr_tablet_create (desktop->tablet_v2, self->seat, device);
 
   struct libinput_device_group *group =
     libinput_device_get_device_group (wlr_libinput_get_device_handle (device));
-  PhocTabletPad *pad;
 
-  wl_list_for_each (pad, &seat->tablet_pads, link) {
-    if (!wlr_input_device_is_libinput (pad->device))
+  for (GSList *l = self->tablet_pads; l; l = l->next) {
+    PhocInputDevice *pad_device = PHOC_INPUT_DEVICE (l->data);
+    struct wlr_input_device *wlr_device = phoc_input_device_get_device (pad_device);
+
+    if (!wlr_input_device_is_libinput (wlr_device))
       continue;
 
-    struct libinput_device *li_dev = wlr_libinput_get_device_handle (pad->device);
+    struct libinput_device *li_dev = wlr_libinput_get_device_handle (wlr_device);
     if (libinput_device_get_device_group (li_dev) == group)
-      attach_tablet_pad (pad, tablet);
+      phoc_tablet_pad_attach_tablet (PHOC_TABLET_PAD (pad_device), tablet);
   }
 }
 
@@ -1519,25 +1374,17 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
 
   /* An existing keyboard grab might try to deny setting focus, so cancel it */
   wlr_seat_keyboard_end_grab (seat->seat);
-
   struct wlr_keyboard *keyboard = wlr_seat_get_keyboard (seat->seat);
   if (keyboard) {
     wlr_seat_keyboard_notify_enter (seat->seat, view->wlr_surface,
                                     keyboard->keycodes, keyboard->num_keycodes,
                                     &keyboard->modifiers);
-    /* FIXME: Move this to a better place */
-    PhocTabletPad *pad;
-    wl_list_for_each (pad, &seat->tablet_pads, link) {
-      if (pad->tablet)
-        wlr_tablet_v2_tablet_pad_notify_enter (pad->tablet_v2_pad,
-                                               pad->tablet->tablet_v2,
-                                               view->wlr_surface);
-    }
   } else {
     wlr_seat_keyboard_notify_enter (seat->seat, view->wlr_surface, NULL, 0, NULL);
   }
 
   g_debug ("Focused view %p", view);
+  phoc_seat_tablet_pads_set_focus (seat, view->wlr_surface);
   phoc_cursor_update_focus (seat->cursor);
   phoc_input_method_relay_set_focus (&seat->im_relay, view->wlr_surface);
 
@@ -1948,7 +1795,6 @@ phoc_seat_init (PhocSeat *self)
 {
   PhocSeatPrivate *priv = phoc_seat_get_instance_private (self);
 
-  wl_list_init (&self->tablet_pads);
   priv->views = g_queue_new ();
 
   self->touch_id = -1;

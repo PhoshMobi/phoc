@@ -1,4 +1,5 @@
-/* Copyright (C) 2019 Purism SPC
+/*
+ * Copyright (C) 2019 Purism SPC
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -17,12 +18,11 @@ G_BEGIN_DECLS
  *
  * A tablet input device
  */
-struct _PhocTablet {
-  PhocInputDevice              parent;
+typedef struct _PhocTablet {
+  PhocInputDevice parent;
 
   struct wlr_tablet_v2_tablet *tablet_v2;
-};
-
+} PhocTablet;
 
 #define PHOC_TYPE_TABLET (phoc_tablet_get_type ())
 

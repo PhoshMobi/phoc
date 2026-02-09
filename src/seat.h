@@ -10,7 +10,6 @@
 #include "drag-icon.h"
 #include "input.h"
 #include "input-method-relay.h"
-#include "layer-shell.h"
 #include "shortcuts-inhibit.h"
 
 #include <wlr/types/wlr_switch.h>
@@ -26,7 +25,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (PhocSeat, phoc_seat, PHOC, SEAT, GObject)
 
 typedef struct _PhocCursor PhocCursor;
-typedef struct _PhocTablet PhocTablet;
 
 /**
  * PhocSeat:
@@ -60,7 +58,7 @@ typedef struct _PhocSeat {
   GSList                         *switches;  /* (element-type PhocSwitch) */
   GSList                         *touch;     /* (element-type PhocTouch) */
   GSList                         *tablets;   /* (element-type PhocTablet) */
-  struct wl_list                  tablet_pads;
+  GSList                         *tablet_pads; /* (element-type PhocTabletPads) */
 
   struct wl_listener              request_set_selection;
   struct wl_listener              request_set_primary_selection;
@@ -83,40 +81,6 @@ typedef struct _PhocSeatView {
   double             grab_sx;
   double             grab_sy;
 } PhocSeatView;
-
-
-typedef struct _PhocTabletPad {
-  struct wl_list                   link;
-  struct wlr_tablet_v2_tablet_pad *tablet_v2_pad;
-
-  PhocSeat                        *seat;
-  struct wlr_input_device         *device;
-
-  struct wl_listener               device_destroy;
-  struct wl_listener               attach;
-  struct wl_listener               button;
-  struct wl_listener               ring;
-  struct wl_listener               strip;
-
-  PhocTablet                      *tablet;
-  struct wl_listener               tablet_destroy;
-} PhocTabletPad;
-
-
-typedef struct _PhocTabletTool {
-  struct wl_list                    link;
-  struct wl_list                    tool_link;
-  struct wlr_tablet_v2_tablet_tool *tablet_v2_tool;
-
-  PhocSeat                         *seat;
-  double                            tilt_x, tilt_y;
-
-  struct wl_listener                set_cursor;
-  struct wl_listener                tool_destroy;
-
-  PhocTablet                       *current_tablet;
-  struct wl_listener                tablet_destroy;
-} PhocTabletTool;
 
 
 typedef struct PhocPointerConstraint {
