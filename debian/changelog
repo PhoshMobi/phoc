@@ -1,3 +1,185 @@
+phoc (0.53~rc1) experimental; urgency=medium
+
+  [ Guido Günther ]
+  * desktop: Sort protocols alphabetically
+  * view: Simplify clearing toplevel handles
+  * server: Bump default buffer size.
+    Otherwise we might run out of space with the 4096 byte default.
+    Use 1 MiB instead.
+  * layer-shell-effects: Remove unused header
+  * keybindings: Split out updating accelerators
+  * keybindings: Move creating a binding into its own functions
+  * keyboards: Move keybindings to keyboard.
+    Giving each keyboard its own keybinding instance will allow them
+    to have different keysyms when necessary.
+    This will allow us to parse pseudo keysyms like `above_tab` per layout.
+    The fact that the keybindings are part of `PhocConfig` is mostly historic.
+  * keybindings: Properly namespace parser
+  * keybindings: Fix indent
+  * keybindings: Allow to set context.
+    This allows other places in phoc to set data relevant for keybinding parsing.
+    This is a bit more generic than passing in the keyboard and also makes it
+    clear which data we're actually interested in.
+  * keyboard: Update keybindings context when layout changes.
+    This is currently a noop.
+  * keybindings: Allow to add context argument to parsing
+  * keydings: Add a simple parser test
+  * view: Don't rely on g_return_fail to be compiled enabled.
+    This shouldn't be dependent on G_DISABLE_CHECKS.
+  * view: Don't get server multiple times.
+    Makes for shorter calls.
+  * pointer: Log when we got a 0 serial on button press/release.
+    This might indicate that press/release got out of sync but can
+    also just be that there's no grab (e.g. when clicking on empty
+    screen area).
+  * view-child: Don't invoke phoc_input_update_cursor_focus on map.
+    This prevents us from resetting the mouse button press counter
+    as tracked by wlroots when the button press/release pops up a
+    subsurface:
+    ```
+    phoc_view_child_map_default
+      --> phoc_input_update_cursor_focus
+        --> phoc_cursor_update_position
+          --> send_pointer_enter
+            --> wlr_seat_pointer_notify_enter resets button counter
+    ```
+    Due to that button counter reset we lose the button up event
+    as the following
+    ```
+    send_pointer_button
+      --> wlr_seat_pointer_notify_button
+    ```
+    doesn't see the button as pressed anymore.
+    This makes some popups in inkscape (built from a subsurface) or
+    some buttons in GTK3 inspector unclickable.
+    To reproduce try to change e.g. a boolean property of a widget in
+    GTK3 inspector. The opened popup closes when clicking the button
+    in the popup instead of toggling the button.
+    Same in inkscape when you draw a rectangle and right click on it.
+    Selection from the menu then isn't possible.
+    As we don't do it on map we shouldn't do it on unmap either.
+    Closes: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/406
+  * output: Add helper to set fullscreen view.
+    Use this from where we set a view as fullscreen
+  * view: Clear fullscreen output when switching outputs.
+    When switching from one output to another we should clear the
+    old one. We also shouldn't overwrite saved geometry with a
+    fullscreen geometry in this case.
+  * seat: Don't unfullscreen views when they lose focus.
+    We only clear and set the outputs notion of fullscreen so scanout, etc
+    happens correctly.
+  * seat: Exit early when new focus view is old one.
+    We don't want to change the fullscreen state in that case.
+    Closes: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/386
+  * ci: Update to 2025-02-04
+  * tablet: Move structs to tablet class.
+    This makes the seat header more seat specific and groups the
+    tablets ones. We'll split out the pad soon into its own object.
+  * seat: Use GSList for tablet pads.
+    This treats all input devices the same way
+  * tablet: Make TabletPad a GObject.
+    This allows us to reuse our PhocInputDevice class
+  * seat: Move tablet pad focus handling to PhocTabletPad.
+    Addresses another FIXME. We also add sending leave events.
+  * tablet-pad: Move most of the device init over from seat.
+    This reduces our seat class (which needs some polishing)
+  * seat: Drop PhocTablet typedef.
+    With the structs moved we don't need to forward declare it.
+  * tablet-pad: Move tablet attach to class
+  * tablet-pad: Use PhocInputDevice's destroy handling.
+    Use the parent class handling so we can drop the listener.
+  * tablet-pad: Make class struct private.
+    We've removed all direct references
+  * tablet: Remove unused links from tool
+  * seat: Split out tablet-tool as well.
+    We could put it into the tablet unit but let's just use a separte one
+  * seat: Drop phoc_ prefix from tool.
+    Leftovers from rootston
+  * tablet-tool: Add setter for tilt values
+  * tablet-tool: Drop unused variables
+  * desktop-xwayland: Set log domain.
+    Otherwise we can't get useful logs out there
+  * desktop-xwayland: Print more surface details.
+    Size is relevant for e.g. fullscreen / maxmize
+  * input: Remove unused desktop
+  * input: Remove unused includes
+  * view: Use `self` in view_center.
+    We still have some cleanup to do, let's start here. We move
+    some variable declarations to the top too.
+  * examples/layer-shell-effects: Move anchor optarg parsing into function.
+    Cleanup a bit while at that.
+  * examples/layer-shell-effects: Set some reasonable defaults.
+    Default to emulating a top panel so we don't need to specify dozens
+    of options for this.
+    As the anchor option can be given multiple times we need to clear the
+    default if there are options on the command line.
+  * examples/layer-shell-effects: Move layers optarg parsing into function
+  * xwayland-surface: Pick up non-1 surface size.
+    When starting an X11 application maximized or fullscreen we see
+    a 1x1 surface size from Xwayland initially that only later gets
+    updated.
+    At that point the view_save() for the maximize already happened
+    and thus when we unmaxmize the surface disappears as it is only 1x1
+    pixel in size.
+    Update the surface size in these situations.
+    To reproduce:`
+       _build/src/phoc --xwayland -E "xterm -fullscreen"
+    and then use `foreign-toplevel` from wlr-clients:
+       _build/foreign-toplevel -S 0
+  * ptk: Damage cursor at 0,0
+  * view: Allow to get and set pending box.
+    Using this will allow us to make the pending_move_resize struct private eventually.
+  * output: Allow to get cutout information for a given view.
+    We always fill it in now, not only when drawing the cutout overlay.
+  * output: Allow to get corner information for a given view
+  * output: Allow to toggle cutout debugging at runtime
+  * output: Simplify cutout rendering.
+    Avoid going through the `render-end` signal
+  * server: Allow to set DT compatibles.
+    Useful in tests
+  * testlib: Allow to set DT compatibles
+  * xx-cutouts: Add xx-cutouts-v1 protocol implementation.
+    The base protocol implementation will move to wlroots
+    once merged in wayland-protocols.
+    We vendor the current protocol version from
+    https://gitlab.freedesktop.org/wayland/wayland-protocols/-/merge_requests/372
+  * ptk: Get xdg-cutouts-manager-v1 global
+  * ptk: Add cutout demo.
+    Renders the cutout information sent by the compositor as bounding boxes. Left click
+    maximizes / unmaximizes the surface.
+    Run e.g. nested with
+    ```
+    PHOC_DEBUG=fake-builtin,cutouts _build/run -E "_build/examples/ptk-demo --run cutouts"
+    ```
+    To add layer-shell to the tests one can spawn an additional client:
+    ```
+    WAYLAND_DISPLAY=wayland-1 _build/examples/layer-shell-effects -l overlay -h 350 -a left -a top -a right -w 0 -f -300 -t 0.5 -e 50 -A
+    ```
+    To overlay different cutouts use e.g.
+    ```
+    export G_RESOURCE_OVERLAYS=/mobi/phosh/gmobile/devices/display-panels=$PWD
+    ```
+    and add a oneplus,fajita.json with the intended data. See
+    https://phosh.mobi/posts/notch-support/#information-about-the-cutouts
+
+  [ Arun Mani J ]
+  * xdg-toplevel: Fix typo.
+    Fixes: 5b066717b ("xdg-surfae: Rename source files to xdg-toplevel")
+
+  [ Teemu Ikonen ]
+  * workspace: Add phoc_workspace_cycle method
+  * keybindings: Add handlers for cycling through windows in a workspace
+  * keybindings: Set 'switch-windows(-backward)' bindings
+  * keybindings: Translate 'Above_Tab' pseudo-keysym to a real keysym.
+    Set keybindings context->above_tab_keysym when PhocKeyboard layout is changed and
+    (re)load keybindings from GSettings with a new method phoc_keybindings_load_settings().
+    Use the keybindings context (if defined) in phoc_keybindings_parse_accelerator() to parse the
+    'Above_Tab' pseudo-keysym.
+    Remove phoc_keybindings_constructed() method and move initialization to phoc_keybindings_init().
+    Add a test for 'Above_Tab' parsing
+
+ -- Guido Günther <agx@sigxcpu.org>  Mon, 09 Feb 2026 11:42:54 +0100
+
 phoc (0.52.0) experimental; urgency=medium
 
   * build: Use released gmobile

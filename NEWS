@@ -1,3 +1,26 @@
+phoc 0.53~rc1
+-------------
+Released February 2026
+* New protocol support:
+  * xx-cutouts-v1 protocol: Allow clients to receive display cutout information
+* Improvements:
+  * Handle `Above_Tab` pseudo keysym
+  * Allow to cycle through windows on a workspace
+  * Allow apps to stay fullscreen when losing focus (helps e.g. full screen games)
+* Bug fixes:
+  * Bump default buffer size to avoid some busy Wayland clients from being disconnected
+  * Fix issue preventing some GTK3 popups activatable via mouse
+  * Fix some initially fullscreen X11 apps getting resized to 1x1 pixels (thus seemingly
+    disappearing) when unfullscreened.
+* Another round of internal cleanups and improvements
+* Issues fixed:
+    * https://gitlab.gnome.org/World/Phosh/phoc/-/issues/406
+    * https://gitlab.gnome.org/World/Phosh/phoc/-/issues/386
+* Contributors:
+    * Arun Mani J
+    * Guido Günther
+    * Teemu Ikonen
+
 phoc 0.52.0
 -----------
 Released January 2026
