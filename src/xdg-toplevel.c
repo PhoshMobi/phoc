@@ -154,24 +154,23 @@ apply_size_constraints (struct wlr_xdg_toplevel *wlr_xdg_toplevel,
   *dest_height = height;
 
   struct wlr_xdg_toplevel_state *state = &wlr_xdg_toplevel->current;
-  if (width < state->min_width) {
+  if (width < state->min_width)
     *dest_width = state->min_width;
-  } else if (state->max_width > 0 && width > state->max_width) {
+  else if (state->max_width > 0 && width > state->max_width)
     *dest_width = state->max_width;
-  }
-  if (height < state->min_height) {
+
+  if (height < state->min_height)
     *dest_height = state->min_height;
-  } else if (state->max_height > 0 && height > state->max_height) {
+  else if (state->max_height > 0 && height > state->max_height)
     *dest_height = state->max_height;
-  }
 }
 
 static void
 resize (PhocView *view, uint32_t width, uint32_t height)
 {
   struct wlr_xdg_toplevel *wlr_xdg_toplevel = PHOC_XDG_TOPLEVEL (view)->xdg_toplevel;
-
   uint32_t constrained_width, constrained_height;
+
   apply_size_constraints (wlr_xdg_toplevel, width, height, &constrained_width, &constrained_height);
 
   if (wlr_xdg_toplevel->scheduled.width == constrained_width &&
@@ -305,9 +304,9 @@ _close (PhocView *view)
 }
 
 static void
-for_each_surface (PhocView                    *view,
-                  wlr_surface_iterator_func_t  iterator,
-                  void                        *user_data)
+for_each_surface (PhocView                   *view,
+                  wlr_surface_iterator_func_t iterator,
+                  void                       *user_data)
 {
   struct wlr_xdg_toplevel *xdg_toplevel = PHOC_XDG_TOPLEVEL (view)->xdg_toplevel;
 
@@ -365,8 +364,8 @@ get_pid (PhocView *view)
 
 
 static void
-phoc_xdg_toplevel_set_capabilities (PhocXdgToplevel                        *self,
-                                    enum wlr_xdg_toplevel_wm_capabilities  caps)
+phoc_xdg_toplevel_set_capabilities (PhocXdgToplevel                      *self,
+                                    enum wlr_xdg_toplevel_wm_capabilities caps)
 {
   uint32_t version;
   struct wlr_xdg_toplevel *toplevel = self->xdg_toplevel;

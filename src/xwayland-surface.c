@@ -101,9 +101,10 @@ move (PhocView *view, double x, double y)
   if (!is_moveable (view))
     return;
 
-  view_update_position(view, x, y);
-  wlr_xwayland_surface_configure(xwayland_surface, x, y,
-                                 xwayland_surface->width, xwayland_surface->height);
+  view_update_position (view, x, y);
+  wlr_xwayland_surface_configure (xwayland_surface,
+                                  x, y,
+                                  xwayland_surface->width, xwayland_surface->height);
 }
 
 static void
@@ -114,27 +115,30 @@ apply_size_constraints (PhocView                    *view,
                         uint32_t                    *dest_width,
                         uint32_t                    *dest_height)
 {
+  xcb_size_hints_t *size_hints;
+
   *dest_width = width;
   *dest_height = height;
 
   if (phoc_view_is_maximized (view))
     return;
 
-  xcb_size_hints_t *size_hints = xwayland_surface->size_hints;
-  if (size_hints != NULL) {
-    if (size_hints->min_width > 0 && width < (uint32_t)size_hints->min_width) {
-      *dest_width = size_hints->min_width;
-    } else if (size_hints->max_width > 0 &&
-               width > (uint32_t)size_hints->max_width) {
-      *dest_width = size_hints->max_width;
-    }
-    if (size_hints->min_height > 0 && height < (uint32_t)size_hints->min_height) {
-      *dest_height = size_hints->min_height;
-    } else if (size_hints->max_height > 0 &&
-               height > (uint32_t)size_hints->max_height) {
-      *dest_height = size_hints->max_height;
-    }
-  }
+  size_hints = xwayland_surface->size_hints;
+  if (size_hints == NULL)
+    return;
+
+  g_debug ("Size hints: width: %d/%d, height: %d/%d",
+           size_hints->min_width, size_hints->max_width,
+           size_hints->min_height, size_hints->max_height);
+
+  if (size_hints->min_width > 0 && width < (uint32_t)size_hints->min_width)
+    *dest_width = size_hints->min_width;
+  else if (size_hints->max_width > 0 && width > (uint32_t)size_hints->max_width)
+    *dest_width = size_hints->max_width;
+  if (size_hints->min_height > 0 && height < (uint32_t)size_hints->min_height)
+    *dest_height = size_hints->min_height;
+  else if (size_hints->max_height > 0 && height > (uint32_t)size_hints->max_height)
+    *dest_height = size_hints->max_height;
 }
 
 static void
@@ -146,11 +150,14 @@ resize (PhocView *view, uint32_t width, uint32_t height)
   xwayland_surface = PHOC_XWAYLAND_SURFACE (view)->xwayland_surface;
 
   uint32_t constrained_width, constrained_height;
-  apply_size_constraints(view, xwayland_surface, width, height, &constrained_width,
-                         &constrained_height);
+  apply_size_constraints (view,
+                          xwayland_surface,
+                          width, height,
+                          &constrained_width, &constrained_height);
 
-  wlr_xwayland_surface_configure(xwayland_surface, xwayland_surface->x,
-                                 xwayland_surface->y, constrained_width, constrained_height);
+  wlr_xwayland_surface_configure (xwayland_surface,
+                                  xwayland_surface->x, xwayland_surface->y,
+                                  constrained_width, constrained_height);
 }
 
 static void
@@ -170,15 +177,16 @@ move_resize (PhocView *view, double x, double y, uint32_t width, uint32_t height
   bool update_y = y != view->box.y;
 
   uint32_t constrained_width, constrained_height;
-  apply_size_constraints(view, xwayland_surface, width, height, &constrained_width,
-                         &constrained_height);
+  apply_size_constraints (view,
+                          xwayland_surface,
+                          width, height,
+                          &constrained_width, &constrained_height);
 
-  if (update_x) {
+  if (update_x)
     x = x + width - constrained_width;
-  }
-  if (update_y) {
+
+  if (update_y)
     y = y + height - constrained_height;
-  }
 
   view->pending_move_resize.update_x = update_x;
   view->pending_move_resize.update_y = update_y;
@@ -187,7 +195,7 @@ move_resize (PhocView *view, double x, double y, uint32_t width, uint32_t height
   view->pending_move_resize.width = constrained_width;
   view->pending_move_resize.height = constrained_height;
 
-  wlr_xwayland_surface_configure(xwayland_surface, x, y, constrained_width, constrained_height);
+  wlr_xwayland_surface_configure (xwayland_surface, x, y, constrained_width, constrained_height);
 }
 
 static void
@@ -235,7 +243,7 @@ set_maximized (PhocView *view, bool maximized)
 }
 
 static void
-set_fullscreen(PhocView *view, bool fullscreen)
+set_fullscreen (PhocView *view, bool fullscreen)
 {
   struct wlr_xwayland_surface *xwayland_surface;
 
@@ -304,7 +312,9 @@ handle_request_configure (struct wl_listener *listener, void *data)
 
   view_update_position (PHOC_VIEW (self), event->x, event->y);
 
-  wlr_xwayland_surface_configure (xwayland_surface, event->x, event->y, event->width, event->height);
+  wlr_xwayland_surface_configure (xwayland_surface,
+                                  event->x, event->y,
+                                  event->width, event->height);
 }
 
 static PhocSeat *
@@ -319,9 +329,8 @@ guess_seat_for_view (PhocView *view)
     PhocSeat *seat = PHOC_SEAT (elem->data);
 
     g_assert (PHOC_IS_SEAT (seat));
-    if (seat->seat->pointer_state.focused_surface == view->wlr_surface) {
+    if (seat->seat->pointer_state.focused_surface == view->wlr_surface)
       return seat;
-    }
   }
   return NULL;
 }
@@ -406,14 +415,16 @@ handle_set_startup_id (struct wl_listener *listener, void *data)
   g_debug ("Got startup-id %s", self->xwayland_surface->startup_id);
 
   token = self->xwayland_surface->startup_id;
-  phoc_view_set_activation_token (PHOC_VIEW (self), token, PHOSH_PRIVATE_STARTUP_TRACKER_PROTOCOL_X11);
+  phoc_view_set_activation_token (PHOC_VIEW (self),
+                                  token,
+                                  PHOSH_PRIVATE_STARTUP_TRACKER_PROTOCOL_X11);
   if (phoc_view_is_mapped (PHOC_VIEW (self))) {
     PhocSeat *seat = phoc_server_get_last_active_seat (phoc_server_get_default ());
 
     g_debug ("Activating view %p via token '%s'", PHOC_VIEW (self), token);
     phoc_seat_set_focus_view (seat, PHOC_VIEW (self));
   } else {
-    g_debug ("Setting view %p via token '%s' as pending activation", PHOC_VIEW (self),token);
+    g_debug ("Setting view %p via token '%s' as pending activation", PHOC_VIEW (self), token);
   }
 }
 
@@ -477,14 +488,27 @@ handle_map (struct wl_listener *listener, void *data)
   view->box.width = surface->surface->current.width;
   view->box.height = surface->surface->current.height;
 
+  /* Update saved surface size if not yet set so we don't restore a 1x1 window */
+  if (phoc_view_is_fullscreen (view) && (view->saved.width == 1 && view->saved.height == 1)) {
+    PhocOutput *output = phoc_view_get_fullscreen_output (view);
+
+    view->saved.width = view->box.width;
+    view->saved.height = view->box.height;
+
+    if (output) {
+      view->saved.x = MAX (0, (output->wlr_output->width - view->saved.width) / 2);
+      view->saved.y = MAX (0, (output->wlr_output->height - view->saved.height) / 2);
+    }
+  }
+
   self->surface_commit.notify = handle_surface_commit;
   wl_signal_add (&surface->surface->events.commit, &self->surface_commit);
 
   phoc_view_map (view, surface->surface);
 
-  if (surface->override_redirect)
+  if (surface->override_redirect) {
     phoc_view_set_initial_focus (view);
-  else {
+  } else {
     if (surface->decorations == WLR_XWAYLAND_SURFACE_DECORATIONS_ALL)
       phoc_view_set_decorated (view, TRUE);
 
@@ -554,22 +578,22 @@ phoc_xwayland_surface_constructed (GObject *object)
   phoc_view_set_app_id (PHOC_VIEW (self), surface->class);
 
   self->destroy.notify = handle_destroy;
-  wl_signal_add(&surface->events.destroy, &self->destroy);
+  wl_signal_add (&surface->events.destroy, &self->destroy);
 
   self->request_configure.notify = handle_request_configure;
-  wl_signal_add(&surface->events.request_configure, &self->request_configure);
+  wl_signal_add (&surface->events.request_configure, &self->request_configure);
 
   self->request_move.notify = handle_request_move;
-  wl_signal_add(&surface->events.request_move, &self->request_move);
+  wl_signal_add (&surface->events.request_move, &self->request_move);
 
   self->request_resize.notify = handle_request_resize;
-  wl_signal_add(&surface->events.request_resize, &self->request_resize);
+  wl_signal_add (&surface->events.request_resize, &self->request_resize);
 
   self->request_maximize.notify = handle_request_maximize;
-  wl_signal_add(&surface->events.request_maximize, &self->request_maximize);
+  wl_signal_add (&surface->events.request_maximize, &self->request_maximize);
 
   self->request_fullscreen.notify = handle_request_fullscreen;
-  wl_signal_add(&surface->events.request_fullscreen, &self->request_fullscreen);
+  wl_signal_add (&surface->events.request_fullscreen, &self->request_fullscreen);
 
   self->associate.notify = handle_associate;
   wl_signal_add (&surface->events.associate, &self->associate);
@@ -578,13 +602,13 @@ phoc_xwayland_surface_constructed (GObject *object)
   wl_signal_add (&surface->events.dissociate, &self->dissociate);
 
   self->set_title.notify = handle_set_title;
-  wl_signal_add(&surface->events.set_title, &self->set_title);
+  wl_signal_add (&surface->events.set_title, &self->set_title);
 
   self->set_class.notify = handle_set_class;
-  wl_signal_add(&surface->events.set_class, &self->set_class);
+  wl_signal_add (&surface->events.set_class, &self->set_class);
 
   self->set_startup_id.notify = handle_set_startup_id;
-  wl_signal_add(&surface->events.set_startup_id, &self->set_startup_id);
+  wl_signal_add (&surface->events.set_startup_id, &self->set_startup_id);
 
   self->set_opacity.notify = handle_set_opacity;
   wl_signal_add (&surface->events.set_opacity, &self->set_opacity);
@@ -597,19 +621,19 @@ phoc_xwayland_surface_constructed (GObject *object)
 static void
 phoc_xwayland_surface_finalize (GObject *object)
 {
-  PhocXWaylandSurface *self = PHOC_XWAYLAND_SURFACE(object);
+  PhocXWaylandSurface *self = PHOC_XWAYLAND_SURFACE (object);
 
-  wl_list_remove(&self->destroy.link);
-  wl_list_remove(&self->request_configure.link);
-  wl_list_remove(&self->request_move.link);
-  wl_list_remove(&self->request_resize.link);
-  wl_list_remove(&self->request_maximize.link);
-  wl_list_remove(&self->request_fullscreen.link);
-  wl_list_remove(&self->associate.link);
-  wl_list_remove(&self->dissociate.link);
-  wl_list_remove(&self->set_title.link);
-  wl_list_remove(&self->set_class.link);
-  wl_list_remove(&self->set_startup_id.link);
+  wl_list_remove (&self->destroy.link);
+  wl_list_remove (&self->request_configure.link);
+  wl_list_remove (&self->request_move.link);
+  wl_list_remove (&self->request_resize.link);
+  wl_list_remove (&self->request_maximize.link);
+  wl_list_remove (&self->request_fullscreen.link);
+  wl_list_remove (&self->associate.link);
+  wl_list_remove (&self->dissociate.link);
+  wl_list_remove (&self->set_title.link);
+  wl_list_remove (&self->set_class.link);
+  wl_list_remove (&self->set_startup_id.link);
   wl_list_remove (&self->set_opacity.link);
 
   self->xwayland_surface->data = NULL;
@@ -648,6 +672,7 @@ phoc_xwayland_surface_class_init (PhocXWaylandSurfaceClass *klass)
   props[PROP_WLR_XWAYLAND_SURFACE] =
     g_param_spec_pointer ("wlr-xwayland-surface", "", "",
                           G_PARAM_CONSTRUCT_ONLY | G_PARAM_WRITABLE | G_PARAM_STATIC_STRINGS);
+
   g_object_class_install_properties (object_class, PROP_LAST_PROP, props);
 }
 

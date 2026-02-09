@@ -44,14 +44,16 @@ static struct wl_egl_window *egl_window;
 static struct wlr_egl_surface *egl_surface;
 static struct wl_callback *frame_callback;
 
-static uint32_t layer = ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND;
-static uint32_t anchor;
-static uint32_t width = 256, height = 256;
+static uint32_t layer = ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY;
+static uint32_t anchor = (ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP |
+                          ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
+                          ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
+static uint32_t width = 0, height = 350;
 static uint32_t handle;
 static int32_t  unfolded_margin;
-static int32_t  folded_margin;
-static uint32_t exclusive;
-static double   threshold = 1.0;
+static int32_t  folded_margin = -300;
+static uint32_t exclusive = 50;
+static double   threshold = 0.5;
 static bool     use_alpha = false;
 static bool     run_display = true;
 static int      cur_x = -1, cur_y = -1;
@@ -475,11 +477,68 @@ static const struct wl_registry_listener registry_listener = {
   .global_remove = handle_global_remove,
 };
 
+
+static bool
+parse_layers (char *arg)
+{
+  struct {
+    char                          *name;
+    enum zwlr_layer_shell_v1_layer value;
+  } layers[] = {
+    { "background", ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND },
+    { "bottom", ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM },
+    { "top", ZWLR_LAYER_SHELL_V1_LAYER_TOP },
+    { "overlay", ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY },
+  };
+
+  for (size_t i = 0; i < G_N_ELEMENTS (layers); i++) {
+    if (strcmp (arg, layers[i].name) == 0) {
+      layer = layers[i].value;
+      return true;
+    }
+  }
+
+  g_critical ("invalid layer %s", arg);
+  return false;
+}
+
+
+static gboolean
+parse_anchor (char *arg)
+{
+  static bool cleared_default;
+  struct {
+    char    *name;
+    uint32_t value;
+  } anchors[] = {
+    { "top", ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP },
+    { "bottom", ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM },
+    { "left", ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT },
+    { "right", ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT },
+  };
+
+  /* Clear the default anchor */
+  if (!cleared_default) {
+    anchor = 0;
+    cleared_default = true;
+  }
+
+  for (int i = 0; i < G_N_ELEMENTS (anchors); i++) {
+    if (strcmp (arg, anchors[i].name) == 0) {
+      anchor |= anchors[i].value;
+      return true;
+    }
+  }
+
+  g_critical ("invalid anchor %s", arg);
+  return false;
+}
+
+
 int
 main (int argc, char **argv)
 {
   char *namespace = "phoc-lse";
-  bool found;
   int c;
 
   while ((c = getopt (argc, argv, "u:f:e:w:h:H:l:a:t:A")) != -1) {
@@ -502,54 +561,14 @@ main (int argc, char **argv)
     case 'H':
       handle = atoi (optarg);
       break;
-    case 'l': {
-      struct {
-        char                          *name;
-        enum zwlr_layer_shell_v1_layer value;
-      } layers[] = {
-        { "background", ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND },
-        { "bottom", ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM },
-        { "top", ZWLR_LAYER_SHELL_V1_LAYER_TOP },
-        { "overlay", ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY },
-      };
-      found = false;
-      for (size_t i = 0; i < sizeof (layers) / sizeof (layers[0]); ++i) {
-        if (strcmp (optarg, layers[i].name) == 0) {
-          layer = layers[i].value;
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        g_critical ("invalid layer %s", optarg);
+    case 'l':
+      if (!parse_layers (optarg))
         return 1;
-      }
       break;
-    }
-    case 'a': {
-      struct {
-        char    *name;
-        uint32_t value;
-      } anchors[] = {
-        { "top", ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP },
-        { "bottom", ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM },
-        { "left", ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT },
-        { "right", ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT },
-      };
-      found = false;
-      for (size_t i = 0; i < sizeof (anchors) / sizeof (anchors[0]); ++i) {
-        if (strcmp (optarg, anchors[i].name) == 0) {
-          anchor |= anchors[i].value;
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        g_critical ("invalid anchor %s", optarg);
+    case 'a':
+      if (!parse_anchor (optarg))
         return 1;
-      }
       break;
-    }
     case 't':
       threshold = atof (optarg);
       break;

@@ -6,6 +6,8 @@
  * Author: Guido Günther <agx@sigxcpu.org>
  */
 
+#define G_LOG_DOMAIN "phoc-desktop-xwayland"
+
 #include "cursor.h"
 #include "desktop.h"
 #include "desktop-xwayland.h"
@@ -82,8 +84,13 @@ static void
 handle_xwayland_surface (struct wl_listener *listener, void *data)
 {
   struct wlr_xwayland_surface *surface = data;
-  g_debug ("new xwayland surface: title=%s, class=%s, instance=%s",
-           surface->title, surface->class, surface->instance);
+  g_debug ("New XWayland surface: title=%s, class=%s, instance=%s, width=%d, height=%d",
+           surface->title,
+           surface->class,
+           surface->instance,
+           surface->width,
+           surface->height);
+
   wlr_xwayland_surface_ping (surface);
 
   /* Ref is dropped on surface destroy */

@@ -2,11 +2,6 @@
 
 #include "phoc-config.h"
 
-#define _POSIX_C_SOURCE 200112L
-#include <assert.h>
-#include <stdlib.h>
-#include <time.h>
-#include <wayland-server-core.h>
 #include "cursor.h"
 #include "input.h"
 #include "seat.h"
@@ -107,11 +102,9 @@ phoc_input_constructed (GObject *object)
 {
   PhocInput *self = PHOC_INPUT (object);
   PhocServer *server = phoc_server_get_default ();
-  PhocDesktop *desktop = phoc_server_get_desktop (server);
   struct wlr_backend *wlr_backend = phoc_server_get_backend (server);
 
   g_debug ("Initializing phoc input");
-  g_assert (desktop);
 
   G_OBJECT_CLASS (phoc_input_parent_class)->constructed (object);
 
