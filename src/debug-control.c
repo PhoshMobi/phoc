@@ -112,6 +112,7 @@ phoc_debug_control_set_server (PhocDebugControl *self, PhocServer *server)
 {
   g_autoptr (GFlagsClass) eclass = NULL;
   PhocServerDebugFlags exported[] = {
+    PHOC_SERVER_DEBUG_FLAG_CUTOUTS,
     PHOC_SERVER_DEBUG_FLAG_DAMAGE_TRACKING,
     PHOC_SERVER_DEBUG_FLAG_DAMAGE_WHOLE,
     PHOC_SERVER_DEBUG_FLAG_TOUCH_POINTS,

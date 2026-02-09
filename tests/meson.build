@@ -49,6 +49,7 @@ tests = [
   'utils',
   'xdg-decoration',
   'xdg-shell',
+  'xx-cutouts',
 ]
 
 if have_xwayland == true

@@ -21,6 +21,7 @@ typedef struct {
 
 
 static const Demo demos[] = {
+  { "cutouts", "Demo Display Cutouts", ptk_demo_cutouts },
   { "subsurfaces", "Demo Subsurfaces", ptk_demo_subsurface },
 };
 

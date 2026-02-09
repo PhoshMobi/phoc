@@ -61,17 +61,18 @@ ENVIRONMENT VARIABLES
   https://gitlab.freedesktop.org/wlroots/wlroots/-/blob/master/docs/env_vars.md
 - ``G_MESSAGES_DEBUG``, ``G_DEBUG`` and other environment variables supported
   by glib. https://docs.gtk.org/glib/running.html
-- ``PHOC_DEBUG``: Comma separated list of debugging flags:
+- ``PHOC_DEBUG``: Comma separated list of debugging flags. Some of
+  them can also be toggled at runtime, see ``DBUS INTERFACE`` below.
 
       - ``help``: Show a list of available debug flags
       - ``auto-maximize``: Maximize toplevels
-      - ``damage-tracking``: Debug damage tracking
-      - ``damage-whole``: Damage whole output on each frame
+      - ``damage-tracking``: Debug damage tracking (can be toggled at runtime)
+      - ``damage-whole``: Damage whole output on each frame (can be toggled at runtime)
       - ``fake-builtin``: Handle virtual outputs like builtin displays
       - ``no-quit``: Don't quit when session ends
-      - ``touch-points``: Debug touch points
+      - ``touch-points``: Debug touch points (can be toggled at runtime)
       - ``layer-shell``: Debug layer shell
-      - ``cutouts``: Debug display cutouts and notches
+      - ``cutouts``: Debug display cutouts and notches (can be toggled at runtime)
       - ``disable-animations``: Disable animations
       - ``force-shell-reveal``: Always reveal shell over fullscreen apps
       - ``ignore-state``: Ignore any saved output state

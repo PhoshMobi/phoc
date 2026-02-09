@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2020 Purism SPC
- *               2025 Phosh.mobi e.V.
+ *               2025-2026 Phosh.mobi e.V.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -8,7 +8,7 @@
  */
 
 #include "testlib.h"
-#include "server.h"
+#include "server-private.h"
 #include <wayland-client.h>
 
 #include <cairo.h>
@@ -373,6 +373,9 @@ registry_handle_global (void               *data,
   } else if (!g_strcmp0 (interface, zxdg_decoration_manager_v1_interface.name)) {
     globals->decoration_manager = wl_registry_bind (registry, name,
                                                     &zxdg_decoration_manager_v1_interface, 1);
+  } else if (!g_strcmp0 (interface, xx_cutouts_manager_v1_interface.name)) {
+    globals->cutouts_manager = wl_registry_bind (registry, name,
+                                                 &xx_cutouts_manager_v1_interface, 1);
   }
 }
 
@@ -422,6 +425,7 @@ wl_client_run (GTask *task, gpointer source, gpointer data, GCancellable *cancel
   else
     success = TRUE;
 
+  g_clear_pointer (&globals.cutouts_manager, xx_cutouts_manager_v1_destroy);
   g_clear_pointer (&globals.decoration_manager, zxdg_decoration_manager_v1_destroy);
   wl_proxy_destroy ((struct wl_proxy *)globals.gtk_shell1);
   wl_proxy_destroy ((struct wl_proxy *)globals.phosh);
@@ -533,6 +537,7 @@ phoc_test_client_run (int timeout, PhocTestClientIface *iface, gpointer data)
     config = phoc_config_new_from_file (TEST_PHOC_INI);
 
   phoc_server_set_debug_flags (server, iface->debug_flags);
+  phoc_server_set_compatibles (server, iface->compatibles);
   g_assert_true (PHOC_IS_SERVER (server));
   g_assert_true (config);
   g_assert_true (phoc_server_setup (server, config, NULL, loop, PHOC_SERVER_FLAG_NONE));

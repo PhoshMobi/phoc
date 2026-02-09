@@ -14,7 +14,7 @@
 #include "debug-control.h"
 #include "render-private.h"
 #include "seat.h"
-#include "server.h"
+#include "server-private.h"
 #include "surface.h"
 #include "utils.h"
 
@@ -887,6 +887,16 @@ phoc_server_get_compatibles (PhocServer *self)
   g_assert (PHOC_IS_SERVER (self));
 
   return (const char * const *)self->dt_compatibles;
+}
+
+
+void
+phoc_server_set_compatibles (PhocServer *self, const char *const *compatibles)
+{
+  g_assert (PHOC_IS_SERVER (self));
+
+  g_strfreev (self->dt_compatibles);
+  self->dt_compatibles = g_strdupv ((GStrv)compatibles);
 }
 
 

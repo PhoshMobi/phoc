@@ -471,6 +471,61 @@ phoc_view_get_box (PhocView *self, struct wlr_box *box)
   box->height = self->box.height * priv->scale;
 }
 
+/**
+ * phoc_view_get_pending_box:
+ * @self: The view
+ *
+ * Get the view's box in layout coordinates taking any pending move
+ * and resize operations into account. Note that this rounds x,y to
+ * their lower values. If there's currently no update pending we
+ * return the current box for convenience.
+ *
+ * Returns: The pending box
+ */
+PhocBox
+phoc_view_get_pending_box (PhocView *self)
+{
+  PhocBox box;
+
+  g_assert (PHOC_IS_VIEW (self));
+
+  box.x = self->pending_move_resize.x;
+  box.y = self->pending_move_resize.y;
+  box.width = self->pending_move_resize.width;
+  box.height = self->pending_move_resize.height;
+
+  if (box.x == 0.0 && box.y == 0.0 && box.width == 0 && box.height == 0)
+    phoc_view_get_box (self, &box);
+
+  return box;
+}
+
+/**
+ * phoc_view_set_pending_box:
+ * @self: The view
+ * @box: (out): The box
+ *
+ * Set the view's pending box in layout coordinates.
+ */
+void
+phoc_view_set_pending_box (PhocView *self,
+                           bool      update_x,
+                           bool      update_y,
+                           double    x,
+                           double    y,
+                           uint32_t  width,
+                           uint32_t  height)
+{
+  g_assert (PHOC_IS_VIEW (self));
+
+  self->pending_move_resize.update_x = update_x;
+  self->pending_move_resize.update_y = update_y;
+  self->pending_move_resize.x = x;
+  self->pending_move_resize.y = y;
+  self->pending_move_resize.width = width;
+  self->pending_move_resize.height = height;
+}
+
 
 PhocViewDecoPart
 phoc_view_get_deco_part (PhocView *self, double sx, double sy)

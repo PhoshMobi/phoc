@@ -54,12 +54,11 @@ static guint signals[N_SIGNALS];
 typedef struct _PhocOutputPrivate {
   PhocOutputShield *shield;
 
-  GSList  *frame_callbacks; /* (element-type: PhocOutputFrameCallbackInfo) */
-  gint     frame_callback_next_id;
-  gint64   last_frame_us;
+  GSList *frame_callbacks; /* (element-type: PhocOutputFrameCallbackInfo) */
+  gint    frame_callback_next_id;
+  gint64  last_frame_us;
 
-  PhocOutputCutouts *cutouts;
-  gulong   render_cutouts_id;
+  PhocOutputCutouts  *cutouts;
   struct wlr_texture *cutouts_texture;
 
   gboolean shell_revealed;
@@ -369,25 +368,6 @@ phoc_output_handle_destroy (struct wl_listener *listener, void *data)
 
 
 static void
-render_cutouts (PhocOutput *self, PhocRenderContext *ctx)
-{
-  PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
-
-  g_assert (PHOC_IS_OUTPUT (self));
-
-  if (priv->cutouts_texture) {
-    struct wlr_texture *texture = priv->cutouts_texture;
-
-    wlr_render_pass_add_texture (ctx->render_pass, &(struct wlr_render_texture_options) {
-        .texture = texture,
-        .transform = WL_OUTPUT_TRANSFORM_NORMAL,
-        .filter_mode = phoc_output_get_texture_filter_mode (ctx->output),
-    });
-  }
-}
-
-
-static void
 phoc_output_handle_damage (struct wl_listener *listener, void *user_data)
 {
   PhocOutputPrivate *priv = wl_container_of (listener, priv, damage);
@@ -564,6 +544,22 @@ build_debug_damage_tracking (PhocOutput *self)
 }
 
 
+static void
+render_cutouts (PhocOutput *self, PhocRenderContext *ctx)
+{
+  PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
+
+  if (!priv->cutouts_texture)
+    return;
+
+  wlr_render_pass_add_texture (ctx->render_pass, &(struct wlr_render_texture_options) {
+    .texture = priv->cutouts_texture,
+    .transform = WL_OUTPUT_TRANSFORM_NORMAL,
+    .filter_mode = phoc_output_get_texture_filter_mode (ctx->output),
+  });
+}
+
+
 PHOC_TRACE_NO_INLINE static void
 phoc_output_draw (PhocOutput *self)
 {
@@ -623,6 +619,7 @@ phoc_output_draw (PhocOutput *self)
     .render_pass = render_pass,
   };
   phoc_renderer_render_output (phoc_server_get_renderer (server), self, &render_context);
+  render_cutouts (self, &render_context);
 
   pixman_region32_fini (&buffer_damage);
 
@@ -983,6 +980,39 @@ phoc_output_set_layout_pos (PhocOutput *self, PhocOutputConfig *output_config)
 }
 
 
+static void
+phoc_output_enable_render_cutouts (PhocOutput *self, gboolean enable)
+{
+  PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
+  gboolean is_enabled = !!priv->cutouts_texture;
+
+  if (is_enabled == !!enable)
+    return;
+
+  if (enable) {
+    g_debug ("Adding cutouts overlay");
+    priv->cutouts_texture = phoc_output_cutouts_get_cutouts_texture (priv->cutouts);
+  } else {
+    g_clear_pointer (&priv->cutouts_texture, wlr_texture_destroy);
+  }
+
+  phoc_output_damage_whole (self);
+}
+
+
+static void
+on_server_debug_flags_changed (PhocOutput *self, GParamSpec *pspec, PhocServer *server)
+{
+  gboolean enable;
+
+  g_assert (PHOC_IS_OUTPUT (self));
+  g_assert (PHOC_IS_SERVER (server));
+
+  enable = phoc_server_get_debug_flags (server) & PHOC_SERVER_DEBUG_FLAG_CUTOUTS;
+  phoc_output_enable_render_cutouts (self, enable);
+}
+
+
 static gboolean
 phoc_output_initable_init (GInitable    *initable,
                            GCancellable *cancellable,
@@ -1062,18 +1092,17 @@ phoc_output_initable_init (GInitable    *initable,
 
   update_output_manager_config (self->desktop);
 
-  if (phoc_server_check_debug_flags (server, PHOC_SERVER_DEBUG_FLAG_CUTOUTS) &&
-      phoc_output_is_builtin (self)) {
+  if (phoc_output_is_builtin (self)) {
     priv->cutouts = phoc_output_cutouts_new (phoc_server_get_compatibles (server));
-    if (priv->cutouts) {
-      g_message ("Adding cutouts overlay");
-      priv->cutouts_texture = phoc_output_cutouts_get_cutouts_texture (priv->cutouts);
-      priv->render_cutouts_id = g_signal_connect_swapped (renderer, "render-end",
-                                                          G_CALLBACK (render_cutouts),
-                                                          self);
-    } else {
-      g_warning ("Could not create cutout overlay");
-    }
+
+    if (phoc_server_check_debug_flags (server, PHOC_SERVER_DEBUG_FLAG_CUTOUTS))
+      phoc_output_enable_render_cutouts (self, TRUE);
+
+    g_signal_connect_object (server,
+                             "notify::debug-flags",
+                             G_CALLBACK (on_server_debug_flags_changed),
+                             self,
+                             G_CONNECT_SWAPPED);
   }
 
   g_message ("Output '%s' added ('%s'/'%s'/'%s'), "
@@ -1091,10 +1120,8 @@ phoc_output_initable_init (GInitable    *initable,
 static void
 phoc_output_finalize (GObject *object)
 {
-  PhocServer *server = phoc_server_get_default ();
   PhocOutput *self = PHOC_OUTPUT (object);
   PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
-  PhocRenderer *renderer = phoc_server_get_renderer (server);
 
   self->wlr_output->data = NULL;
   self->wlr_output = NULL;
@@ -1113,10 +1140,8 @@ phoc_output_finalize (GObject *object)
   for (int i = 0; i < G_N_ELEMENTS (priv->layer_surfaces); i++)
     g_clear_pointer (&priv->layer_surfaces[i], g_queue_free);
 
-  if (renderer) {
-    g_clear_signal_handler (&priv->render_cutouts_id, renderer);
-    g_clear_pointer (&priv->cutouts_texture, wlr_texture_destroy);
-  }
+  phoc_output_enable_render_cutouts (self, FALSE);
+
   g_clear_object (&priv->cutouts);
   g_clear_object (&priv->shield);
   g_clear_object (&self->desktop);
@@ -2624,4 +2649,197 @@ phoc_output_set_fullscreen_view (PhocOutput *self, PhocView *view)
   phoc_output_damage_whole (self);
   if (view)
     phoc_output_force_shell_reveal (self, false);
+}
+
+/**
+ * phoc_output_get_cutout_boxes:
+ * @self: The output
+ * @view: The view to check
+ * @overlap: (inout): A (already initialized) region that gets the overlap.
+ *
+ * Checks whether view overlaps with any cutouts of the output.
+ *
+ * Returns: `TRUE` if there is any overlap, otherwise `FALSE`.
+ */
+gboolean
+phoc_output_get_cutout_boxes (PhocOutput *self, PhocView *view, pixman_region32_t *overlap)
+{
+  PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
+  const pixman_region32_t *cutouts;
+  pixman_region32_t transformed_cutouts, scaled_cutouts;
+  struct wlr_box view_box;
+  gboolean ret;
+
+  g_assert (PHOC_IS_OUTPUT (self));
+  g_assert (overlap);
+
+  if (!priv->cutouts)
+    return FALSE;
+
+  cutouts = phoc_output_cutouts_get_region (priv->cutouts);
+  if (pixman_region32_empty (cutouts))
+    return FALSE;
+
+  pixman_region32_clear (overlap);
+
+  view_box = phoc_view_get_pending_box (view);
+  view_box.x -= self->lx;
+  view_box.y -= self->ly;
+
+  /* TODO: we can calculate and cache this on transform / mode changes
+   * in `phoc_output_handle_commit` */
+
+  pixman_region32_init (&transformed_cutouts);
+  wlr_region_transform (&transformed_cutouts,
+                        cutouts,
+                        self->wlr_output->transform,
+                        self->wlr_output->width,
+                        self->wlr_output->height);
+
+  pixman_region32_init (&scaled_cutouts);
+  wlr_region_scale (&scaled_cutouts, &transformed_cutouts, 1.0 / self->wlr_output->scale);
+  pixman_region32_fini (&transformed_cutouts);
+
+  ret = pixman_region32_intersect_rect (overlap,
+                                        &scaled_cutouts,
+                                        view_box.x,
+                                        view_box.y,
+                                        view_box.width,
+                                        view_box.height);
+  pixman_region32_fini (&scaled_cutouts);
+
+  /* Transform to surface local coordinates */
+  pixman_region32_translate (overlap, -view_box.x, -view_box.y);
+
+  return ret;
+}
+
+/**
+ * transformed_corner_pos:
+ * @pos: The corner position on the physical panel
+ * @transform: The current output transform
+ *
+ * Get the corner position on the logical output
+ *
+ * Returns: The logical corner position
+ */
+static PhocCornerPosition
+transformed_corner_pos (PhocCornerPosition pos, enum wl_output_transform transform)
+{
+  switch (transform) {
+  case WL_OUTPUT_TRANSFORM_NORMAL:
+  case WL_OUTPUT_TRANSFORM_FLIPPED:
+    break;
+  case WL_OUTPUT_TRANSFORM_90:
+  case WL_OUTPUT_TRANSFORM_FLIPPED_90:
+    pos += 1;
+    break;
+  case WL_OUTPUT_TRANSFORM_180:
+  case WL_OUTPUT_TRANSFORM_FLIPPED_180:
+    pos += 2;
+    break;
+  case WL_OUTPUT_TRANSFORM_270:
+  case WL_OUTPUT_TRANSFORM_FLIPPED_270:
+    pos += 3;
+    break;
+  default:
+    g_assert_not_reached ();
+  }
+  pos %= 4;
+
+  if (transform >= WL_OUTPUT_TRANSFORM_FLIPPED) {
+    /* Flip left and right */
+    pos = 2 * (pos / 2) + (pos + 1) % 2;
+  }
+
+  return pos;
+}
+
+/**
+ * phoc_output_get_cutout_corners:
+ * @self: The output
+ * @view: The view to check
+ *
+ * Get the cutout corners if the surfaces touches the screen edge
+ *
+ * Returns: (transfer full)(nullable)(element-type PhocCutoutCorner):
+ *     The overlapping rounded corners
+ */
+GArray *
+phoc_output_get_cutout_corners (PhocOutput *self, PhocView *view)
+{
+  PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
+  enum wl_output_transform transform;
+  GArray *corners;
+  struct wlr_box view_box;
+  int width, height;
+
+  g_assert (PHOC_IS_OUTPUT (self));
+
+  if (!priv->cutouts)
+    return NULL;
+
+  if (!phoc_output_cutouts_get_corners (priv->cutouts))
+    return NULL;
+
+  view_box = phoc_view_get_pending_box (view);
+  view_box.x -= self->lx;
+  view_box.y -= self->ly;
+
+  transform = wlr_output_transform_invert (self->wlr_output->transform);
+  wlr_output_effective_resolution (self->wlr_output, &width, &height);
+
+  /* TODO: we can calculate and cache this on transform / mode changes
+   * in `phoc_output_handle_commit` */
+
+  corners = g_array_new (FALSE, FALSE, sizeof (PhocCutoutCorner));
+  if (view_box.x == 0 && view_box.y == 0) {
+    PhocCornerPosition pos = transformed_corner_pos (PHOC_CORNER_TOP_LEFT, transform);
+    const PhocCutoutCorner *corner = phoc_output_cutouts_get_corner (priv->cutouts, pos);
+    if (corner) {
+      PhocCutoutCorner scaled = *corner;
+
+      scaled.radius /= self->wlr_output->scale;
+      scaled.position = PHOC_CORNER_TOP_LEFT;
+      g_array_append_val (corners, scaled);
+    }
+  }
+
+  if (view_box.x + view_box.width == width && view_box.y == 0) {
+    PhocCornerPosition pos = transformed_corner_pos (PHOC_CORNER_TOP_RIGHT, transform);
+    const PhocCutoutCorner *corner = phoc_output_cutouts_get_corner (priv->cutouts, pos);
+    if (corner) {
+      PhocCutoutCorner scaled = *corner;
+
+      scaled.radius /= self->wlr_output->scale;
+      scaled.position = PHOC_CORNER_TOP_RIGHT;
+      g_array_append_val (corners, scaled);
+    }
+  }
+
+  if (view_box.x + view_box.width == width && view_box.y + view_box.height == height) {
+    PhocCornerPosition pos = transformed_corner_pos (PHOC_CORNER_BOTTOM_RIGHT, transform);
+    const PhocCutoutCorner *corner = phoc_output_cutouts_get_corner (priv->cutouts, pos);
+    if (corner) {
+      PhocCutoutCorner scaled = *corner;
+
+      scaled.radius /= self->wlr_output->scale;
+      scaled.position = PHOC_CORNER_BOTTOM_RIGHT;
+      g_array_append_val (corners, scaled);
+    }
+  }
+
+  if (view_box.x == 0 && view_box.y + view_box.height == height) {
+    PhocCornerPosition pos = transformed_corner_pos (PHOC_CORNER_BOTTOM_LEFT, transform);
+    const PhocCutoutCorner *corner = phoc_output_cutouts_get_corner (priv->cutouts, pos);
+    if (corner) {
+      PhocCutoutCorner scaled = *corner;
+
+      scaled.radius /= self->wlr_output->scale;
+      scaled.position = PHOC_CORNER_BOTTOM_LEFT;
+      g_array_append_val (corners, scaled);
+    }
+  }
+
+  return corners;
 }

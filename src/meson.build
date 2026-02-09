@@ -142,6 +142,8 @@ sources = files(
   'xdg-toplevel-decoration.h',
   'xdg-toplevel.c',
   'xdg-toplevel.h',
+  'xx-cutouts-v1.c',
+  'xx-cutouts-v1.h',
 ) + phoc_anim_sources
 
 libphoc_generated_sources = [

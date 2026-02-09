@@ -18,6 +18,12 @@ Files:
 Copyright: See individual files
 License: MIT
 
+# Imported from wayland-protocols
+Files:
+ protocols/xx-cutouts-v1.xml
+Copyright: See individual files
+License: MIT
+
 # Imported from GTK
 Files:
  protocols/gtk-shell.xml
@@ -109,6 +115,8 @@ Files:
  doc/phoc.rst
  doc/phoc.toml.in
  doc/phoc-outputs-states.rst
+ examples/shaders/cutout-rect.frag
+ examples/shaders/cutout-rect.vert
  examples/shaders/embed.sh
  gcovr.cfg
  tools/*

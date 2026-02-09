@@ -1,7 +1,7 @@
 embed = find_program('./embed.sh', native: true)
 shader_headers = []
 
-shaders = []
+shaders = ['cutout-rect.vert', 'cutout-rect.frag']
 
 foreach name : shaders
   custom_target(

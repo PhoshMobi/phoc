@@ -13,6 +13,7 @@
 #include "wlr-screencopy-unstable-v1-client-protocol.h"
 #include "xdg-decoration-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
+#include "xx-cutouts-v1-client-protocol.h"
 
 /* Needs wlr-screencopy-unstable */
 #include "phosh-private-client-protocol.h"
@@ -58,21 +59,22 @@ typedef struct _PhocTestOutput {
 
 
 struct _PhocTestClientGlobals {
-  struct wl_display *display;
-  struct wl_compositor *compositor;
-  struct wl_shm *shm;
-  struct xdg_wm_base *xdg_shell;
-  struct zwlr_layer_shell_v1 *layer_shell;
-  struct zphoc_layer_shell_effects_v1 *layer_shell_effects;
-  struct zwlr_screencopy_manager_v1 *screencopy_manager;
+  struct wl_display                       *display;
+  struct wl_compositor                    *compositor;
+  struct wl_shm                           *shm;
+  struct xdg_wm_base                      *xdg_shell;
+  struct xx_cutouts_manager_v1            *cutouts_manager;
+  struct zwlr_layer_shell_v1              *layer_shell;
+  struct zphoc_layer_shell_effects_v1     *layer_shell_effects;
+  struct zwlr_screencopy_manager_v1       *screencopy_manager;
   struct zwlr_foreign_toplevel_manager_v1 *foreign_toplevel_manager;
-  struct zxdg_decoration_manager_v1 *decoration_manager;
+  struct zxdg_decoration_manager_v1       *decoration_manager;
   GSList *foreign_toplevels;
-  struct phosh_private *phosh;
-  struct gtk_shell1   *gtk_shell1;
+  struct phosh_private                    *phosh;
+  struct gtk_shell1                       *gtk_shell1;
   /* TODO: handle multiple outputs */
-  PhocTestOutput       output;
-  PhocTestOutputConfig output_config;
+  PhocTestOutput                           output;
+  PhocTestOutputConfig                     output_config;
 
   GPtrArray *formats;
 };
@@ -95,8 +97,9 @@ typedef struct PhocTestClientIface {
   PhocTestClientFunc   client_run;
   PhocServerFlags      server_flags;
   PhocServerDebugFlags debug_flags;
-  gboolean             xwayland;
+  gboolean xwayland;
   PhocTestOutputConfig output_config;
+  const char * const  *compatibles;
 } PhocTestClientIface;
 
 typedef struct _PhocTestXdgToplevelSurface PhocTestXdgToplevelSurface;
@@ -223,6 +226,26 @@ void     phoc_test_buffer_free (PhocTestBuffer *buffer);
         g_strdup_printf ("Box " #b1 " (%d,%d %dx%d) doesn't match " #b2 " (%d,%d %dx%d)",   \
                          __b1->x, __b1->y, __b1->width, __b1->height,                       \
                          __b2->x, __b2->y, __b2->width, __b2->height);                      \
+      g_assertion_message (G_LOG_DOMAIN, __FILE__, __LINE__, G_STRFUNC, __msg);             \
+    }                                                                                       \
+} G_STMT_END
+
+/**
+ * phoc_test_assert_cmpcutoutcorner
+ * @b1: A box
+ * @b2: A box
+ *
+ * Debugging macro to compare two boxes.
+ */
+#define phoc_assert_cmpcorner(c1, c2) G_STMT_START {                                        \
+    __auto_type __c1 = (c1);                                                                \
+    __auto_type __c2 = (c2);                                                                \
+    if (__c1->position != __c2->position || __c1->radius != __c2->radius) {                 \
+      g_autofree char *__msg =                                                              \
+        g_strdup_printf ("Corner " #c1 " pos: %d, radius %d doesn't match " #c2             \
+                         " (pos: %d, radius %d)",                                           \
+                         __c1->position, __c1->radius,                                      \
+                         __c2->position, __c2->radius);                                     \
       g_assertion_message (G_LOG_DOMAIN, __FILE__, __LINE__, G_STRFUNC, __msg);             \
     }                                                                                       \
 } G_STMT_END
