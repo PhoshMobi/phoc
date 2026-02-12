@@ -57,7 +57,7 @@ typedef enum {
    avoid other member access */
 typedef struct _PhocView PhocView;
 struct _PhocView {
-  GObject parent_instance;
+  GObject        parent_instance;
 
   /* (x, y): surface position in layout coordinates
    * (width, height): geometry width and height */
@@ -65,15 +65,15 @@ struct _PhocView {
   struct wlr_box saved;
 
   struct {
-    bool update_x, update_y;
-    double x, y;
+    bool     update_x, update_y;
+    double   x, y;
     uint32_t width, height;
   } pending_move_resize;
-  bool pending_centering;
+  bool                pending_centering;
 
-  PhocView       *parent;
-  struct wl_list  stack;
-  struct wl_list  parent_link;
+  PhocView           *parent;
+  struct wl_list      stack;
+  struct wl_list      parent_link;
 
   struct wlr_surface *wlr_surface; // set only when the surface is mapped
 };
@@ -106,13 +106,12 @@ struct _PhocView {
  *     The implementation is optional.
  * @get_alpha: Get the view's alpha value.
  */
-typedef struct _PhocViewClass
-{
+typedef struct _PhocViewClass {
   GObjectClass parent_class;
 
   void (*move)               (PhocView *self, double x, double y);
   void (*resize)             (PhocView *self, uint32_t width, uint32_t height);
-  void (*move_resize)        (PhocView *self, double x, double y, uint32_t  width, uint32_t height);
+  void (*move_resize)        (PhocView *self, double x, double y, uint32_t width, uint32_t height);
   bool (*want_scaling)       (PhocView *self);
   bool (*want_auto_maximize) (PhocView *self);
   void (*set_active)         (PhocView *self, bool active);
@@ -121,7 +120,8 @@ typedef struct _PhocViewClass
   void (*set_tiled)          (PhocView *self, bool tiled);
   void (*set_suspended)      (PhocView *self, bool suspended);
   void (*close)              (PhocView *self);
-  void (*for_each_surface)   (PhocView *self, wlr_surface_iterator_func_t iterator, void *user_data);
+  void (*for_each_surface)   (PhocView *self, wlr_surface_iterator_func_t iterator,
+                              void *user_data);
   void (*get_geometry)       (PhocView *self, struct wlr_box *box);
   struct wlr_surface *
        (*get_wlr_surface_at) (PhocView *self, double sx, double sy, double *sub_x, double *sub_y);
@@ -177,11 +177,11 @@ void                  phoc_view_set_fullscreen (PhocView   *self,
                                                 PhocOutput *output);
 void                  phoc_view_close (PhocView *self);
 void                  phoc_view_set_app_id (PhocView *self, const char *app_id);
-const char           *phoc_view_get_app_id (PhocView *self);
+const char *          phoc_view_get_app_id (PhocView *self);
 void                  phoc_view_for_each_surface (PhocView                   *self,
                                                   wlr_surface_iterator_func_t iterator,
                                                   gpointer                    user_data);
-struct wlr_surface   *phoc_view_get_wlr_surface_at (PhocView *self,
+struct wlr_surface *  phoc_view_get_wlr_surface_at (PhocView *self,
                                                     double    sx,
                                                     double    sy,
                                                     double   *sub_x,
@@ -195,14 +195,14 @@ PhocViewDecoPart      phoc_view_get_deco_part (PhocView *self, double sx, double
 void                  phoc_view_set_scale_to_fit (PhocView *self, gboolean enable);
 gboolean              phoc_view_get_scale_to_fit (PhocView *self);
 void                  phoc_view_set_activation_token (PhocView *self, const char *token, int type);
-const char           *phoc_view_get_activation_token (PhocView *self);
+const char *          phoc_view_get_activation_token (PhocView *self);
 void                  phoc_view_flush_activation_token (PhocView *self);
 float                 phoc_view_get_alpha (PhocView *self);
 float                 phoc_view_get_scale (PhocView *self);
 gboolean              phoc_view_is_decorated (PhocView *self);
 void                  phoc_view_set_always_on_top (PhocView *self, gboolean on_top);
 bool                  phoc_view_is_always_on_top (PhocView *self);
-PhocOutput           *phoc_view_get_fullscreen_output (PhocView *self);
+PhocOutput *          phoc_view_get_fullscreen_output (PhocView *self);
 bool                  phoc_view_want_auto_maximize (PhocView *self);
 void                  phoc_view_set_decorated (PhocView *self,
                                                gboolean  decorated);
@@ -216,6 +216,6 @@ gboolean              phoc_view_get_tiled_box (PhocView             *self,
                                                struct wlr_box       *box);
 void                  phoc_view_add_bling (PhocView *self, PhocBling *bling);
 void                  phoc_view_remove_bling (PhocView *self, PhocBling *bling);
-GSList               *phoc_view_get_blings (PhocView *self);
+GSList *              phoc_view_get_blings (PhocView *self);
 
 G_END_DECLS

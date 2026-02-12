@@ -256,7 +256,7 @@ toggle_decoration (PhocView *self)
 /* {{{ Foreign toplevel requests  */
 
 static void
-handle_toplevel_handle_request_maximize (struct wl_listener *listener,void *data)
+handle_toplevel_handle_request_maximize (struct wl_listener *listener, void *data)
 {
   PhocViewPrivate *priv = wl_container_of (listener, priv, toplevel_handle_request_maximize);
   PhocView *self = PHOC_VIEW_SELF (priv);
