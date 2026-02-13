@@ -42,3 +42,9 @@ executable(
   sources: ['idle.c', client_protos_headers, protos_sources],
   dependencies: [glib, wayland_client],
 )
+
+executable(
+  'wlls',
+  sources: ['wlls.c', client_protos_headers, protos_sources],
+  dependencies: [glib, wayland_client],
+)
