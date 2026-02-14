@@ -28,6 +28,8 @@
 #include <wlr/xwayland.h>
 #include <xcb/xproto.h>
 
+#include <sys/socket.h>
+
 enum {
   PROP_0,
   PROP_WLR_XDG_TOPLEVEL,
@@ -364,6 +366,33 @@ get_pid (PhocView *view)
   wl_client_get_credentials (client, &pid, NULL, NULL);
 
   return pid;
+}
+
+
+static int
+get_pidfd (PhocView *view)
+{
+#if __linux__
+  PhocXdgToplevel *self = PHOC_XDG_TOPLEVEL (view);
+  struct wl_client *client;
+  int fd = -1;
+  int pid_fd = -1;
+  socklen_t cr_len = sizeof (int);
+
+  g_assert (self->xdg_toplevel);
+  client = wl_resource_get_client (self->xdg_toplevel->base->resource);
+  fd = wl_client_get_fd (client);
+
+  if (fd < 0)
+    return -1;
+
+  if (getsockopt (fd, SOL_SOCKET, SO_PEERPIDFD, &pid_fd, &cr_len) != 0)
+    return -1;
+
+  return pid_fd;
+#else
+  return -1
+#endif
 }
 
 
@@ -731,6 +760,7 @@ phoc_xdg_toplevel_class_init (PhocXdgToplevelClass *klass)
   view_class->get_geometry = get_geometry;
   view_class->get_wlr_surface_at = get_wlr_surface_at;
   view_class->get_pid = get_pid;
+  view_class->get_pidfd = get_pidfd;
 
   /**
    * PhocXdgToplevel:wlr-xdg-toplevel:
