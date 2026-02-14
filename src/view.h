@@ -107,6 +107,9 @@ struct _PhocView {
  *     The implementation is optional.
  * @get_wlr_surface_at: Get the wlr_surface at the give coordinates.
  *     The implementation is optional.
+ * @get_pid: Get the view's pid
+ * @get_pidfd: Get the view's pidfd
+ *     The implementation is optional.
  * @get_alpha: Get the view's alpha value.
  */
 typedef struct _PhocViewClass {
@@ -129,6 +132,7 @@ typedef struct _PhocViewClass {
   struct wlr_surface *
        (*get_wlr_surface_at) (PhocView *self, double sx, double sy, double *sub_x, double *sub_y);
   pid_t (*get_pid)           (PhocView *self);
+  int   (*get_pidfd)         (PhocView *self);
   float (*get_alpha)         (PhocView *self);
 } PhocViewClass;
 
@@ -198,6 +202,7 @@ struct wlr_surface *  phoc_view_get_wlr_surface_at (PhocView *self,
 PhocView *            phoc_view_from_wlr_surface (struct wlr_surface *wlr_surface);
 PhocOutput *          phoc_view_get_output (PhocView *self);
 pid_t                 phoc_view_get_pid (PhocView *self);
+int                   phoc_view_get_pidfd (PhocView *self);
 bool                  phoc_view_is_mapped (PhocView *self);
 PhocViewDecoPart      phoc_view_get_deco_part (PhocView *self, double sx, double sy);
 void                  phoc_view_set_scale_to_fit (PhocView *self, gboolean enable);

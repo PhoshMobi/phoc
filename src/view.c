@@ -2558,6 +2558,18 @@ phoc_view_get_pid (PhocView *self)
   return priv->pid;
 }
 
+
+int
+phoc_view_get_pidfd (PhocView *self)
+{
+  g_assert (PHOC_IS_VIEW (self));
+
+  if (PHOC_VIEW_GET_CLASS (self)->get_pidfd)
+    return PHOC_VIEW_GET_CLASS (self)->get_pidfd (self);
+
+  return -1;
+}
+
 /**
  * phoc_view_add_bling:
  * @self: The view
