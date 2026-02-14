@@ -1,5 +1,5 @@
-phoc 0.53~rc1
--------------
+phoc 0.53.0
+-----------
 Released February 2026
 * New protocol support:
   * xx-cutouts-v1 protocol: Allow clients to receive display cutout information

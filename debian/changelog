@@ -1,3 +1,9 @@
+phoc (0.53.0) experimental; urgency=medium
+
+  * No changes over rc1
+
+ -- Guido Günther <agx@sigxcpu.org>  Sat, 14 Feb 2026 14:10:26 +0100
+
 phoc (0.53~rc1) experimental; urgency=medium
 
   [ Guido Günther ]
