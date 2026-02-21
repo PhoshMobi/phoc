@@ -1,0 +1,43 @@
+From 3676ab4df0e7b31efd9c72f543fd8e6326af95cc Mon Sep 17 00:00:00 2001
+Message-ID: <3676ab4df0e7b31efd9c72f543fd8e6326af95cc.1771659402.git.agx@sigxcpu.org>
+In-Reply-To: <c1452d88114710f5772662b1d8efb9c71edaa34c.1771659402.git.agx@sigxcpu.org>
+References: <c1452d88114710f5772662b1d8efb9c71edaa34c.1771659402.git.agx@sigxcpu.org>
+From: Aleksei Bavshin <alebastr89@gmail.com>
+Date: Sat, 7 Feb 2026 17:48:16 -0800
+Subject: [PATCH 2/2] backend/libinput: add support for
+ LIBINPUT_SWITCH_KEYPAD_SLIDE
+
+---
+ backend/libinput/switch.c      | 3 ++-
+ include/wlr/types/wlr_switch.h | 1 +
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/backend/libinput/switch.c b/backend/libinput/switch.c
+index 9dde3c9c..a78d37ab 100644
+--- a/backend/libinput/switch.c
++++ b/backend/libinput/switch.c
+@@ -39,7 +39,8 @@ void handle_switch_toggle(struct libinput_event *event,
+ 		break;
+ #if HAVE_LIBINPUT_SWITCH_KEYPAD_SLIDE
+ 	case LIBINPUT_SWITCH_KEYPAD_SLIDE:
+-		return;
++		wlr_event.switch_type = WLR_SWITCH_TYPE_KEYPAD_SLIDE;
++		break;
+ #endif
+ 	}
+ 	switch (libinput_event_switch_get_switch_state(sevent)) {
+diff --git a/include/wlr/types/wlr_switch.h b/include/wlr/types/wlr_switch.h
+index 641df199..2b9e9126 100644
+--- a/include/wlr/types/wlr_switch.h
++++ b/include/wlr/types/wlr_switch.h
+@@ -36,6 +36,7 @@ struct wlr_switch {
+ enum wlr_switch_type {
+ 	WLR_SWITCH_TYPE_LID,
+ 	WLR_SWITCH_TYPE_TABLET_MODE,
++	WLR_SWITCH_TYPE_KEYPAD_SLIDE,
+ };
+ 
+ enum wlr_switch_state {
+-- 
+2.51.0
+

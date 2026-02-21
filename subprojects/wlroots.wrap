@@ -5,4 +5,7 @@ revision=0.19.2
 depth=1
 
 # Phoc specific patches
-diff_files = wlroots/0001-Revert-layer-shell-error-on-0-dimension-without-anch.patch
+diff_files =
+  wlroots/0001-backend-libinput-fix-build-with-libinput-1.31.patch,
+  wlroots/0002-backend-libinput-add-support-for-LIBINPUT_SWITCH_KEY.patch,
+  wlroots/0001-Revert-layer-shell-error-on-0-dimension-without-anch.patch
