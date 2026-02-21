@@ -143,6 +143,6 @@ phoc_switch_is_type (PhocSwitch *self, enum wlr_switch_type type)
   case WLR_SWITCH_TYPE_TABLET_MODE:
     return phoc_switch_is_tablet_mode_switch (self);
   default:
-    g_assert_not_reached ();
+    g_return_val_if_reached (FALSE);
   }
 }
