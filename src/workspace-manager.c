@@ -34,11 +34,11 @@ enum {
 static GParamSpec *props[PROP_LAST_PROP];
 
 struct _PhocWorkspaceManager {
-  GObject            parent;
+  GObject           parent;
 
-  PhocWorkspaceMode  mode;
-  GPtrArray         *workspaces;
-  PhocWorkspace     *active;
+  PhocWorkspaceMode mode;
+  GPtrArray        *workspaces;
+  PhocWorkspace    *active;
 };
 G_DEFINE_TYPE (PhocWorkspaceManager, phoc_workspace_manager, G_TYPE_OBJECT)
 
@@ -68,7 +68,7 @@ phoc_workspace_manager_get_property (GObject    *object,
 static void
 phoc_workspace_manager_finalize (GObject *object)
 {
-  PhocWorkspaceManager *self = PHOC_WORKSPACE_MANAGER(object);
+  PhocWorkspaceManager *self = PHOC_WORKSPACE_MANAGER (object);
 
   g_clear_pointer (&self->workspaces, g_ptr_array_unref);
 
