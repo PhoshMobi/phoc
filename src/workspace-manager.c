@@ -36,11 +36,81 @@ static GParamSpec *props[PROP_LAST_PROP];
 struct _PhocWorkspaceManager {
   GObject           parent;
 
+  GSettings        *settings;
   PhocWorkspaceMode mode;
   GPtrArray        *workspaces;
   PhocWorkspace    *active;
 };
 G_DEFINE_TYPE (PhocWorkspaceManager, phoc_workspace_manager, G_TYPE_OBJECT)
+
+
+static void
+move_workspace_content (PhocWorkspace *from, PhocWorkspace *to, gboolean on_top)
+{
+  GQueue *views = phoc_workspace_get_views (from);
+  GQueue *unmanaged = phoc_workspace_get_unmanaged (from);
+  gpointer item;
+
+  if (on_top) {
+    while ((item = g_queue_peek_tail (views))) {
+      phoc_workspace_remove_view (from, item);
+      phoc_workspace_insert_view (to, item);
+    }
+  } else {
+    while ((item = g_queue_peek_head (views))) {
+      phoc_workspace_remove_view (from, item);
+      phoc_workspace_append_view (to, item);
+    }
+  }
+
+  /* TODO: Unmanaged surfaces will still be on top. We should close them. */
+  while ((item = g_queue_peek_tail (unmanaged))) {
+    phoc_workspace_remove_unmanaged (from, item);
+    phoc_workspace_insert_unmanaged (to, item);
+  }
+}
+
+
+static void
+on_num_workspaces_setting_changed (PhocWorkspaceManager *self)
+{
+  guint n_old = self->workspaces->len;
+  guint n_new;
+  PhocWorkspace *last;
+
+  if (self->mode != PHOC_WORKSPACE_MODE_FIXED)
+    return;
+
+  n_new = g_settings_get_int (self->settings, KEY_NUM_WORKSPACES);
+  if (n_new == n_old)
+    return;
+
+  g_debug ("Number of workspaces changed from %u to %u", n_old, n_new);
+
+  if (n_new > n_old) {
+    for (guint i = n_old; i < n_new; i++)
+      g_ptr_array_add (self->workspaces, phoc_workspace_new ());
+    return;
+  }
+
+  /* Move everything from the workspaces that go away to the new last one */
+  last = g_ptr_array_index (self->workspaces, n_new - 1);
+  for (guint i = n_new; i < n_old; i++) {
+    PhocWorkspace *workspace = g_ptr_array_index (self->workspaces, i);
+
+    /* Views from hidden workspaces go to the bottom to not cover what's on screen */
+    if (workspace != self->active)
+      move_workspace_content (workspace, last, FALSE);
+  }
+
+  /* The active workspace goes last so its views end up on top */
+  if (phoc_workspace_manager_get_active_index (self) >= n_new) {
+    move_workspace_content (self->active, last, TRUE);
+    phoc_workspace_manager_set_active (self, last);
+  }
+
+  g_ptr_array_remove_range (self->workspaces, n_new, n_old - n_new);
+}
 
 
 static void
@@ -70,6 +140,7 @@ phoc_workspace_manager_finalize (GObject *object)
 {
   PhocWorkspaceManager *self = PHOC_WORKSPACE_MANAGER (object);
 
+  g_clear_object (&self->settings);
   g_clear_pointer (&self->workspaces, g_ptr_array_unref);
 
   G_OBJECT_CLASS (phoc_workspace_manager_parent_class)->finalize (object);
@@ -111,12 +182,14 @@ static void
 phoc_workspace_manager_init (PhocWorkspaceManager *self)
 {
   guint n_workspaces;
-  g_autoptr (GSettings) settings = g_settings_new (PREFS_SCHEMA_ID);
 
-  /* TODO: adjust at runtime */
+  self->settings = g_settings_new (PREFS_SCHEMA_ID);
   self->mode = PHOC_WORKSPACE_MODE_FIXED;
+  g_signal_connect_swapped (self->settings, "changed::" KEY_NUM_WORKSPACES,
+                            G_CALLBACK (on_num_workspaces_setting_changed),
+                            self);
 
-  n_workspaces = g_settings_get_int (settings, KEY_NUM_WORKSPACES);
+  n_workspaces = g_settings_get_int (self->settings, KEY_NUM_WORKSPACES);
   self->workspaces = g_ptr_array_new_with_free_func (g_object_unref);
 
   for (int i = 0; i < n_workspaces; i++) {
