@@ -874,7 +874,7 @@ on_active_workspace_changed (PhocDesktop *self, GParamSpec *pspec, PhocWorkspace
   PhocDesktopPrivate *priv = phoc_desktop_get_instance_private (self);
   int index;
 
-  if (priv->active_workspace)
+  if (priv->active_workspace != NULL)
     phoc_workspace_for_each_view (priv->active_workspace, workspace_damage_view_iter, NULL);
 
   priv->active_workspace = phoc_workspace_manager_get_active (priv->workspace_manager);
