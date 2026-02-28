@@ -82,11 +82,20 @@ phoc_workspace_manager_class_init (PhocWorkspaceManagerClass *klass)
   object_class->get_property = phoc_workspace_manager_get_property;
   object_class->finalize = phoc_workspace_manager_finalize;
 
+  /**
+   * PhocWorspaceManager::n-workspaces
+   *
+   * The number of workspaces
+   */
   props[PROP_N_WORKSPACES] =
     g_param_spec_boolean ("n-workspaces", "", "",
                           1,
                           G_PARAM_READABLE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
-
+  /**
+   * PhocWorspaceManager::active
+   *
+   * The currently active workspace
+   */
   props[PROP_ACTIVE] =
     g_param_spec_object ("active", "", "",
                          PHOC_TYPE_WORKSPACE,
