@@ -4,9 +4,6 @@
 
 #define _POSIX_C_SOURCE 200112L
 #include <assert.h>
-#include <math.h>
-#include <stdlib.h>
-#include <time.h>
 #include <wlr/config.h>
 #include <wlr/types/wlr_alpha_modifier_v1.h>
 #include <wlr/types/wlr_compositor.h>
@@ -39,7 +36,6 @@
 
 #include "cursor.h"
 #include "desktop-xwayland.h"
-#include "device-state.h"
 #include "idle-inhibit.h"
 #include "layer-shell.h"
 #include "output.h"
