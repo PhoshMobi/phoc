@@ -848,7 +848,10 @@ show_workspace_indicator (PhocDesktop *self, int num)
 
     for (GSList *l = blings; l; l = l->next) {
       if (PHOC_IS_WORKSPACE_INDICATOR (l->data)) {
-        phoc_output_remove_bling (output, l->data);
+        PhocBling *bling = l->data;
+
+        phoc_bling_unmap (bling);
+        phoc_output_remove_bling (output, bling);
         break;
       }
     }
