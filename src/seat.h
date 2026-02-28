@@ -10,6 +10,7 @@
 #include "drag-icon.h"
 #include "input.h"
 #include "input-method-relay.h"
+#include "workspace.h"
 #include "shortcuts-inhibit.h"
 
 #include <wlr/types/wlr_switch.h>
@@ -107,6 +108,7 @@ void               phoc_seat_set_focus_layer (PhocSeat                    *seat,
                                               struct wlr_layer_surface_v1 *layer);
 
 void               phoc_seat_cycle_focus (PhocSeat *seat, gboolean forward);
+void               phoc_seat_focus_workspace (PhocSeat *seat, PhocWorkspace *workspace);
 
 void               phoc_seat_begin_move (PhocSeat *seat, PhocView *view);
 
