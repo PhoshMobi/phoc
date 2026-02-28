@@ -80,7 +80,6 @@ phoc_workspace_manager_class_init (PhocWorkspaceManagerClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->get_property = phoc_workspace_manager_get_property;
-  //object_class->set_property = phoc_workspace_manager_set_property;
   object_class->finalize = phoc_workspace_manager_finalize;
 
   props[PROP_N_WORKSPACES] =
