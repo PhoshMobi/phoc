@@ -72,7 +72,7 @@ enum {
 static GParamSpec *props[PROP_LAST_PROP];
 
 struct _PhocRenderer {
-  GObject               parent;
+  GObject parent;
 
   struct wlr_backend   *wlr_backend;
   struct wlr_renderer  *wlr_renderer;
@@ -82,13 +82,14 @@ struct _PhocRenderer {
 static void phoc_renderer_initable_iface_init (GInitableIface *iface);
 
 G_DEFINE_TYPE_WITH_CODE (PhocRenderer, phoc_renderer, G_TYPE_OBJECT,
-                         G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, phoc_renderer_initable_iface_init));
+                         G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE,
+                                                phoc_renderer_initable_iface_init));
 
 
 struct render_view_data {
   PhocView *view;
-  int width;
-  int height;
+  int       width;
+  int       height;
   struct wlr_render_pass *render_pass;
 };
 
