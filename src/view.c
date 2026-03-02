@@ -1002,10 +1002,6 @@ phoc_view_set_fullscreen (PhocView *view, bool fullscreen, PhocOutput *output)
     if (output == NULL)
       output = phoc_view_get_output (view);
 
-    /* Nothing to do if old fullscreen output is the new one */
-    if (was_fullscreen && output == priv->fullscreen_output)
-      return;
-
     if (was_fullscreen) {
       /* If switching fullscreen outputs clear the old one */
       phoc_output_set_fullscreen_view (priv->fullscreen_output, NULL);
