@@ -77,6 +77,10 @@ struct _PhocRenderer {
   struct wlr_backend   *wlr_backend;
   struct wlr_renderer  *wlr_renderer;
   struct wlr_allocator *wlr_allocator;
+
+  struct wl_listener    renderer_lost;
+  guint renderer_recreate_id;
+
 };
 
 static void phoc_renderer_initable_iface_init (GInitableIface *iface);
@@ -92,6 +96,68 @@ struct render_view_data {
   int       height;
   struct wlr_render_pass *render_pass;
 };
+
+
+
+static void
+recreate_renderer (void *data)
+{
+  PhocRenderer *self = PHOC_RENDERER (data);
+  PhocServer *server = phoc_server_get_default ();
+  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
+  PhocOutput *output;
+  struct wlr_allocator *wlr_allocator, *old_wlr_allocator;
+  struct wlr_renderer *wlr_renderer, *old_wlr_renderer;
+  struct wlr_compositor *wlr_compositor;
+
+  g_message ("Re-creating renderer after GPU reset");
+  self->renderer_recreate_id = 0;
+
+  old_wlr_renderer = self->wlr_renderer;
+  wlr_renderer = wlr_renderer_autocreate (self->wlr_backend);
+  if (wlr_renderer == NULL) {
+    g_critical ("Failed to create renderer");
+    return;
+  }
+
+  old_wlr_allocator = self->wlr_allocator;
+  wlr_allocator = wlr_allocator_autocreate (self->wlr_backend, wlr_renderer);
+  if (wlr_allocator == NULL) {
+    g_critical ("Failed to create allocator");
+    wlr_renderer_destroy (wlr_renderer);
+    return;
+  }
+
+  self->wlr_renderer = wlr_renderer;
+  self->wlr_allocator = wlr_allocator;
+
+  wl_list_remove (&self->renderer_lost.link);
+  wl_signal_add (&self->wlr_renderer->events.lost, &self->renderer_lost);
+
+  wlr_compositor = phoc_server_get_compositor (server);
+  wlr_compositor_set_renderer (wlr_compositor, wlr_renderer);
+
+  wl_list_for_each (output, &desktop->outputs, link)
+    wlr_output_init_render (output->wlr_output, self->wlr_allocator, self->wlr_renderer);
+
+  wlr_allocator_destroy (old_wlr_allocator);
+  wlr_renderer_destroy (old_wlr_renderer);
+}
+
+
+static void
+handle_renderer_lost (struct wl_listener *listener, void *data)
+{
+  PhocRenderer *self = wl_container_of (listener, self, renderer_lost);
+
+  if (self->renderer_recreate_id) {
+    g_debug ("Re-creation of renderer already scheduled");
+    return;
+  }
+
+  g_debug ("Scheduling re-creation of renderer after GPU reset");
+  self->renderer_recreate_id = g_idle_add_once (recreate_renderer, self);
+}
 
 
 static void
@@ -588,8 +654,10 @@ phoc_renderer_initable_init (GInitable    *initable,
     return FALSE;
   }
 
-  self->wlr_allocator = wlr_allocator_autocreate (self->wlr_backend,
-                                                  self->wlr_renderer);
+  self->renderer_lost.notify = handle_renderer_lost;
+  wl_signal_add (&self->wlr_renderer->events.lost, &self->renderer_lost);
+
+  self->wlr_allocator = wlr_allocator_autocreate (self->wlr_backend, self->wlr_renderer);
   if (self->wlr_allocator == NULL) {
     g_set_error (error,
                  G_FILE_ERROR, G_FILE_ERROR_FAILED,
@@ -605,6 +673,10 @@ static void
 phoc_renderer_finalize (GObject *object)
 {
   PhocRenderer *self = PHOC_RENDERER (object);
+
+  wl_list_remove (&self->renderer_lost.link);
+
+  g_clear_handle_id (&self->renderer_recreate_id, g_source_remove);
 
   g_clear_pointer (&self->wlr_allocator, wlr_allocator_destroy);
   g_clear_pointer (&self->wlr_renderer, wlr_renderer_destroy);
@@ -662,6 +734,7 @@ phoc_renderer_class_init (PhocRendererClass *klass)
 static void
 phoc_renderer_init (PhocRenderer *self)
 {
+  wl_list_init (&self->renderer_lost.link);
 }
 
 
