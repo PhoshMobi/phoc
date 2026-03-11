@@ -11,6 +11,8 @@
 #include "phoc-config.h"
 
 #include "workspace-manager.h"
+#include "seat.h"
+#include "server.h"
 
 #include <gio/gio.h>
 
@@ -25,7 +27,7 @@
 
 enum {
   PROP_0,
-  PROP_WORKSPACE,
+  PROP_ACTIVE,
   PROP_N_WORKSPACES,
   PROP_LAST_PROP
 };
@@ -50,7 +52,7 @@ phoc_workspace_manager_get_property (GObject    *object,
   PhocWorkspaceManager *self = PHOC_WORKSPACE_MANAGER (object);
 
   switch (property_id) {
-  case PROP_WORKSPACE:
+  case PROP_ACTIVE:
     g_value_set_object (value, phoc_workspace_manager_get_active (self));
     break;
   case PROP_N_WORKSPACES:
@@ -80,15 +82,23 @@ phoc_workspace_manager_class_init (PhocWorkspaceManagerClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->get_property = phoc_workspace_manager_get_property;
-  //object_class->set_property = phoc_workspace_manager_set_property;
   object_class->finalize = phoc_workspace_manager_finalize;
 
+  /**
+   * PhocWorspaceManager::n-workspaces
+   *
+   * The number of workspaces
+   */
   props[PROP_N_WORKSPACES] =
     g_param_spec_boolean ("n-workspaces", "", "",
                           1,
                           G_PARAM_READABLE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
-
-  props[PROP_WORKSPACE] =
+  /**
+   * PhocWorspaceManager::active
+   *
+   * The currently active workspace
+   */
+  props[PROP_ACTIVE] =
     g_param_spec_object ("active", "", "",
                          PHOC_TYPE_WORKSPACE,
                          G_PARAM_READABLE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
@@ -198,14 +208,26 @@ phoc_workspace_manager_set_active (PhocWorkspaceManager *self, PhocWorkspace *wo
 
   g_debug ("Switching to workspace %u", index);
   self->active = workspace;
-  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_WORKSPACE]);
+  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_ACTIVE]);
 }
 
-
+/**
+ * phoc_workspace_manager_set_active_by_index:
+ * @self: The workspace manager
+ * @index: The index of the workspace to set active
+ * @focus: Whether to focus the last active view on that workspace
+ *
+ * Activate the workspace with the given index. If `focus` is `TRUE`
+ * the last focused view on that surface will be focused, otherwise
+ * focus remains unchanged.
+ */
 void
-phoc_workspace_manager_set_active_by_index (PhocWorkspaceManager *self, guint index)
+phoc_workspace_manager_set_active_by_index (PhocWorkspaceManager *self,
+                                            guint                 index,
+                                            gboolean              focus)
 {
   PhocWorkspace *workspace;
+  PhocSeat *seat = phoc_server_get_last_active_seat (phoc_server_get_default ());
 
   g_assert (PHOC_IS_WORKSPACE_MANAGER (self));
 
@@ -219,5 +241,8 @@ phoc_workspace_manager_set_active_by_index (PhocWorkspaceManager *self, guint in
 
   g_debug ("Switching to workspace %u", index);
   self->active = workspace;
-  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_WORKSPACE]);
+  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_ACTIVE]);
+
+  if (focus)
+    phoc_seat_focus_workspace (seat, self->active);
 }

@@ -250,7 +250,7 @@ handle_switch_to_workspace (PhocSeat *seat, GVariant *param)
   PhocWorkspaceManager *manager = phoc_desktop_get_workspace_manager (desktop);
   int index = g_variant_get_int32 (param);
 
-  phoc_workspace_manager_set_active_by_index (manager, index);
+  phoc_workspace_manager_set_active_by_index (manager, index, TRUE);
 }
 
 
@@ -262,7 +262,7 @@ handle_switch_to_workspace_relative (PhocSeat *seat, GVariant *param)
   int index = phoc_workspace_manager_get_active_index (manager);
   int offset = g_variant_get_int32 (param);
 
-  phoc_workspace_manager_set_active_by_index (manager, index + offset);
+  phoc_workspace_manager_set_active_by_index (manager, index + offset, TRUE);
 }
 
 
@@ -292,7 +292,7 @@ move_to_workspace (PhocView *view, int index)
 
   phoc_workspace_insert_view (new, view);
   /* Switch to the workspace containing the moved view */
-  phoc_workspace_manager_set_active_by_index (manager, index);
+  phoc_workspace_manager_set_active_by_index (manager, index, FALSE);
 }
 
 

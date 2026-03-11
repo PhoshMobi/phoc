@@ -29,7 +29,8 @@ PhocWorkspaceManager *  phoc_workspace_manager_new              (void);
 void                    phoc_workspace_manager_set_active       (PhocWorkspaceManager *self,
                                                                  PhocWorkspace        *workspace);
 void                    phoc_workspace_manager_set_active_by_index (PhocWorkspaceManager *self,
-                                                                    guint                 index);
+                                                                    guint                 index,
+                                                                    gboolean              focus);
 PhocWorkspace *         phoc_workspace_manager_get_by_index     (PhocWorkspaceManager *self,
                                                                  guint                 index);
 PhocWorkspace *         phoc_workspace_manager_get_active       (PhocWorkspaceManager *self);

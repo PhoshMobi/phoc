@@ -1552,6 +1552,37 @@ phoc_seat_cycle_focus (PhocSeat *seat, gboolean forward)
   }
 }
 
+/**
+ * phoc_seat_focus_workspace:
+ * @seat: The seat
+ * @workspace: The workspace
+ *
+ * Focus the view that was last focused on the give workspace.
+ */
+void
+phoc_seat_focus_workspace (PhocSeat *seat, PhocWorkspace *workspace)
+{
+  PhocSeatPrivate *priv;
+
+  g_assert (PHOC_IS_SEAT (seat));
+  g_assert (PHOC_IS_WORKSPACE (workspace));
+  priv = phoc_seat_get_instance_private (seat);
+
+  if (g_queue_is_empty (priv->views))
+    return;
+
+  /* TODO: not very efficient for now but correct */
+  for (GList *l = priv->views->head; l; l = l->next) {
+    PhocSeatView *seat_view = l->data;
+
+    if (phoc_workspace_has_view (workspace, seat_view->view)) {
+      phoc_seat_set_focus_view (seat, seat_view->view);
+      break;
+    }
+  }
+}
+
+
 void
 phoc_seat_begin_move (PhocSeat *seat, PhocView *view)
 {

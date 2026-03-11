@@ -4,9 +4,6 @@
 
 #define _POSIX_C_SOURCE 200112L
 #include <assert.h>
-#include <math.h>
-#include <stdlib.h>
-#include <time.h>
 #include <wlr/config.h>
 #include <wlr/types/wlr_alpha_modifier_v1.h>
 #include <wlr/types/wlr_compositor.h>
@@ -39,7 +36,6 @@
 
 #include "cursor.h"
 #include "desktop-xwayland.h"
-#include "device-state.h"
 #include "idle-inhibit.h"
 #include "layer-shell.h"
 #include "output.h"
@@ -852,7 +848,10 @@ show_workspace_indicator (PhocDesktop *self, int num)
 
     for (GSList *l = blings; l; l = l->next) {
       if (PHOC_IS_WORKSPACE_INDICATOR (l->data)) {
-        phoc_output_remove_bling (output, l->data);
+        PhocBling *bling = l->data;
+
+        phoc_bling_unmap (bling);
+        phoc_output_remove_bling (output, bling);
         break;
       }
     }
@@ -878,7 +877,7 @@ on_active_workspace_changed (PhocDesktop *self, GParamSpec *pspec, PhocWorkspace
   PhocDesktopPrivate *priv = phoc_desktop_get_instance_private (self);
   int index;
 
-  if (priv->active_workspace)
+  if (priv->active_workspace != NULL)
     phoc_workspace_for_each_view (priv->active_workspace, workspace_damage_view_iter, NULL);
 
   priv->active_workspace = phoc_workspace_manager_get_active (priv->workspace_manager);
