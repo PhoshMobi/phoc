@@ -25,6 +25,7 @@ struct _PhocWorkspace {
    * the last one the one at the bottom. This is different from focus
    * order */
   GQueue *views;
+  GQueue *unmanaged;
 };
 G_DEFINE_TYPE (PhocWorkspace, phoc_workspace, G_TYPE_OBJECT)
 
@@ -35,6 +36,7 @@ phoc_workspace_finalize (GObject *object)
   PhocWorkspace *self = PHOC_WORKSPACE (object);
 
   g_clear_pointer (&self->views, g_queue_free);
+  g_clear_pointer (&self->unmanaged, g_queue_free);
 
   G_OBJECT_CLASS (phoc_workspace_parent_class)->finalize (object);
 }
@@ -53,6 +55,7 @@ static void
 phoc_workspace_init (PhocWorkspace *self)
 {
   self->views = g_queue_new ();
+  self->unmanaged = g_queue_new ();
 }
 
 
@@ -258,4 +261,74 @@ phoc_workspace_for_each_view (PhocWorkspace         *self,
     if (!cont)
       return;
   }
+}
+
+/**
+ * phoc_workspace_insert_unmanaged:
+ * @self: the desktop
+ * @unmanaged: the unmanaged to insert
+ *
+ * Insert the unmanaged surface into the queue of unmanageds. New
+ * unmanageds are inserted at the front so they appear on top of other
+ * unmanaged surfaces.
+ */
+void
+phoc_workspace_insert_unmanaged (PhocWorkspace         *self,
+                                 PhocXWaylandUnmanaged *unmanaged)
+{
+  g_assert (PHOC_IS_WORKSPACE (self));
+
+  g_queue_push_head (self->unmanaged, unmanaged);
+}
+
+/**
+ * phoc_workspace_remove_unmanaged:
+ * @self: the workspace
+ * @unmanaged: The unmanaged to remove
+ *
+ * Removes a unmanaged surface from the queue of unmanaged surfaces..
+ *
+ * Returns: %TRUE if the unmanaged was found, otherwise %FALSE
+ */
+gboolean
+phoc_workspace_remove_unmanaged (PhocWorkspace         *self,
+                                 PhocXWaylandUnmanaged *unmanaged)
+{
+  g_assert (PHOC_IS_WORKSPACE (self));
+
+  return g_queue_remove (self->unmanaged, unmanaged);
+}
+
+/**
+ * phoc_workspace_get_unmanaged:
+ * @self: the workspace
+ *
+ * Get the current unmanaged surfaces in render order. Don't
+ * manipulate the queue directly. This is only meant for reading.
+ *
+ * Returns:(transfer none): The unmanaged in render order
+ */
+GQueue *
+phoc_workspace_get_unmanaged (PhocWorkspace *self)
+{
+  g_assert (PHOC_IS_WORKSPACE (self));
+
+  return self->unmanaged;
+}
+
+/**
+ * phoc_workspace_has_unmanaged:
+ * @self: the workspace
+ * @unmanaged: a unmanaged
+ *
+ * Checks if the given unmanaged surface is part of this workspace
+ *
+ * Returns: `TRUE` if the give unmanaged is on this workspace, otherwise `FALSE`
+ */
+gboolean
+phoc_workspace_has_unmanaged (PhocWorkspace *self, PhocXWaylandUnmanaged *unmanaged)
+{
+  g_assert (PHOC_IS_WORKSPACE (self));
+
+  return !!g_queue_find (self->unmanaged, unmanaged);
 }

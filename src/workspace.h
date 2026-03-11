@@ -7,6 +7,7 @@
 #pragma once
 
 #include "view.h"
+#include "xwayland-unmanaged.h"
 
 #include <glib-object.h>
 
@@ -48,5 +49,13 @@ void                    phoc_workspace_for_each_view             (PhocWorkspace 
                                                                   gpointer       user_data);
 PhocView *              phoc_workspace_cycle                     (PhocWorkspace *self,
                                                                   gboolean forward);
+
+void                    phoc_workspace_insert_unmanaged          (PhocWorkspace         *self,
+                                                                  PhocXWaylandUnmanaged *unmanaged);
+gboolean                phoc_workspace_remove_unmanaged          (PhocWorkspace         *self,
+                                                                  PhocXWaylandUnmanaged *unmanaged);
+GQueue *                phoc_workspace_get_unmanaged             (PhocWorkspace *self);
+gboolean                phoc_workspace_has_unmanaged             (PhocWorkspace         *self,
+                                                                  PhocXWaylandUnmanaged *unmanaged);
 
 G_END_DECLS
