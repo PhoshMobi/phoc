@@ -270,6 +270,20 @@ render_layer (enum zwlr_layer_shell_v1_layer layer, PhocRenderContext *ctx)
 
 
 static void
+render_unmanaged_surfaces (PhocRenderer *self, PhocWorkspace *workspace, PhocRenderContext *ctx)
+{
+  for (GList *l = phoc_workspace_get_unmanaged (workspace)->tail; l; l = l->prev) {
+    PhocXWaylandUnmanaged *unmanaged = PHOC_XWAYLAND_UNMANAGED (l->data);
+
+    phoc_output_unmanaged_for_each_surface (ctx->output,
+                                            unmanaged,
+                                            render_surface_iterator,
+                                            ctx);
+  }
+}
+
+
+static void
 render_output_blings (PhocOutput *output, PhocRenderContext *ctx)
 {
   GSList *blings;
@@ -530,6 +544,10 @@ phoc_renderer_render_output (PhocRenderer *self, PhocOutput *output, PhocRenderC
       if (phoc_desktop_view_check_visibility (desktop, view))
         render_view (output, view, ctx);
     }
+
+    /* Render unmanaged XWayland surfaces */
+    render_unmanaged_surfaces (self, workspace, ctx);
+
     /* Render top layer above views */
     render_layer (ZWLR_LAYER_SHELL_V1_LAYER_TOP, ctx);
   }
