@@ -1321,22 +1321,22 @@ phoc_output_xwayland_children_for_each_surface (PhocOutput                  *sel
                                                 void                        *user_data)
 {
   struct wlr_box output_box;
-  wlr_output_layout_get_box (self->desktop->layout, self->wlr_output, &output_box);
+  struct wlr_xwayland_surface *child;
 
+  wlr_output_layout_get_box (self->desktop->layout, self->wlr_output, &output_box);
   if (wlr_box_empty (&output_box))
     return;
-
-  struct wlr_xwayland_surface *child;
 
   wl_list_for_each (child, &surface->children, parent_link) {
     if (child->surface && child->surface->mapped) {
       double ox = child->x - output_box.x;
       double oy = child->y - output_box.y;
-      phoc_output_surface_for_each_surface (self, child->surface, ox, oy, iterator,
+      phoc_output_surface_for_each_surface (self, child->surface,
+                                            ox, oy,
+                                            iterator,
                                             user_data);
     }
-    phoc_output_xwayland_children_for_each_surface (self, child,
-                                                    iterator, user_data);
+    phoc_output_xwayland_children_for_each_surface (self, child, iterator, user_data);
   }
 }
 #endif
@@ -1603,8 +1603,9 @@ phoc_output_for_each_surface (PhocOutput          *self,
 
 #ifdef PHOC_XWAYLAND
     if (PHOC_IS_XWAYLAND_SURFACE (view)) {
-      struct wlr_xwayland_surface *xsurface =
-        phoc_xwayland_surface_get_wlr_surface (PHOC_XWAYLAND_SURFACE (view));
+      struct wlr_xwayland_surface *xsurface;
+
+      xsurface = phoc_xwayland_surface_get_wlr_surface (PHOC_XWAYLAND_SURFACE (view));
       phoc_output_xwayland_children_for_each_surface (self, xsurface, iterator, user_data);
     }
 #endif
@@ -1672,8 +1673,11 @@ phoc_view_accept_damage (PhocOutput *self, PhocView  *view)
 }
 
 static void
-damage_surface_iterator (PhocOutput *self, struct wlr_surface *wlr_surface, struct wlr_box *_box,
-                         float scale, void *data)
+damage_surface_iterator (PhocOutput         *self,
+                         struct wlr_surface *wlr_surface,
+                         struct wlr_box     *_box,
+                         float               scale,
+                         void               *data)
 {
   bool *whole = data;
   PhocSurface *surface = wlr_surface->data;
