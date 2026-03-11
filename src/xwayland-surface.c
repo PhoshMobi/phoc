@@ -85,9 +85,7 @@ set_active (PhocView *view, bool active)
   xwayland_surface = PHOC_XWAYLAND_SURFACE (view)->xwayland_surface;
 
   wlr_xwayland_surface_activate (xwayland_surface, active);
-
-  if (!xwayland_surface->override_redirect)
-    wlr_xwayland_surface_restack (xwayland_surface, NULL, XCB_STACK_MODE_ABOVE);
+  wlr_xwayland_surface_restack (xwayland_surface, NULL, XCB_STACK_MODE_ABOVE);
 }
 
 static void
@@ -507,15 +505,10 @@ handle_map (struct wl_listener *listener, void *data)
 
   phoc_view_map (view, surface->surface);
 
-  if (surface->override_redirect) {
-    phoc_view_set_initial_focus (view);
-  } else {
-    if (surface->decorations == WLR_XWAYLAND_SURFACE_DECORATIONS_ALL)
-      phoc_view_set_decorated (view, TRUE);
+  if (surface->decorations == WLR_XWAYLAND_SURFACE_DECORATIONS_ALL)
+    phoc_view_set_decorated (view, TRUE);
 
-    phoc_view_setup (view);
-  }
-
+  phoc_view_setup (view);
   phoc_view_auto_maximize (PHOC_VIEW (self));
 
   if (surface->maximized_horz && surface->maximized_vert)
