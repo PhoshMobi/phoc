@@ -13,6 +13,7 @@
 #include "seat.h"
 #include "server.h"
 #include "view-private.h"
+#include "xwayland-unmanaged.h"
 #include "xwayland-surface.h"
 
 #include <wlr/xwayland.h>
@@ -48,6 +49,7 @@ typedef struct _PhocXWaylandSurface {
   struct wl_listener set_class;
   struct wl_listener set_startup_id;
   struct wl_listener set_opacity;
+  struct wl_listener set_override_redirect;
 
   struct wl_listener surface_commit;
 } PhocXWaylandSurface;
@@ -554,6 +556,33 @@ handle_dissociate (struct wl_listener *listener, void *data)
 }
 
 
+static void
+handle_set_override_redirect (struct wl_listener *listener, void *data)
+{
+  PhocXWaylandSurface *self = wl_container_of (listener, self, set_override_redirect);
+  struct wlr_xwayland_surface *wlr_xwayland_surface = self->xwayland_surface;
+  PhocXWaylandSurfaceState state = PHOC_XWAYLAND_SURFACE_STATE_NONE;
+  bool associated, mapped;
+
+  associated = wlr_xwayland_surface->surface != NULL;
+  mapped = associated && wlr_xwayland_surface->surface->mapped;
+
+  if (associated) {
+    handle_dissociate (&self->dissociate, NULL);
+    state |= PHOC_XWAYLAND_SURFACE_STATE_ASSOCIATED;
+  }
+
+  if (mapped) {
+    handle_unmap (&self->unmap, NULL);
+    state |= PHOC_XWAYLAND_SURFACE_STATE_MAPPED;
+  }
+
+  handle_destroy (&self->destroy, NULL);
+
+  phoc_xwayland_unmanaged_new (wlr_xwayland_surface, state);
+}
+
+
 /* }}} */
 
 
@@ -612,6 +641,9 @@ phoc_xwayland_surface_constructed (GObject *object)
   self->set_opacity.notify = handle_set_opacity;
   wl_signal_add (&surface->events.set_opacity, &self->set_opacity);
 
+  self->set_override_redirect.notify = handle_set_override_redirect;
+  wl_signal_add (&surface->events.set_override_redirect, &self->set_override_redirect);
+
   wl_list_init (&self->map.link);
   wl_list_init (&self->unmap.link);
 }
@@ -634,6 +666,7 @@ phoc_xwayland_surface_finalize (GObject *object)
   wl_list_remove (&self->set_class.link);
   wl_list_remove (&self->set_startup_id.link);
   wl_list_remove (&self->set_opacity.link);
+  wl_list_remove (&self->set_override_redirect.link);
 
   self->xwayland_surface->data = NULL;
 
