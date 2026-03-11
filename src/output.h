@@ -5,6 +5,7 @@
 #include "phoc-animation.h"
 #include "render.h"
 #include "view.h"
+#include "xwayland-unmanaged.h"
 
 #include <gio/gio.h>
 #include <glib-object.h>
@@ -130,6 +131,11 @@ void        phoc_output_xwayland_children_for_each_surface (PhocOutput *self,
                                                             PhocSurfaceIterator iterator,
                                                             void *user_data);
 #endif
+void        phoc_output_unmanaged_for_each_surface (PhocOutput            *self,
+                                                    PhocXWaylandUnmanaged *unmanaged,
+                                                    PhocSurfaceIterator    iterator,
+                                                    void                  *user_data);
+
 GQueue     *phoc_output_get_layer_surfaces_for_layer (PhocOutput                     *self,
                                                       enum zwlr_layer_shell_v1_layer  layer);
 void        phoc_output_set_layer_dirty (PhocOutput *self, enum zwlr_layer_shell_v1_layer  layer);
