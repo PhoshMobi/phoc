@@ -28,8 +28,6 @@ static GParamSpec *props[PROP_LAST_PROP];
  * PhocXWaylandSurface
  *
  * An XWayland Surface.
- *
- * For how to setup such an object see handle_xwayland_surface.
  */
 typedef struct _PhocXWaylandSurface {
   PhocView view;
