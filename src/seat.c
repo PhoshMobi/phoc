@@ -1277,7 +1277,6 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
 {
   PhocSeatPrivate *priv;
   PhocOutput *fullscreen_output;
-  bool unfullscreen = true;
 
   g_assert (PHOC_IS_SEAT (seat));
   priv = phoc_seat_get_instance_private (seat);
@@ -1299,22 +1298,13 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
     seat_raise_view_stack (seat, parent);
   }
 
-#ifdef PHOC_XWAYLAND
-  if (view && PHOC_IS_XWAYLAND_SURFACE (view)) {
-    struct wlr_xwayland_surface *xsurface =
-      phoc_xwayland_surface_get_wlr_surface (PHOC_XWAYLAND_SURFACE (view));
-    if (xsurface->override_redirect)
-      unfullscreen = false;
-  }
-#endif
-
   PhocView *prev_focus = phoc_seat_get_focus_view (seat);
   if (view && view == prev_focus) {
     g_debug ("View %p already focused", view);
     return;
   }
 
-  if (view && unfullscreen) {
+  if (view) {
     PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
     PhocOutput *output;
     struct wlr_box box;
@@ -1330,14 +1320,6 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
     }
   }
 
-#ifdef PHOC_XWAYLAND
-  if (view && PHOC_IS_XWAYLAND_SURFACE (view)) {
-    struct wlr_xwayland_surface *xsurface =
-      phoc_xwayland_surface_get_wlr_surface (PHOC_XWAYLAND_SURFACE (view));
-    if (!wlr_xwayland_surface_override_redirect_wants_focus (xsurface))
-      return;
-  }
-#endif
   PhocSeatView *seat_view = NULL;
   if (view != NULL) {
     seat_view = phoc_seat_view_from_view (seat, view);
