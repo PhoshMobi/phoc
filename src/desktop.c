@@ -1420,6 +1420,98 @@ phoc_desktop_for_each_view (PhocDesktop *self, PhocDesktopViewIter view_iter, gp
   }
 }
 
+/**
+ * phoc_desktop_for_each_unmanaged:
+ * @self: The desktop
+ * @unmanaged_iter:(scope call): The iterator
+ * @user_data: The user data
+ *
+ * Invokes `unmanaged_iter` on all unmanaged surfaces passing in
+ * `user_data`.
+ */
+void
+phoc_desktop_for_each_unmanaged (PhocDesktop              *self,
+                                 PhocDesktopUnmanagedIter  unmanaged_iter,
+                                 gpointer                  user_data)
+{
+#ifdef PHOC_XWAYLAND
+  PhocDesktopPrivate *priv = phoc_desktop_get_instance_private (self);
+  guint n_workspaces;
+
+  g_assert (PHOC_IS_DESKTOP (self));
+
+  n_workspaces = phoc_workspace_manager_get_n_workspaces (priv->workspace_manager);
+  for (guint i = 0; i < n_workspaces; i++) {
+    PhocWorkspace *workspace = phoc_workspace_manager_get_by_index (priv->workspace_manager, i);
+
+    for (GList *l = phoc_workspace_get_unmanaged (workspace)->head; l; l = l->next) {
+      PhocXWaylandUnmanaged *unmanaged = PHOC_XWAYLAND_UNMANAGED (l->data);
+      gboolean cont;
+
+      cont = (*unmanaged_iter)(self, unmanaged, user_data);
+      if (!cont)
+        return;
+    }
+  }
+#endif
+}
+
+/**
+ * phoc_desktop_unmanaged_check_visibility:
+ * @self: The desktop
+ * @unmanaged: The unmanaged surface to check
+ *
+ * Checks if a unmanaged surface is currently visible. This is
+ * currently very pessimistic and only assumes that the unmanaged
+ * surface is not visible when covered by a fulls screen layer
+ * surface.
+ *
+ * Returns: `FALSE` when it's certain that the unmanaged is not visible, otherwise `TRUE`
+ */
+gboolean
+phoc_desktop_unmanaged_check_visibility (PhocDesktop *self, PhocXWaylandUnmanaged *unmanaged)
+{
+  gboolean visible = TRUE;
+#ifdef PHOC_XWAYLAND
+  PhocDesktopPrivate *priv;
+  PhocOutput *output;
+  GQueue *layer_surfaces;
+
+  g_assert (PHOC_IS_DESKTOP (self));
+  g_assert (PHOC_IS_XWAYLAND_UNMANAGED (unmanaged));
+
+  priv = phoc_desktop_get_instance_private (self);
+
+  if (!phoc_xwayland_unmanaged_is_mapped (unmanaged)) {
+    visible = FALSE;
+    goto out;
+  }
+
+  if (!phoc_workspace_has_unmanaged (priv->active_workspace, unmanaged)) {
+    visible = FALSE;
+    goto out;
+  }
+
+  /* current heuristics work well only for single output */
+  if (wl_list_length (&self->outputs) != 1)
+    goto out;
+
+  output = wl_container_of (self->outputs.next, output, link);
+  layer_surfaces = phoc_output_get_layer_surfaces_for_layer (output, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY);
+  for (GList *l = layer_surfaces->head; l; l = l->next) {
+    PhocLayerSurface *layer_surface = PHOC_LAYER_SURFACE (l->data);
+
+    if (phoc_layer_surface_covers_output (layer_surface)) {
+      visible = FALSE;
+      goto out;
+    }
+  }
+
+ out:
+#endif
+  return visible;
+}
+
 
 static void
 on_always_on_top_animation_done (PhocTimedAnimation *anim, PhocColorRect *rect)
@@ -1501,6 +1593,55 @@ phoc_desktop_set_view_always_on_top (PhocDesktop *self, PhocView *view, gboolean
   /* Raise children recursively */
   wl_list_for_each_reverse (child, &view->stack, parent_link)
     phoc_desktop_set_view_always_on_top (self, child, on_top);
+}
+
+/**
+ * phoc_desktop_insert_unmanaged:
+ * @self: the desktop
+ * @unmanaged: the unmanaged surface to insert
+ *
+ * Insert the unmanaged surface into the queue of unmanaged
+ * surfaces. New unmanaged surfaces are inserted at the front so they
+ * appear on top of other unmanaged surfaces.
+ */
+void
+phoc_desktop_insert_unmanaged (PhocDesktop *self, PhocXWaylandUnmanaged *unmanaged)
+{
+  PhocDesktopPrivate *priv;
+
+  g_assert (PHOC_IS_DESKTOP (self));
+  priv = phoc_desktop_get_instance_private (self);
+
+  phoc_workspace_insert_unmanaged (priv->active_workspace, unmanaged);
+}
+
+/**
+ * phoc_desktop_remove_unmanaged:
+ * @self: the desktop
+ * @unmanaged: The unmanaged to remove
+ *
+ * Removes a unmanaged surface from the queue of unmanaged surfaces
+ *
+ * Returns: %TRUE if the unmanaged was found, otherwise %FALSE
+ */
+gboolean
+phoc_desktop_remove_unmanaged (PhocDesktop *self, PhocXWaylandUnmanaged *unmanaged)
+{
+  PhocDesktopPrivate *priv;
+  guint n_workspaces;
+
+  g_assert (PHOC_IS_DESKTOP (self));
+  priv = phoc_desktop_get_instance_private (self);
+  n_workspaces = phoc_workspace_manager_get_n_workspaces (priv->workspace_manager);
+
+  for (guint i = 0; i < n_workspaces; i++) {
+    PhocWorkspace *workspace = phoc_workspace_manager_get_by_index (priv->workspace_manager, i);
+
+    if (phoc_workspace_remove_unmanaged (workspace, unmanaged))
+      return TRUE;
+  }
+
+  return FALSE;
 }
 
 

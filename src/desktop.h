@@ -8,6 +8,7 @@
 #include "workspace-manager.h"
 #include "xx-cutouts-v1.h"
 #include "xwayland-surface.h"
+#include "xwayland-unmanaged.h"
 
 
 #include <time.h>
@@ -115,6 +116,9 @@ struct _PhocDesktop {
  * Returns: `TRUE` if the iteration should continue.
  */
 typedef gboolean (*PhocDesktopViewIter)(PhocDesktop *self, PhocView *view, gpointer user_data);
+typedef gboolean (*PhocDesktopUnmanagedIter)(PhocDesktop           *self,
+                                             PhocXWaylandUnmanaged *unmanaged,
+                                             gpointer               user_data);
 
 PhocDesktop *           phoc_desktop_new (void);
 
@@ -127,6 +131,15 @@ gboolean                phoc_desktop_remove_view                  (PhocDesktop *
 void                    phoc_desktop_for_each_view                (PhocDesktop        *self,
                                                                    PhocDesktopViewIter view_iter,
                                                                    gpointer            user_data);
+void                    phoc_desktop_insert_unmanaged             (PhocDesktop *self,
+                                                                   PhocXWaylandUnmanaged *unmanaged);
+gboolean                phoc_desktop_remove_unmanaged             (PhocDesktop *self,
+                                                                   PhocXWaylandUnmanaged *unmanaged);
+void                    phoc_desktop_for_each_unmanaged           (PhocDesktop              *self,
+                                                                   PhocDesktopUnmanagedIter unmanaged_iter,
+                                                                   gpointer                 user_data);
+gboolean                phoc_desktop_unmanaged_check_visibility   (PhocDesktop           *self,
+                                                                   PhocXWaylandUnmanaged *unmanaged);
 
 void                    phoc_desktop_set_auto_maximize            (PhocDesktop *self,
                                                                    gboolean     on);
