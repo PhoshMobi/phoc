@@ -207,6 +207,35 @@ desktop_view_at (PhocDesktop         *self,
   return NULL;
 }
 
+
+static struct wlr_surface *
+desktop_unmanaged_at (PhocDesktop *self, double lx, double ly, double *sx, double *sy)
+{
+#ifdef PHOC_XWAYLAND
+  PhocDesktopPrivate *priv = phoc_desktop_get_instance_private (self);
+
+  for (GList *l = phoc_workspace_get_unmanaged (priv->active_workspace)->head; l; l = l->next) {
+    PhocXWaylandUnmanaged *unmanaged = l->data;
+    struct wlr_surface *wlr_surface;
+    int u_lx, u_ly;
+    double u_sx, u_sy;
+
+    if (!phoc_xwayland_unmanaged_is_mapped (unmanaged))
+      continue;
+
+    phoc_xwayland_unmanaged_get_pos (unmanaged, &u_lx, &u_ly);
+    wlr_surface = phoc_xwayland_unmanaged_get_wlr_surface (unmanaged);
+
+    u_sx = lx - u_lx;
+    u_sy = ly - u_ly;
+
+    return wlr_surface_surface_at (wlr_surface, u_sx, u_sy, sx, sy);
+  }
+#endif
+  return NULL;
+}
+
+
 static struct wlr_surface *
 layer_surface_at (PhocOutput                     *output,
                   enum zwlr_layer_shell_v1_layer  layer,
@@ -293,6 +322,10 @@ phoc_desktop_wlr_surface_at (PhocDesktop *desktop,
     if (surface)
       return surface;
   }
+
+  surface = desktop_unmanaged_at (desktop, lx, ly, sx, sy);
+  if (surface)
+    return surface;
 
   PhocView *_view = desktop_view_at (desktop, lx, ly, &surface, sx, sy);
   if (_view) {
