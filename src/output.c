@@ -3,7 +3,25 @@
 #include "phoc-config.h"
 #include "phoc-tracing.h"
 
-#define _POSIX_C_SOURCE 200809L
+#include "anim/animatable.h"
+#include "bling.h"
+#include "cursor.h"
+#include "input-method-relay.h"
+#include "layer-shell-effects.h"
+#include "layer-shell.h"
+#include "layout-transaction.h"
+#include "output-cutouts.h"
+#include "output-shield.h"
+#include "output.h"
+#include "render-private.h"
+#include "render.h"
+#include "seat.h"
+#include "server.h"
+#include "settings.h"
+#include "surface.h"
+#include "utils.h"
+#include "xwayland-surface.h"
+
 #include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
@@ -17,25 +35,6 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/region.h>
 #include <wlr/util/transform.h>
-
-#include "anim/animatable.h"
-#include "bling.h"
-#include "cursor.h"
-#include "output-cutouts.h"
-#include "settings.h"
-#include "layer-shell.h"
-#include "layer-shell-effects.h"
-#include "layout-transaction.h"
-#include "output.h"
-#include "output-shield.h"
-#include "render.h"
-#include "render-private.h"
-#include "seat.h"
-#include "server.h"
-#include "surface.h"
-#include "input-method-relay.h"
-#include "utils.h"
-#include "xwayland-surface.h"
 
 enum {
   PROP_0,

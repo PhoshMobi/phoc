@@ -1,15 +1,14 @@
-#define _POSIX_C_SOURCE 200809L
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
-#include <unistd.h>
+#include "egl-common.h"
+
 #include <wayland-client.h>
 
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
-#include "egl-common.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+#include <unistd.h>
 
 EGLDisplay egl_display;
 EGLConfig egl_config;

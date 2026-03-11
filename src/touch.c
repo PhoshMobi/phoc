@@ -2,14 +2,11 @@
 
 #include "phoc-config.h"
 
-#define _POSIX_C_SOURCE 200112L
-#include <stdlib.h>
-#include <time.h>
-#include <wlr/backend/libinput.h>
-
 #include "input-device.h"
 #include "touch.h"
 #include "seat.h"
+
+#include <wlr/backend/libinput.h>
 
 /**
  * PhocTouch:

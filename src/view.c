@@ -2,14 +2,6 @@
 
 #include "phoc-config.h"
 
-#ifndef _POSIX_C_SOURCE
-#define _POSIX_C_SOURCE 200809L
-#endif
-#include <stdlib.h>
-#include <string.h>
-#include <wlr/types/wlr_subcompositor.h>
-#include <wlr/types/wlr_output_layout.h>
-
 #include "phoc-enums.h"
 
 #include "bling.h"
@@ -25,6 +17,9 @@
 #include "view-child-private.h"
 #include "view-private.h"
 #include "workspace.h"
+
+#include <wlr/types/wlr_subcompositor.h>
+#include <wlr/types/wlr_output_layout.h>
 
 #define PHOC_ANIM_DURATION_WINDOW_FADE 150
 #define PHOC_MOVE_TO_CORNER_MARGIN 12

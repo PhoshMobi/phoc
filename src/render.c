@@ -18,21 +18,14 @@
 #include "cursor.h"
 #include "input.h"
 #include "layer-surface.h"
+#include "render-private.h"
+#include "render.h"
 #include "seat.h"
 #include "server.h"
-#include "render.h"
-#include "render-private.h"
 #include "touch-point.h"
-#include "xwayland-surface.h"
 #include "utils.h"
+#include "xwayland-surface.h"
 
-#define _POSIX_C_SOURCE 200809L
-#include <assert.h>
-#include <drm_fourcc.h>
-#include <fcntl.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <time.h>
 #include <wlr/backend.h>
 #include <wlr/config.h>
 #include <wlr/render/drm_format_set.h>
@@ -48,6 +41,13 @@
 #include <wlr/render/allocator.h>
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
+
+#include <assert.h>
+#include <drm_fourcc.h>
+#include <fcntl.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <time.h>
 
 #define COLOR_BLACK                ((struct wlr_render_color){0.0f, 0.0f, 0.0f, 1.0f})
 #define COLOR_MAGENTA_ALPHA(x)     ((struct wlr_render_color){0.5f, 0.0f, 0.5f, (x)})

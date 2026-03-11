@@ -2,9 +2,6 @@
 
 #include "phoc-config.h"
 
-#ifndef _POSIX_C_SOURCE
-#define _POSIX_C_SOURCE 200112L
-#endif
 #include <errno.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -17,12 +14,9 @@
 #include "desktop.h"
 #include "layer-shell.h"
 #include "layer-shell-private.h"
-#include "layout-transaction.h"
 #include "output.h"
 #include "seat.h"
 #include "server.h"
-#include "surface.h"
-#include "utils.h"
 
 #include <glib.h>
 

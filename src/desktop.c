@@ -2,7 +2,6 @@
 
 #include "phoc-config.h"
 
-#define _POSIX_C_SOURCE 200112L
 #include <assert.h>
 #include <wlr/config.h>
 #include <wlr/types/wlr_alpha_modifier_v1.h>

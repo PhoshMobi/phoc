@@ -9,9 +9,20 @@
 
 #include "phoc-config.h"
 
-#define _POSIX_C_SOURCE 200112L
-#include <libinput.h>
-#include <time.h>
+#include "cursor.h"
+#include "device-state.h"
+#include "input-method-relay.h"
+#include "keyboard.h"
+#include "pointer.h"
+#include "seat.h"
+#include "server.h"
+#include "switch.h"
+#include "tablet-pad.h"
+#include "tablet-tool.h"
+#include "tablet.h"
+#include "touch.h"
+#include "xwayland-surface.h"
+
 #include <wayland-server-core.h>
 #include <wlr/backend/libinput.h>
 #include <wlr/config.h>
@@ -21,19 +32,8 @@
 #include <wlr/types/wlr_tablet_v2.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 
-#include "cursor.h"
-#include "device-state.h"
-#include "keyboard.h"
-#include "pointer.h"
-#include "switch.h"
-#include "seat.h"
-#include "server.h"
-#include "tablet.h"
-#include "tablet-pad.h"
-#include "tablet-tool.h"
-#include "input-method-relay.h"
-#include "touch.h"
-#include "xwayland-surface.h"
+#include <libinput.h>
+#include <time.h>
 
 enum {
   PROP_0,
