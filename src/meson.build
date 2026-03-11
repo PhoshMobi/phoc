@@ -9,6 +9,10 @@ phoc_enum_headers = files(
   'server.h',
   'view.h',
 )
+if have_xwayland
+  phoc_enum_headers += ['xwayland-unmanaged.h']
+endif
+
 phoc_enum_sources = gnome.mkenums_simple('phoc-enums', sources: phoc_enum_headers)
 
 phoc_marshalers = gnome.genmarshal(
@@ -182,7 +186,12 @@ phoc_deps = [
 ]
 
 if have_xwayland
-  sources += ['xwayland-surface.c', 'xwayland-surface.h']
+  sources += [
+    'xwayland-surface.c',
+    'xwayland-surface.h',
+    'xwayland-unmanaged.c',
+    'xwayland-unmanaged.h',
+  ]
   phoc_deps += dependency('xcb')
 endif
 
