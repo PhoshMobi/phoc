@@ -106,6 +106,8 @@ PhocView          *phoc_seat_get_focus_view  (PhocSeat *seat);
 void               phoc_seat_set_focus_view  (PhocSeat *seat, PhocView *view);
 void               phoc_seat_set_focus_layer (PhocSeat                    *seat,
                                               struct wlr_layer_surface_v1 *layer);
+void               phoc_seat_set_focus_surface (PhocSeat           *self,
+                                                struct wlr_surface *wlr_surface);
 
 void               phoc_seat_cycle_focus (PhocSeat *seat, gboolean forward);
 void               phoc_seat_focus_workspace (PhocSeat *seat, PhocWorkspace *workspace);

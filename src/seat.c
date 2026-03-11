@@ -1374,19 +1374,9 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
 
   /* An existing keyboard grab might try to deny setting focus, so cancel it */
   wlr_seat_keyboard_end_grab (seat->seat);
-  struct wlr_keyboard *keyboard = wlr_seat_get_keyboard (seat->seat);
-  if (keyboard) {
-    wlr_seat_keyboard_notify_enter (seat->seat, view->wlr_surface,
-                                    keyboard->keycodes, keyboard->num_keycodes,
-                                    &keyboard->modifiers);
-  } else {
-    wlr_seat_keyboard_notify_enter (seat->seat, view->wlr_surface, NULL, 0, NULL);
-  }
 
+  phoc_seat_set_focus_surface (seat, view->wlr_surface);
   g_debug ("Focused view %p", view);
-  phoc_seat_tablet_pads_set_focus (seat, view->wlr_surface);
-  phoc_cursor_update_focus (seat->cursor);
-  phoc_input_method_relay_set_focus (&seat->im_relay, view->wlr_surface);
 
   /* View was fullscreen on output, so scan it out like that again */
   fullscreen_output = phoc_view_get_fullscreen_output (view);
@@ -1456,6 +1446,31 @@ phoc_seat_set_focus_layer (PhocSeat *seat, struct wlr_layer_surface_v1 *layer)
   phoc_cursor_update_focus (seat->cursor);
   phoc_input_method_relay_set_focus (&seat->im_relay, layer->surface);
   phoc_output_update_shell_reveal (PHOC_OUTPUT (layer->output->data));
+}
+
+/**
+ * phoc_seat_set_focus_surface:
+ * @self: The seat
+ * @wlr_surface:(nullable): The surface to focus
+ *
+ * Focus the given surface. Except from cursor code you want to invoke
+ * Seat@focus_view instead.
+ */
+void
+phoc_seat_set_focus_surface (PhocSeat *self, struct wlr_surface *wlr_surface)
+{
+  struct wlr_keyboard *keyboard = wlr_seat_get_keyboard (self->seat);
+  if (keyboard) {
+    wlr_seat_keyboard_notify_enter (self->seat, wlr_surface,
+                                    keyboard->keycodes, keyboard->num_keycodes,
+                                    &keyboard->modifiers);
+  } else {
+    wlr_seat_keyboard_notify_enter (self->seat, wlr_surface, NULL, 0, NULL);
+  }
+
+  phoc_seat_tablet_pads_set_focus (self, wlr_surface);
+  phoc_cursor_update_focus (self->cursor);
+  phoc_input_method_relay_set_focus (&self->im_relay, wlr_surface);
 }
 
 /**
