@@ -252,6 +252,13 @@ check-markdown:
   extends:
     - .phosh-check-markdown
 
+check-g-style:
+  stage: style-checks
+  variables:
+    PHOSH_BANNED_TYPES: "gchar gfloat gdouble gint"
+  extends:
+    - .phosh-check-g-style
+
 check-meson:
   stage: style-checks
   extends:
