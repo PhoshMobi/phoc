@@ -468,7 +468,7 @@ test_xx_cutouts_scale2_trans90 (void)
 
 
 int
-main (gint argc, char *argv[])
+main (int argc, char *argv[])
 {
   g_test_init (&argc, &argv, NULL);
 
