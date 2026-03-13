@@ -480,12 +480,13 @@ phoc_server_dispose (GObject *object)
 {
   PhocServer *self = PHOC_SERVER (object);
 
+  wl_display_destroy_clients (self->wl_display);
+
   g_clear_object (&self->input);
 
   g_clear_object (&self->renderer);
 
   if (self->backend) {
-    wl_display_destroy_clients (self->wl_display);
     wlr_backend_destroy (self->backend);
     self->backend = NULL;
   }
