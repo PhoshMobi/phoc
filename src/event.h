@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "input-device.h"
+
 #include <wlr/types/wlr_touch.h>
 #include <wlr/types/wlr_pointer.h>
 
@@ -145,11 +147,9 @@ GType                       phoc_event_sequence_get_type             (void) G_GN
 PhocEvent                  *phoc_event_new                           (PhocEventType    type,
                                                                       const gpointer   wlr_event,
                                                                       gsize            size);
-PhocEvent                  *phoc_event_copy                          (const PhocEvent *event);
-void                        phoc_event_free                          (PhocEvent       *event);
-PhocEventSequence          *phoc_event_get_event_sequence            (const PhocEvent *event);
-/* TODO: #include "input-device.h" tirggers header fallout again */
-typedef struct _PhocInputDevice PhocInputDevice;
+PhocEvent                 *phoc_event_copy                           (const PhocEvent *event);
+void                       phoc_event_free                           (PhocEvent       *event);
+PhocEventSequence         *phoc_event_get_event_sequence             (const PhocEvent *event);
 PhocInputDevice           *phoc_event_get_device                     (const PhocEvent *event);
 PhocTouchpadGesturePhase   phoc_event_get_touchpad_gesture_phase     (const PhocEvent *event);
 gboolean                   phoc_event_is_touchpad_gesture            (const PhocEvent *event);
