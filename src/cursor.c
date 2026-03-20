@@ -1602,13 +1602,11 @@ phoc_cursor_handle_touch_up (PhocCursor                *self,
 {
   struct wlr_touch_point *point = wlr_seat_touch_get_point (self->seat->seat, event->touch_id);
   PhocTouchPoint *touch_point;
-  PhocCursorPrivate *priv;
+  PhocCursorPrivate *priv = phoc_cursor_get_instance_private (self);
 
   g_assert (PHOC_IS_CURSOR (self));
-  priv = phoc_cursor_get_instance_private (self);
 
   touch_point = phoc_cursor_get_touch_point (self, event->touch_id);
-
   /* Don't process unknown touch points */
   if (!touch_point)
     return;
