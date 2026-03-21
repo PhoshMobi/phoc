@@ -23,6 +23,7 @@
 #include <glib-unix.h>
 
 #include <wlr/types/wlr_drm.h>
+#include <wlr/types/wlr_ext_data_control_v1.h>
 #include <wlr/types/wlr_linux_dmabuf_v1.h>
 #include <wlr/types/wlr_security_context_v1.h>
 #include <wlr/xwayland.h>
@@ -86,6 +87,7 @@ typedef struct _PhocServer {
 
   struct wlr_linux_dmabuf_v1     *linux_dmabuf_v1;
   struct wlr_data_device_manager *data_device_manager;
+  struct wlr_ext_data_control_manager_v1 *ext_data_control_manager_v1;
 
   struct wl_listener   new_surface;
 
@@ -320,6 +322,13 @@ on_shell_state_changed (PhocServer *self, GParamSpec *pspec, PhocPhoshPrivate *p
 }
 
 
+static void
+phoc_server_init_protocols (PhocServer *self)
+{
+  self->ext_data_control_manager_v1 = wlr_ext_data_control_manager_v1_create (self->wl_display, 1);
+}
+
+
 static gboolean
 phoc_server_client_has_security_context (PhocServer *self, const struct wl_client *client)
 {
@@ -338,7 +347,7 @@ phoc_server_is_privileged_protocol (PhocServer *self, const struct wl_global *gl
   if (phoc_desktop_is_privileged_protocol (self->desktop, global))
     return true;
 
-  return FALSE;
+  return global == self->ext_data_control_manager_v1->global;
 }
 
 
@@ -635,6 +644,8 @@ phoc_server_setup (PhocServer     *self,
   const char *socket = NULL;
 
   g_assert (!self->inited);
+
+  phoc_server_init_protocols (self);
 
   self->config = config;
   self->flags = flags;
