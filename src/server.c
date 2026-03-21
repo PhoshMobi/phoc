@@ -332,6 +332,16 @@ phoc_server_client_has_security_context (PhocServer *self, const struct wl_clien
 }
 
 
+static gboolean
+phoc_server_is_privileged_protocol (PhocServer *self, const struct wl_global *global)
+{
+  if (phoc_desktop_is_privileged_protocol (self->desktop, global))
+    return true;
+
+  return FALSE;
+}
+
+
 static bool
 phoc_server_filter_globals (const struct wl_client *client,
                             const struct wl_global *global,
@@ -346,7 +356,7 @@ phoc_server_filter_globals (const struct wl_client *client,
 #endif
 
   /* Clients with a security context can request privileged protocols */
-  if (phoc_desktop_is_privileged_protocol (self->desktop, global) &&
+  if (phoc_server_is_privileged_protocol (self, global) &&
       phoc_server_client_has_security_context (self, client)) {
     return false;
   }
