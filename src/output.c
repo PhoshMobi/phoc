@@ -1891,7 +1891,7 @@ phoc_output_config_head_to_output_config (PhocOutput                            
   PhocOutputConfig *oc = phoc_output_config_new (phoc_output_get_identifier (self));
 
   oc->enable = TRUE;
-  if (head->state.mode && !head->state.mode->preferred) {
+  if (head->state.mode && head->state.mode->preferred) {
     oc->mode.width = head->state.mode->width;
     oc->mode.height = head->state.mode->height;
     oc->mode.refresh_rate = head->state.mode->refresh / 1000.0;
