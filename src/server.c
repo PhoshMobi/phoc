@@ -24,6 +24,8 @@
 
 #include <wlr/types/wlr_drm.h>
 #include <wlr/types/wlr_ext_data_control_v1.h>
+#include <wlr/types/wlr_ext_image_capture_source_v1.h>
+#include <wlr/types/wlr_ext_image_copy_capture_v1.h>
 #include <wlr/types/wlr_linux_dmabuf_v1.h>
 #include <wlr/types/wlr_security_context_v1.h>
 #include <wlr/xwayland.h>
@@ -88,6 +90,7 @@ typedef struct _PhocServer {
   struct wlr_linux_dmabuf_v1     *linux_dmabuf_v1;
   struct wlr_data_device_manager *data_device_manager;
   struct wlr_ext_data_control_manager_v1 *ext_data_control_manager_v1;
+  struct wlr_ext_image_copy_capture_manager_v1 *ext_image_copy_capture_manager_v1;
 
   struct wl_listener   new_surface;
 
@@ -326,6 +329,9 @@ static void
 phoc_server_init_protocols (PhocServer *self)
 {
   self->ext_data_control_manager_v1 = wlr_ext_data_control_manager_v1_create (self->wl_display, 1);
+  self->ext_image_copy_capture_manager_v1 =
+    wlr_ext_image_copy_capture_manager_v1_create (self->wl_display, 1);
+  wlr_ext_output_image_capture_source_manager_v1_create (self->wl_display, 1);
 }
 
 
@@ -347,7 +353,9 @@ phoc_server_is_privileged_protocol (PhocServer *self, const struct wl_global *gl
   if (phoc_desktop_is_privileged_protocol (self->desktop, global))
     return true;
 
-  return global == self->ext_data_control_manager_v1->global;
+  return
+    global == self->ext_data_control_manager_v1->global ||
+    global == self->ext_image_copy_capture_manager_v1->global;
 }
 
 
