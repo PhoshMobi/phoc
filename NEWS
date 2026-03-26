@@ -1,3 +1,21 @@
+phoc 0.54~rc1
+-------------
+Released March 2026
+* Workspace focus improvements
+* X11 override-redirect handling improvements
+* Multiple bug fixes, internal cleanups and improvements
+* Update to wlroots 0.19.3
+* Issues fixed:
+    * https://gitlab.gnome.org/World/Phosh/phoc/-/issues/351
+    * https://gitlab.gnome.org/World/Phosh/phoc/-/issues/352
+    * https://gitlab.gnome.org/World/Phosh/phoc/-/issues/425
+    * https://gitlab.gnome.org/World/Phosh/phoc/-/issues/428
+    * https://gitlab.gnome.org/World/Phosh/phoc/-/issues/429
+    * https://gitlab.gnome.org/World/Phosh/phoc/-/issues/44
+* Contributors:
+    * Gotam Gorabh
+    * Guido Günther
+
 phoc 0.53.0
 -----------
 Released February 2026

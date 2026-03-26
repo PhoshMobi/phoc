@@ -1,3 +1,118 @@
+phoc (0.54~rc1) experimental; urgency=medium
+
+  [ Guido Günther ]
+  * switch: Don't assert on unknown switch types
+    libinput might introduce new ones at any time
+  * wlroots: Add build fixes for libinput 1.31
+  * desktop: Remove unused headers.
+    We include plenty, no need to include ones that aren't direclty used.
+  * desktop: Use pointer comparison.
+    This makes it obvious that we're not checking a boolean
+  * workspace-manager: Name property consistently.
+    The property is `active` not `workspace`.
+  * workspace-manager: Document properties
+  * desktop: Unmap workspace indicator before removing it.
+    This ensures the area gets properly damaged
+  * workspace-manager: When switching worskpaces focus last focused view.
+    This ensures the focus is always on the current workspace. We can simplify this
+    by switching to per-workspace SeatViews at some point but let's get it correct
+    first.
+    Only do so when explicitly asked for to keep things usable in situations where
+    focus moves by other means (e.g. activation).
+    Closes: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/425
+    Teemu Ikonen <tpikonen@mailbox.org>
+  * view: Don't exit early if already fullscreen on the output.
+    Different clients want to update geometry later on and currently
+    we shourtcut it.
+    Fixes: d846bf134 ("view: Clear fullscreen output when switching outputs")
+    Closes: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/428
+    Tested-by: Teemu Ikonen <tpikonen@mailbox.org>
+  * server: Destroy clients early.
+    We want them disconnected before freeing the renderer or other
+    things.
+  * output: Actually handle preferred mode.
+    The logic was inverted so when we wanted to pick a preferred mode
+    we ended up in the custom mode path.
+    This fixes
+    ```sh
+    $ wlr-randr --output eDP-1 --mode 2880x1920@120
+    $ wlr-randr --output eDP-1 --mode 2880x1920@60.000999Hz
+    ```
+    for a laptop with
+    ```
+      Modes:
+        2880x1920 px, 120.000000 Hz (preferred, current)
+        2880x1920 px, 60.000999 Hz (preferred)
+    ```
+    Also switching refresh rate via g-c-c works again.
+    Closes: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/429
+    Fixes: c1ef0ea88 ("output: Use PhocOutputConfig with head states too")
+  * event: Drop forward declarations.
+    Headers are cleaned up sufficiently nowadays
+  * cursor: Simplify.
+    Initializing priv early is fine as long as we don't access it
+  * wlroots: Update to 0.19.3
+  * treewide: Drop unused defines.
+    We don't use any _XOPEN_SOURCE or _POSIX_C_SOURCE specific things
+    so drop them.
+    While at that improve the header ordering in those files. Luckily
+    our headers are sufficiently disentangled nowadays that we can
+    also sort phoc's headers alphabetically.
+  * seat: Split out phoc_seat_set_focus_surface.
+    Nice we cleaned that up recently. Will be used for override_redirect
+    XWayland handling.
+  * xwayland-unmanaged: New class to handle unmanged surfaces.
+    These are called unmanaged because the X11 window manager should
+    not worry about them.
+    We track the position in layout coordinates.
+    Helps: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/351
+  * xwayland-surface: Flip to unmanaged when needed.
+    When a xwayland-surface becomes override redirect we create
+    an unmanged surface from it.
+    Helps: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/351
+  * desktop: Create unmanaged xwayland surfaces.
+    We call them unmanaged instead of override-redirect as we might have
+    other unmanaged surfaces later on.
+    That's also why we call things "unmanaged" outside the
+    `PhocXWaylandUnmanaged` class: If needed we introduce a common
+    `PhocUmanaged` base class.
+    Simple test case is
+    ```
+    GDK_BACKEND=x11 gtk3-demo --run=combobox
+    ```
+    Helps: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/351
+    Closes: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/352
+    Closes: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/44
+  * workspace: Allow to add and remove unmanaged surfaces.
+    Needed for XWayland `override-redirect` handling
+    Helps: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/351
+  * desktop: Allow to add, remove and iterate unmanaged surfaces.
+    Needed for override-redirect handling
+    Helps: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/351
+  * output: Add iterators for unmanaged surfaces.
+    Similar to what we do for other surface types.
+    Helps: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/351
+  * render: Render unmanaged surfaces.
+    Unmanaged go on top of views.
+    Helps: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/351
+  * desktop: Check surface positions for unmanaged surfaces.
+    Closes: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/351
+  * seat: Drop override redirect case handling.
+    XWayland views don't have that set anymore since unmanaged
+    surfaces are handled separately.
+  * xwayland-surface: Remove override-redirect paths.
+    These are handled in a separate class now
+
+  [ Gotam Gorabh ]
+  * ci: Update shared scripts to 4a59c2b
+  * ci: Use common g-style check.
+    Drop the local `g-style` script and use the shared CI check
+    from meta-phosh instead. This check is configured to detect
+    gchar, gdouble, gfloat, and gint usages.
+  * tests/test-xx-cutouts: Drop gint use
+
+ -- Guido Günther <agx@sigxcpu.org>  Thu, 26 Mar 2026 09:13:30 +0100
+
 phoc (0.53.0) experimental; urgency=medium
 
   * No changes over rc1
