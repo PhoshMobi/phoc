@@ -3,7 +3,25 @@
 #include "phoc-config.h"
 #include "phoc-tracing.h"
 
-#define _POSIX_C_SOURCE 200809L
+#include "anim/animatable.h"
+#include "bling.h"
+#include "cursor.h"
+#include "input-method-relay.h"
+#include "layer-shell-effects.h"
+#include "layer-shell.h"
+#include "layout-transaction.h"
+#include "output-cutouts.h"
+#include "output-shield.h"
+#include "output.h"
+#include "render-private.h"
+#include "render.h"
+#include "seat.h"
+#include "server.h"
+#include "settings.h"
+#include "surface.h"
+#include "utils.h"
+#include "xwayland-surface.h"
+
 #include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
@@ -17,25 +35,6 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/region.h>
 #include <wlr/util/transform.h>
-
-#include "anim/animatable.h"
-#include "bling.h"
-#include "cursor.h"
-#include "output-cutouts.h"
-#include "settings.h"
-#include "layer-shell.h"
-#include "layer-shell-effects.h"
-#include "layout-transaction.h"
-#include "output.h"
-#include "output-shield.h"
-#include "render.h"
-#include "render-private.h"
-#include "seat.h"
-#include "server.h"
-#include "surface.h"
-#include "input-method-relay.h"
-#include "utils.h"
-#include "xwayland-surface.h"
 
 enum {
   PROP_0,
@@ -1322,25 +1321,60 @@ phoc_output_xwayland_children_for_each_surface (PhocOutput                  *sel
                                                 void                        *user_data)
 {
   struct wlr_box output_box;
-  wlr_output_layout_get_box (self->desktop->layout, self->wlr_output, &output_box);
+  struct wlr_xwayland_surface *child;
 
+  wlr_output_layout_get_box (self->desktop->layout, self->wlr_output, &output_box);
   if (wlr_box_empty (&output_box))
     return;
-
-  struct wlr_xwayland_surface *child;
 
   wl_list_for_each (child, &surface->children, parent_link) {
     if (child->surface && child->surface->mapped) {
       double ox = child->x - output_box.x;
       double oy = child->y - output_box.y;
-      phoc_output_surface_for_each_surface (self, child->surface, ox, oy, iterator,
+      phoc_output_surface_for_each_surface (self, child->surface,
+                                            ox, oy,
+                                            iterator,
                                             user_data);
     }
-    phoc_output_xwayland_children_for_each_surface (self, child,
-                                                    iterator, user_data);
+    phoc_output_xwayland_children_for_each_surface (self, child, iterator, user_data);
   }
 }
 #endif
+
+/**
+ * phoc_output_unmanaged_for_each_surface:
+ * @self: the output
+ * @unmanaged: The [type@XWaylandUnmanaged]
+ * @iterator: (scope call): The callback invoked on each iteration
+ * @user_data: Callback user data
+ *
+ * Iterate over surfaces in a [type@XWaylandUnmanaged]s surface tree.
+ */
+void
+phoc_output_unmanaged_for_each_surface (PhocOutput            *self,
+                                        PhocXWaylandUnmanaged *unmanaged,
+                                        PhocSurfaceIterator    iterator,
+                                        void                  *user_data)
+{
+#ifdef PHOC_XWAYLAND
+  int lx, ly;
+  struct wlr_box output_box;
+  struct wlr_surface *wlr_surface;
+
+  wlr_output_layout_get_box (self->desktop->layout, self->wlr_output, &output_box);
+  if (wlr_box_empty (&output_box))
+    return;
+
+  phoc_xwayland_unmanaged_get_pos (unmanaged, &lx, &ly);
+
+  wlr_surface = phoc_xwayland_unmanaged_get_wlr_surface (unmanaged);
+  phoc_output_surface_for_each_surface (self, wlr_surface,
+                                        lx - output_box.x,
+                                        ly - output_box.y,
+                                        iterator,
+                                        user_data);
+#endif
+}
 
 /**
  * phoc_output_layer_surface_for_each_surface:
@@ -1569,7 +1603,7 @@ struct for_each_surface_data {
 };
 
 static gboolean
-for_each_surface_iter (PhocDesktop *desktop, PhocView *view, gpointer user_data)
+for_each_view_surface_iter (PhocDesktop *desktop, PhocView *view, gpointer user_data)
 {
   struct for_each_surface_data *data = user_data;
 
@@ -1579,14 +1613,25 @@ for_each_surface_iter (PhocDesktop *desktop, PhocView *view, gpointer user_data)
   return TRUE;
 }
 
-/**
- * phoc_output_for_each_surface:
- * @self: the output
+static gboolean
+for_each_unmanaged_surface_iter (PhocDesktop           *desktop,
+                                 PhocXWaylandUnmanaged *unmanaged,
+                                 gpointer               user_data)
+{
+  struct for_each_surface_data *data = user_data;
+
+  if (!data->visible_only || phoc_desktop_unmanaged_check_visibility (desktop, unmanaged))
+    phoc_output_unmanaged_for_each_surface (data->output, unmanaged, data->iterator, data->user_data);
+
+  return TRUE;
+}
+
+/* @self: the output
  * @iterator: (scope call): The iterator
  * @user_data: Callback user data
  * @visible_only: Whether to only iterate over visible surfaces
  *
- * Iterate over surfaces on the output.
+ * Iterate over all surfaces on the output.
  */
 static void
 phoc_output_for_each_surface (PhocOutput          *self,
@@ -1604,14 +1649,15 @@ phoc_output_for_each_surface (PhocOutput          *self,
 
 #ifdef PHOC_XWAYLAND
     if (PHOC_IS_XWAYLAND_SURFACE (view)) {
-      struct wlr_xwayland_surface *xsurface =
-        phoc_xwayland_surface_get_wlr_surface (PHOC_XWAYLAND_SURFACE (view));
+      struct wlr_xwayland_surface *xsurface;
+
+      xsurface = phoc_xwayland_surface_get_wlr_surface (PHOC_XWAYLAND_SURFACE (view));
       phoc_output_xwayland_children_for_each_surface (self, xsurface, iterator, user_data);
     }
 #endif
   } else {
     phoc_desktop_for_each_view (desktop,
-                                for_each_surface_iter,
+                                for_each_view_surface_iter,
                                 (gpointer)&(struct for_each_surface_data){
                                   .output = self,
                                   .iterator = iterator,
@@ -1621,6 +1667,15 @@ phoc_output_for_each_surface (PhocOutput          *self,
   }
 
   phoc_output_drag_icons_for_each_surface (self, input, iterator, user_data);
+
+  phoc_desktop_for_each_unmanaged (desktop,
+                                   for_each_unmanaged_surface_iter,
+                                   (gpointer)&(struct for_each_surface_data){
+                                     .output = self,
+                                     .iterator = iterator,
+                                     .user_data = user_data,
+                                     .visible_only = visible_only,
+                                   });
 
   for (enum zwlr_layer_shell_v1_layer layer = ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND;
        layer <= ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY; layer++) {
@@ -1673,8 +1728,11 @@ phoc_view_accept_damage (PhocOutput *self, PhocView  *view)
 }
 
 static void
-damage_surface_iterator (PhocOutput *self, struct wlr_surface *wlr_surface, struct wlr_box *_box,
-                         float scale, void *data)
+damage_surface_iterator (PhocOutput         *self,
+                         struct wlr_surface *wlr_surface,
+                         struct wlr_box     *_box,
+                         float               scale,
+                         void               *data)
 {
   bool *whole = data;
   PhocSurface *surface = wlr_surface->data;

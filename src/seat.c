@@ -9,9 +9,20 @@
 
 #include "phoc-config.h"
 
-#define _POSIX_C_SOURCE 200112L
-#include <libinput.h>
-#include <time.h>
+#include "cursor.h"
+#include "device-state.h"
+#include "input-method-relay.h"
+#include "keyboard.h"
+#include "pointer.h"
+#include "seat.h"
+#include "server.h"
+#include "switch.h"
+#include "tablet-pad.h"
+#include "tablet-tool.h"
+#include "tablet.h"
+#include "touch.h"
+#include "xwayland-surface.h"
+
 #include <wayland-server-core.h>
 #include <wlr/backend/libinput.h>
 #include <wlr/config.h>
@@ -21,19 +32,8 @@
 #include <wlr/types/wlr_tablet_v2.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 
-#include "cursor.h"
-#include "device-state.h"
-#include "keyboard.h"
-#include "pointer.h"
-#include "switch.h"
-#include "seat.h"
-#include "server.h"
-#include "tablet.h"
-#include "tablet-pad.h"
-#include "tablet-tool.h"
-#include "input-method-relay.h"
-#include "touch.h"
-#include "xwayland-surface.h"
+#include <libinput.h>
+#include <time.h>
 
 enum {
   PROP_0,
@@ -1277,7 +1277,6 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
 {
   PhocSeatPrivate *priv;
   PhocOutput *fullscreen_output;
-  bool unfullscreen = true;
 
   g_assert (PHOC_IS_SEAT (seat));
   priv = phoc_seat_get_instance_private (seat);
@@ -1299,22 +1298,13 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
     seat_raise_view_stack (seat, parent);
   }
 
-#ifdef PHOC_XWAYLAND
-  if (view && PHOC_IS_XWAYLAND_SURFACE (view)) {
-    struct wlr_xwayland_surface *xsurface =
-      phoc_xwayland_surface_get_wlr_surface (PHOC_XWAYLAND_SURFACE (view));
-    if (xsurface->override_redirect)
-      unfullscreen = false;
-  }
-#endif
-
   PhocView *prev_focus = phoc_seat_get_focus_view (seat);
   if (view && view == prev_focus) {
     g_debug ("View %p already focused", view);
     return;
   }
 
-  if (view && unfullscreen) {
+  if (view) {
     PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
     PhocOutput *output;
     struct wlr_box box;
@@ -1330,14 +1320,6 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
     }
   }
 
-#ifdef PHOC_XWAYLAND
-  if (view && PHOC_IS_XWAYLAND_SURFACE (view)) {
-    struct wlr_xwayland_surface *xsurface =
-      phoc_xwayland_surface_get_wlr_surface (PHOC_XWAYLAND_SURFACE (view));
-    if (!wlr_xwayland_surface_override_redirect_wants_focus (xsurface))
-      return;
-  }
-#endif
   PhocSeatView *seat_view = NULL;
   if (view != NULL) {
     seat_view = phoc_seat_view_from_view (seat, view);
@@ -1374,19 +1356,9 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
 
   /* An existing keyboard grab might try to deny setting focus, so cancel it */
   wlr_seat_keyboard_end_grab (seat->seat);
-  struct wlr_keyboard *keyboard = wlr_seat_get_keyboard (seat->seat);
-  if (keyboard) {
-    wlr_seat_keyboard_notify_enter (seat->seat, view->wlr_surface,
-                                    keyboard->keycodes, keyboard->num_keycodes,
-                                    &keyboard->modifiers);
-  } else {
-    wlr_seat_keyboard_notify_enter (seat->seat, view->wlr_surface, NULL, 0, NULL);
-  }
 
+  phoc_seat_set_focus_surface (seat, view->wlr_surface);
   g_debug ("Focused view %p", view);
-  phoc_seat_tablet_pads_set_focus (seat, view->wlr_surface);
-  phoc_cursor_update_focus (seat->cursor);
-  phoc_input_method_relay_set_focus (&seat->im_relay, view->wlr_surface);
 
   /* View was fullscreen on output, so scan it out like that again */
   fullscreen_output = phoc_view_get_fullscreen_output (view);
@@ -1456,6 +1428,31 @@ phoc_seat_set_focus_layer (PhocSeat *seat, struct wlr_layer_surface_v1 *layer)
   phoc_cursor_update_focus (seat->cursor);
   phoc_input_method_relay_set_focus (&seat->im_relay, layer->surface);
   phoc_output_update_shell_reveal (PHOC_OUTPUT (layer->output->data));
+}
+
+/**
+ * phoc_seat_set_focus_surface:
+ * @self: The seat
+ * @wlr_surface:(nullable): The surface to focus
+ *
+ * Focus the given surface. Except from cursor code you want to invoke
+ * Seat@focus_view instead.
+ */
+void
+phoc_seat_set_focus_surface (PhocSeat *self, struct wlr_surface *wlr_surface)
+{
+  struct wlr_keyboard *keyboard = wlr_seat_get_keyboard (self->seat);
+  if (keyboard) {
+    wlr_seat_keyboard_notify_enter (self->seat, wlr_surface,
+                                    keyboard->keycodes, keyboard->num_keycodes,
+                                    &keyboard->modifiers);
+  } else {
+    wlr_seat_keyboard_notify_enter (self->seat, wlr_surface, NULL, 0, NULL);
+  }
+
+  phoc_seat_tablet_pads_set_focus (self, wlr_surface);
+  phoc_cursor_update_focus (self->cursor);
+  phoc_input_method_relay_set_focus (&self->im_relay, wlr_surface);
 }
 
 /**

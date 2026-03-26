@@ -9,16 +9,8 @@
 
 #include "phoc-config.h"
 
-#define _POSIX_C_SOURCE 200112L
-#include <assert.h>
-#include <locale.h>
-#include <stdlib.h>
-#include <unistd.h>
-
-#include <gio/gio.h>
-#include <glib/gi18n.h>
-
-#include <locale.h>
+#include "settings.h"
+#include "server.h"
 
 #include <wayland-server-core.h>
 #include <wlr/backend.h>
@@ -27,8 +19,15 @@
 #include <wlr/config.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/util/log.h>
-#include "settings.h"
-#include "server.h"
+
+#include <gio/gio.h>
+#include <glib/gi18n.h>
+
+#include <assert.h>
+#include <locale.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <locale.h>
 
 
 static GLogLevelFlags wlroots_info_log_level = G_LOG_LEVEL_INFO;

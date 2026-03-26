@@ -13,6 +13,7 @@
 #include "seat.h"
 #include "server.h"
 #include "view-private.h"
+#include "xwayland-unmanaged.h"
 #include "xwayland-surface.h"
 
 #include <wlr/xwayland.h>
@@ -28,8 +29,6 @@ static GParamSpec *props[PROP_LAST_PROP];
  * PhocXWaylandSurface
  *
  * An XWayland Surface.
- *
- * For how to setup such an object see handle_xwayland_surface.
  */
 typedef struct _PhocXWaylandSurface {
   PhocView view;
@@ -50,6 +49,7 @@ typedef struct _PhocXWaylandSurface {
   struct wl_listener set_class;
   struct wl_listener set_startup_id;
   struct wl_listener set_opacity;
+  struct wl_listener set_override_redirect;
 
   struct wl_listener surface_commit;
 } PhocXWaylandSurface;
@@ -85,9 +85,7 @@ set_active (PhocView *view, bool active)
   xwayland_surface = PHOC_XWAYLAND_SURFACE (view)->xwayland_surface;
 
   wlr_xwayland_surface_activate (xwayland_surface, active);
-
-  if (!xwayland_surface->override_redirect)
-    wlr_xwayland_surface_restack (xwayland_surface, NULL, XCB_STACK_MODE_ABOVE);
+  wlr_xwayland_surface_restack (xwayland_surface, NULL, XCB_STACK_MODE_ABOVE);
 }
 
 static void
@@ -507,15 +505,10 @@ handle_map (struct wl_listener *listener, void *data)
 
   phoc_view_map (view, surface->surface);
 
-  if (surface->override_redirect) {
-    phoc_view_set_initial_focus (view);
-  } else {
-    if (surface->decorations == WLR_XWAYLAND_SURFACE_DECORATIONS_ALL)
-      phoc_view_set_decorated (view, TRUE);
+  if (surface->decorations == WLR_XWAYLAND_SURFACE_DECORATIONS_ALL)
+    phoc_view_set_decorated (view, TRUE);
 
-    phoc_view_setup (view);
-  }
-
+  phoc_view_setup (view);
   phoc_view_auto_maximize (PHOC_VIEW (self));
 
   if (surface->maximized_horz && surface->maximized_vert)
@@ -553,6 +546,33 @@ handle_dissociate (struct wl_listener *listener, void *data)
 
   wl_list_remove (&self->map.link);
   wl_list_remove (&self->unmap.link);
+}
+
+
+static void
+handle_set_override_redirect (struct wl_listener *listener, void *data)
+{
+  PhocXWaylandSurface *self = wl_container_of (listener, self, set_override_redirect);
+  struct wlr_xwayland_surface *wlr_xwayland_surface = self->xwayland_surface;
+  PhocXWaylandSurfaceState state = PHOC_XWAYLAND_SURFACE_STATE_NONE;
+  bool associated, mapped;
+
+  associated = wlr_xwayland_surface->surface != NULL;
+  mapped = associated && wlr_xwayland_surface->surface->mapped;
+
+  if (associated) {
+    handle_dissociate (&self->dissociate, NULL);
+    state |= PHOC_XWAYLAND_SURFACE_STATE_ASSOCIATED;
+  }
+
+  if (mapped) {
+    handle_unmap (&self->unmap, NULL);
+    state |= PHOC_XWAYLAND_SURFACE_STATE_MAPPED;
+  }
+
+  handle_destroy (&self->destroy, NULL);
+
+  phoc_xwayland_unmanaged_new (wlr_xwayland_surface, state);
 }
 
 
@@ -614,6 +634,9 @@ phoc_xwayland_surface_constructed (GObject *object)
   self->set_opacity.notify = handle_set_opacity;
   wl_signal_add (&surface->events.set_opacity, &self->set_opacity);
 
+  self->set_override_redirect.notify = handle_set_override_redirect;
+  wl_signal_add (&surface->events.set_override_redirect, &self->set_override_redirect);
+
   wl_list_init (&self->map.link);
   wl_list_init (&self->unmap.link);
 }
@@ -636,6 +659,7 @@ phoc_xwayland_surface_finalize (GObject *object)
   wl_list_remove (&self->set_class.link);
   wl_list_remove (&self->set_startup_id.link);
   wl_list_remove (&self->set_opacity.link);
+  wl_list_remove (&self->set_override_redirect.link);
 
   self->xwayland_surface->data = NULL;
 

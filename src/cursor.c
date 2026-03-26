@@ -9,29 +9,28 @@
 
 #include "phoc-config.h"
 #include "color-rect.h"
-#include "server.h"
-#include "timed-animation.h"
-#include "gesture.h"
+#include "cursor.h"
+#include "desktop.h"
 #include "gesture-drag.h"
 #include "gesture-swipe.h"
+#include "gesture.h"
+#include "input-method-relay.h"
 #include "layer-shell-effects.h"
+#include "server.h"
+#include "timed-animation.h"
 #include "touch-point.h"
+#include "utils.h"
+#include "view.h"
 
-#define _XOPEN_SOURCE 700
 #include <assert.h>
 #include <math.h>
-#include <stdlib.h>
 #include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/util/edges.h>
 #include <wlr/util/log.h>
 #include <wlr/util/region.h>
 #include <linux/input-event-codes.h>
-#include "cursor.h"
-#include "desktop.h"
-#include "input-method-relay.h"
-#include "utils.h"
-#include "view.h"
+
 
 #define PHOC_ANIM_SUGGEST_STATE_CHANGE_COLOR    (PhocColor){0.0f, 0.6f, 1.0f, 0.5f}
 #define PHOC_ANIM_DURATION_SUGGEST_STATE_CHANGE 200

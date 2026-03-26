@@ -18,21 +18,14 @@
 #include "cursor.h"
 #include "input.h"
 #include "layer-surface.h"
+#include "render-private.h"
+#include "render.h"
 #include "seat.h"
 #include "server.h"
-#include "render.h"
-#include "render-private.h"
 #include "touch-point.h"
-#include "xwayland-surface.h"
 #include "utils.h"
+#include "xwayland-surface.h"
 
-#define _POSIX_C_SOURCE 200809L
-#include <assert.h>
-#include <drm_fourcc.h>
-#include <fcntl.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <time.h>
 #include <wlr/backend.h>
 #include <wlr/config.h>
 #include <wlr/render/drm_format_set.h>
@@ -48,6 +41,13 @@
 #include <wlr/render/allocator.h>
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
+
+#include <assert.h>
+#include <drm_fourcc.h>
+#include <fcntl.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <time.h>
 
 #define COLOR_BLACK                ((struct wlr_render_color){0.0f, 0.0f, 0.0f, 1.0f})
 #define COLOR_MAGENTA_ALPHA(x)     ((struct wlr_render_color){0.5f, 0.0f, 0.5f, (x)})
@@ -265,6 +265,20 @@ render_layer (enum zwlr_layer_shell_v1_layer layer, PhocRenderContext *ctx)
                                                 layer_surface,
                                                 render_surface_iterator,
                                                 ctx);
+  }
+}
+
+
+static void
+render_unmanaged_surfaces (PhocRenderer *self, PhocWorkspace *workspace, PhocRenderContext *ctx)
+{
+  for (GList *l = phoc_workspace_get_unmanaged (workspace)->tail; l; l = l->prev) {
+    PhocXWaylandUnmanaged *unmanaged = PHOC_XWAYLAND_UNMANAGED (l->data);
+
+    phoc_output_unmanaged_for_each_surface (ctx->output,
+                                            unmanaged,
+                                            render_surface_iterator,
+                                            ctx);
   }
 }
 
@@ -530,6 +544,10 @@ phoc_renderer_render_output (PhocRenderer *self, PhocOutput *output, PhocRenderC
       if (phoc_desktop_view_check_visibility (desktop, view))
         render_view (output, view, ctx);
     }
+
+    /* Render unmanaged XWayland surfaces */
+    render_unmanaged_surfaces (self, workspace, ctx);
+
     /* Render top layer above views */
     render_layer (ZWLR_LAYER_SHELL_V1_LAYER_TOP, ctx);
   }

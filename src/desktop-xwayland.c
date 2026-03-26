@@ -13,6 +13,7 @@
 #include "desktop-xwayland.h"
 #include "server.h"
 #include "xwayland-surface.h"
+#include "xwayland-unmanaged.h"
 
 
 #ifdef PHOC_XWAYLAND
@@ -83,18 +84,28 @@ handle_xwayland_remove_startup_id (struct wl_listener *listener, void *data)
 static void
 handle_xwayland_surface (struct wl_listener *listener, void *data)
 {
-  struct wlr_xwayland_surface *surface = data;
-  g_debug ("New XWayland surface: title=%s, class=%s, instance=%s, width=%d, height=%d",
-           surface->title,
-           surface->class,
-           surface->instance,
-           surface->width,
-           surface->height);
+  struct wlr_xwayland_surface *wlr_xwayland_surface = data;
 
-  wlr_xwayland_surface_ping (surface);
+  if (wlr_xwayland_surface->override_redirect) {
+    PhocXWaylandUnmanaged *unmanaged;
+
+    unmanaged = phoc_xwayland_unmanaged_new (wlr_xwayland_surface,
+                                             PHOC_XWAYLAND_SURFACE_STATE_NONE);
+    g_debug ("New unmanaged XWayland surface: %p", unmanaged);
+    return;
+  }
+
+  g_debug ("New XWayland surface: title=%s, class=%s, instance=%s, width=%d, height=%d",
+           wlr_xwayland_surface->title,
+           wlr_xwayland_surface->class,
+           wlr_xwayland_surface->instance,
+           wlr_xwayland_surface->width,
+           wlr_xwayland_surface->height);
+
+  wlr_xwayland_surface_ping (wlr_xwayland_surface);
 
   /* Ref is dropped on surface destroy */
-  phoc_xwayland_surface_new (surface);
+  phoc_xwayland_surface_new (wlr_xwayland_surface);
 }
 
 
