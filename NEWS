@@ -1,6 +1,6 @@
-phoc 0.54~rc1
--------------
-Released March 2026
+phoc 0.54.0
+-----------
+Released April 2026
 * Workspace focus improvements
 * X11 override-redirect handling improvements
 * Multiple bug fixes, internal cleanups and improvements
