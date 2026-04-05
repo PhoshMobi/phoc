@@ -123,6 +123,7 @@ Files:
  meson.build
  */meson.build
  meson_options.txt
+ po/LINGUAS
  po/POTFILES.in
  po/POTFILES.skip
  phoc-config.h.in
