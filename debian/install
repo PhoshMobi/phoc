@@ -2,4 +2,5 @@ usr/bin/*
 usr/share/applications/*
 usr/share/glib-2.0/schemas/*
 usr/share/icons/*
+usr/share/locale/*/LC_MESSAGES/phoc.mo
 usr/share/phoc/systemtap/*.stp
