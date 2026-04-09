@@ -373,6 +373,11 @@ static int
 get_pidfd (PhocView *view)
 {
 #if __linux__
+/* See https://www.openwall.com/lists/musl/2026/04/09/3 */
+#ifndef SO_PEERPIDFD
+# define SO_PEERPIDFD 77
+#endif
+
   PhocXdgToplevel *self = PHOC_XDG_TOPLEVEL (view);
   struct wl_client *client;
   int fd = -1;
