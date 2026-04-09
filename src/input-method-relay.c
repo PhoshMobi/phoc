@@ -83,12 +83,11 @@ handle_im_commit (struct wl_listener *listener, void *data)
 {
   PhocInputMethodRelay *relay = wl_container_of (listener, relay, input_method_commit);
   PhocTextInput *text_input = relay_get_focused_text_input (relay);
+  struct wlr_input_method_v2 *context = relay->input_method;
 
   if (!text_input)
     return;
 
-  struct wlr_input_method_v2 *context = data;
-  g_assert (context == relay->input_method);
   if (context->current.preedit.text) {
     wlr_text_input_v3_send_preedit_string (text_input->input,
                                            context->current.preedit.text,
@@ -165,9 +164,7 @@ static void
 handle_im_destroy (struct wl_listener *listener, void *data)
 {
   PhocInputMethodRelay *relay = wl_container_of (listener, relay, input_method_destroy);
-  struct wlr_input_method_v2 *context = data;
 
-  g_assert (context == relay->input_method);
   relay->input_method = NULL;
   PhocTextInput *text_input = relay_get_focused_text_input (relay);
   if (text_input) {
@@ -466,10 +463,10 @@ phoc_input_method_relay_init (PhocSeat *seat, PhocInputMethodRelay *relay)
   wl_list_init (&relay->text_inputs);
 
   relay->text_input_new.notify = relay_handle_new_text_input;
-  wl_signal_add (&desktop->text_input->events.text_input, &relay->text_input_new);
+  wl_signal_add (&desktop->text_input->events.new_text_input, &relay->text_input_new);
 
   relay->input_method_new.notify = relay_handle_new_input_method;
-  wl_signal_add (&desktop->input_method->events.input_method, &relay->input_method_new);
+  wl_signal_add (&desktop->input_method->events.new_input_method, &relay->input_method_new);
 }
 
 

@@ -23,6 +23,9 @@
 #include <glib-unix.h>
 
 #include <wlr/types/wlr_drm.h>
+#include <wlr/types/wlr_ext_data_control_v1.h>
+#include <wlr/types/wlr_ext_image_capture_source_v1.h>
+#include <wlr/types/wlr_ext_image_copy_capture_v1.h>
 #include <wlr/types/wlr_linux_dmabuf_v1.h>
 #include <wlr/types/wlr_security_context_v1.h>
 #include <wlr/xwayland.h>
@@ -86,6 +89,8 @@ typedef struct _PhocServer {
 
   struct wlr_linux_dmabuf_v1     *linux_dmabuf_v1;
   struct wlr_data_device_manager *data_device_manager;
+  struct wlr_ext_data_control_manager_v1 *ext_data_control_manager_v1;
+  struct wlr_ext_image_copy_capture_manager_v1 *ext_image_copy_capture_manager_v1;
 
   struct wl_listener   new_surface;
 
@@ -320,6 +325,16 @@ on_shell_state_changed (PhocServer *self, GParamSpec *pspec, PhocPhoshPrivate *p
 }
 
 
+static void
+phoc_server_init_protocols (PhocServer *self)
+{
+  self->ext_data_control_manager_v1 = wlr_ext_data_control_manager_v1_create (self->wl_display, 1);
+  self->ext_image_copy_capture_manager_v1 =
+    wlr_ext_image_copy_capture_manager_v1_create (self->wl_display, 1);
+  wlr_ext_output_image_capture_source_manager_v1_create (self->wl_display, 1);
+}
+
+
 static gboolean
 phoc_server_client_has_security_context (PhocServer *self, const struct wl_client *client)
 {
@@ -329,6 +344,18 @@ phoc_server_client_has_security_context (PhocServer *self, const struct wl_clien
   context = wlr_security_context_manager_v1_lookup_client (desktop->security_context_manager_v1,
                                                            (struct wl_client *)client);
   return context != NULL;
+}
+
+
+static gboolean
+phoc_server_is_privileged_protocol (PhocServer *self, const struct wl_global *global)
+{
+  if (phoc_desktop_is_privileged_protocol (self->desktop, global))
+    return true;
+
+  return
+    global == self->ext_data_control_manager_v1->global ||
+    global == self->ext_image_copy_capture_manager_v1->global;
 }
 
 
@@ -346,7 +373,7 @@ phoc_server_filter_globals (const struct wl_client *client,
 #endif
 
   /* Clients with a security context can request privileged protocols */
-  if (phoc_desktop_is_privileged_protocol (self->desktop, global) &&
+  if (phoc_server_is_privileged_protocol (self, global) &&
       phoc_server_client_has_security_context (self, client)) {
     return false;
   }
@@ -625,6 +652,8 @@ phoc_server_setup (PhocServer     *self,
   const char *socket = NULL;
 
   g_assert (!self->inited);
+
+  phoc_server_init_protocols (self);
 
   self->config = config;
   self->flags = flags;

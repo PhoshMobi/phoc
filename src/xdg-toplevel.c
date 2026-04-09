@@ -15,6 +15,7 @@
 #include "server.h"
 #include "view-private.h"
 #include "xdg-popup.h"
+#include "xdg-shell-protocol.h"
 #include "xdg-toplevel.h"
 #include "xdg-toplevel-private.h"
 #include "xdg-toplevel-decoration.h"
