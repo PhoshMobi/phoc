@@ -1,3 +1,12 @@
+phoc 0.55~alpha1
+----------------
+Released April 2026
+* Update to wlroots 0.20.0
+* Contributors:
+    * Guido Günther
+* UI translations:
+    * Ryo Nakano (ja)
+
 phoc 0.54.0
 -----------
 Released April 2026

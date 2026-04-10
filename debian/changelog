@@ -1,3 +1,58 @@
+phoc (0.55~alpha1) experimental; urgency=medium
+
+  [ Ryo Nakano ]
+  * po: Add missing de to LINGUAS
+  * po: Add Japanese translation
+
+  [ Guido Günther ]
+  * reuse: Add Linguas
+  * packaging: Install translations
+  * wlroots: Update to f04ef79f.
+    Update to f04ef79f ("build: bump version to 0.20.0-dev")
+    No changes needed
+  * wlroots: Update to c2327248.
+    Update to c2327248 ("output: don't send make/model")
+    No changes needed
+  * wlroots: Update to 62c86fb.
+    Update to 62c86fb ("Add support for XKB_LED_NAME_COMPOSE and XKB_LED_NAME_KANA USB HID LEDs Requires xkbcommon 1.8.0")
+    No changes needed
+  * wlroots: Update to 2d5492c.
+    Update to 2d5492c ("text-input-v3: Use `NULL` when emitting signals")
+    Adjust sginal name
+  * wlroots: Update to a08acfc.
+    Update to a08acfc ("render/pass: Ensure the precision is consistent during comparison")
+    No changes needed
+  * wlroots: Update to 6aa654b.
+    Update to 6aa654b ("wlr_text_input_v3: remove event arguments from header")
+    No changes needed
+  * wlroots: Update to ad1b2f2.
+    Update to ad1b2f2 ("Avoid including generated headers publicly where possible")
+  * wlroots: Update to 06aacb2.
+    Update to 06aacb2 ("input-method: rename input_method event to new_input_method")
+    Adjust signal name
+  * wlroots: Update to 102a6bd.
+    Update to 102a6bd ("input-method: use `NULL` when emitting signals")
+  * wlroots: Update to 7cb3393.
+    Update to 7cb3393 ("scene: send color_management_v1 surface feedback")
+  * wlroots: Update to 9119b8a.
+    Update to 9119b8a ("session: simplify libudev unref handling")
+  * wlroots: Update to 84d603ac.
+    Update to 84d603ac ("xwayland: take wlr_buffer in wlr_xwayland_set_cursor()")
+    Adjust our wlr_xwayland_set_cursor use for that.
+  * wlroots: Update to 0.20.0~rc1
+  * wlroots: Update to 0.20.0~rc3
+  * wlroots: Update to 0.20.0~rc5.
+    No changes needed.
+  * server: Move privileged protocol check.
+    We want to move desktop into server so make it easier to add
+    new protocols there.
+  * server: Support ext-data-control-manager-v1.
+    We add that as new protocol to the server rather than the desktop.
+  * server: Move new image capture protocols to server
+  * wlroots: Update to 0.20.0
+
+ -- Guido Günther <agx@sigxcpu.org>  Thu, 09 Apr 2026 18:39:51 +0200
+
 phoc (0.54.0) experimental; urgency=medium
 
   * No changes over 0.54~rc1
