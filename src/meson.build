@@ -106,6 +106,8 @@ sources = files(
   'shortcuts-inhibit.h',
   'spinner.c',
   'spinner.h',
+  'style-manager.c',
+  'style-manager.h',
   'subsurface.c',
   'subsurface.h',
   'surface.c',
