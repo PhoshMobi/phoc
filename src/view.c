@@ -26,7 +26,6 @@
 /* How long should a surface be invisible/occluded before we notify it about it */
 #define PHOC_SUSPEND_TIMEOUT_SECONDS 3
 
-
 enum {
   PROP_0,
   PROP_SCALE_TO_FIT,
@@ -814,6 +813,7 @@ phoc_view_get_tiled_box (PhocView               *self,
 {
   PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
   PhocViewPrivate *priv = phoc_view_get_instance_private (self);
+  struct wlr_box output_box, usable_area;
 
   g_assert (box);
   g_assert (PHOC_IS_VIEW (self));
@@ -833,29 +833,33 @@ phoc_view_get_tiled_box (PhocView               *self,
   if (!output)
     return FALSE;
 
-  struct wlr_box output_box;
   wlr_output_layout_get_box (desktop->layout, output->wlr_output, &output_box);
-  struct wlr_box usable_area = output->usable_area;
-  int x;
+  usable_area = output->usable_area;
 
   usable_area.x += output_box.x;
   usable_area.y += output_box.y;
 
+  box->x = PHOC_VIEW_WIN_MARGIN;
+  box->y = PHOC_VIEW_WIN_MARGIN + usable_area.y;
   switch (dir) {
   case PHOC_VIEW_TILE_LEFT:
-    x = usable_area.x;
+    box->x += usable_area.x;
     break;
   case PHOC_VIEW_TILE_RIGHT:
-    x = usable_area.x + (0.5 * usable_area.width);
+    box->x += usable_area.x + (0.5 * usable_area.width);
     break;
   default:
     g_error ("Invalid tiling direction %d", dir);
   }
 
-  box->x = x;
-  box->y = usable_area.y;
-  box->width = usable_area.width / 2;
-  box->height = usable_area.height;
+  box->width = (usable_area.width / 2) - 2 * PHOC_VIEW_WIN_MARGIN;
+  box->height = usable_area.height - 2 * PHOC_VIEW_WIN_MARGIN;
+
+  /* Make room for the title bar with SSD */
+  if (phoc_view_is_decorated (self)) {
+    box->y += phoc_view_deco_get_title_bar_height (priv->deco);
+    box->height -= phoc_view_deco_get_title_bar_height (priv->deco);
+  }
 
   return TRUE;
 }
