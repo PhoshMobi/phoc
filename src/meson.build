@@ -45,6 +45,8 @@ sources = files(
   'drag-icon.h',
   'event.c',
   'event.h',
+  'focus-frame.c',
+  'focus-frame.h',
   'gesture-drag.c',
   'gesture-drag.h',
   'gesture-single.c',

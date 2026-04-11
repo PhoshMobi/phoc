@@ -8,6 +8,7 @@
 #include "cursor.h"
 #include "view-deco.h"
 #include "desktop.h"
+#include "focus-frame.h"
 #include "input.h"
 #include "seat.h"
 #include "server.h"
@@ -655,12 +656,65 @@ phoc_view_set_suspended (PhocView *self, bool suspended)
 }
 
 
+static int
+find_focus_border_bling (gconstpointer a, gconstpointer b)
+{
+  const PhocBling *bling = a;
+
+  return !g_object_get_data (G_OBJECT (bling), "focus-border");
+}
+
+
+static void
+phoc_view_add_focus_frame (PhocView *self)
+{
+  PhocViewPrivate *priv = phoc_view_get_instance_private (self);
+  GSList *l;
+
+  g_assert (PHOC_IS_VIEW (self));
+
+  l = g_slist_find_custom (priv->blings, "focus-border", find_focus_border_bling);
+  if (!l) {
+    g_autoptr (PhocBling) bling = PHOC_BLING (phoc_focus_frame_new (self));
+
+    /* Add to bottom of rendering tree */
+    phoc_view_insert_bling (self, bling);
+    g_object_set_data (G_OBJECT (bling), "focus-border", GINT_TO_POINTER (TRUE));
+  }
+}
+
+
+static void
+phoc_view_remove_focus_frame (PhocView *self)
+{
+  GSList *l;
+  g_autoptr (PhocBling) bling = NULL;
+  PhocViewPrivate *priv = phoc_view_get_instance_private (self);
+
+  g_assert (PHOC_IS_VIEW (self));
+
+  l = g_slist_find_custom (priv->blings, "focus-border", find_focus_border_bling);
+  if (!l)
+    return;
+
+  bling = g_object_ref (l->data);
+  phoc_bling_unmap (bling);
+  phoc_view_remove_bling (self, bling);
+}
+
+
 void
 phoc_view_appear_activated (PhocView *self, bool activated)
 {
   g_assert (PHOC_IS_VIEW (self));
 
   PHOC_VIEW_GET_CLASS (self)->set_active (self, activated);
+
+  if (activated) {
+    phoc_view_add_focus_frame (self);
+  } else {
+    phoc_view_remove_focus_frame (self);
+  }
 }
 
 /**
