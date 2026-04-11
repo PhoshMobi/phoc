@@ -813,11 +813,16 @@ phoc_view_get_tiled_box (PhocView               *self,
                          struct wlr_box         *box)
 {
   PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
-  PhocViewPrivate *priv;
+  PhocViewPrivate *priv = phoc_view_get_instance_private (self);
 
   g_assert (box);
   g_assert (PHOC_IS_VIEW (self));
-  priv = phoc_view_get_instance_private (self);
+
+  /* If there's enough room to tile, there's little point to scale-to-fit */
+  if (G_UNLIKELY (G_APPROX_VALUE (priv->scale, 1.0, FLT_EPSILON))) {
+    g_warning ("Resetting scale-to-fit for tiling for view %p", self);
+    priv->scale = 1.0;
+  }
 
   if (phoc_view_is_fullscreen (self))
     return FALSE;
@@ -847,10 +852,10 @@ phoc_view_get_tiled_box (PhocView               *self,
     g_error ("Invalid tiling direction %d", dir);
   }
 
-  box->x = x / priv->scale;
-  box->y = usable_area.y / priv->scale;
-  box->width = usable_area.width / 2 / priv->scale;
-  box->height = usable_area.height / priv->scale;
+  box->x = x;
+  box->y = usable_area.y;
+  box->width = usable_area.width / 2;
+  box->height = usable_area.height;
 
   return TRUE;
 }
@@ -869,8 +874,8 @@ view_arrange_tiled (PhocView *self, PhocOutput *output)
     return;
 
   phoc_view_get_geometry (self, &geom);
-  box.x -= geom.x / priv->scale;
-  box.y -= geom.y / priv->scale;
+  box.x -= geom.x;
+  box.y -= geom.y;
 
   phoc_view_move_resize (self, box.x, box.y, box.width, box.height);
 }
