@@ -17,6 +17,7 @@
 #include "input-method-relay.h"
 #include "layer-shell-effects.h"
 #include "server.h"
+#include "style-manager.h"
 #include "timed-animation.h"
 #include "touch-point.h"
 #include "utils.h"
@@ -32,7 +33,6 @@
 #include <linux/input-event-codes.h>
 
 
-#define PHOC_ANIM_SUGGEST_STATE_CHANGE_COLOR    (PhocColor){0.0f, 0.6f, 1.0f, 0.5f}
 #define PHOC_ANIM_DURATION_SUGGEST_STATE_CHANGE 200
 
 enum {
@@ -230,8 +230,9 @@ phoc_cursor_suggest_view_state_change (PhocCursor            *self,
                                        PhocViewTileDirection  dir)
 {
   PhocCursorPrivate *priv;
-  struct wlr_box view_box, suggested_box;
+  PhocBox view_box, suggested_box;
   g_autoptr (PhocPropertyEaser) easer = NULL;
+  PhocColor color;
 
   g_assert (PHOC_IS_CURSOR (self));
   g_assert (PHOC_IS_VIEW (view));
@@ -255,8 +256,9 @@ phoc_cursor_suggest_view_state_change (PhocCursor            *self,
   phoc_cursor_view_state_set_view (self, view);
   phoc_cursor_view_state_set_output (self, output);
   phoc_view_get_box (view, &view_box);
-  priv->view_state.rect = phoc_color_rect_new ((PhocBox *)&view_box,
-                                               &PHOC_ANIM_SUGGEST_STATE_CHANGE_COLOR);
+  color = phoc_style_manager_get_accent_color (phoc_style_manager_get_default ());
+  color.alpha = 0.5;
+  priv->view_state.rect = phoc_color_rect_new (&view_box, &color);
   phoc_view_add_bling (view, PHOC_BLING (priv->view_state.rect));
 
   switch (state) {
