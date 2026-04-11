@@ -1982,14 +1982,13 @@ phoc_view_class_init (PhocViewClass *klass)
    * Derived classes emit this signal just before dropping their ref so reference holders
    * can react.
    */
-  signals[SURFACE_DESTROY] =
-    g_signal_new ("surface-destroy",
-                  G_TYPE_FROM_CLASS (object_class),
-                  G_SIGNAL_RUN_LAST,
-                  0,
-                  NULL, NULL, NULL,
-                  G_TYPE_NONE,
-                  0);
+  signals[SURFACE_DESTROY] = g_signal_new ("surface-destroy",
+                                           G_TYPE_FROM_CLASS (object_class),
+                                           G_SIGNAL_RUN_LAST,
+                                           0,
+                                           NULL, NULL, NULL,
+                                           G_TYPE_NONE,
+                                           0);
 }
 
 
