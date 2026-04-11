@@ -146,14 +146,13 @@ static inline gboolean PHOC_IS_VIEW_CLASS (gpointer ptr) {
 static inline PhocViewClass * PHOC_VIEW_GET_CLASS (gpointer ptr) {
   return G_TYPE_INSTANCE_GET_CLASS (ptr, phoc_view_get_type (), PhocViewClass); }
 
-void                  phoc_view_appear_activated (PhocView *view, bool activated);
+void                  phoc_view_appear_activated (PhocView *self, bool activated);
 void                  phoc_view_activate (PhocView *self, bool activate);
-void                  phoc_view_damage_whole (PhocView *view);
-gboolean              phoc_view_is_floating (PhocView *view);
-gboolean              phoc_view_is_maximized (PhocView *view);
-gboolean              phoc_view_is_tiled (PhocView *view);
+void                  phoc_view_damage_whole (PhocView *self);
+gboolean              phoc_view_is_floating (PhocView *self);
+gboolean              phoc_view_is_maximized (PhocView *self);
+gboolean              phoc_view_is_tiled (PhocView *self);
 gboolean              phoc_view_is_fullscreen (PhocView *self);
-void                  phoc_view_update_decorated (PhocView *view, bool decorated);
 void                  phoc_view_arrange (PhocView *self, PhocOutput *output, gboolean center);
 void                  phoc_view_get_box (PhocView *self, struct wlr_box *box);
 PhocBox               phoc_view_get_pending_box (PhocView *self);
@@ -161,19 +160,19 @@ void                  phoc_view_get_geometry (PhocView *self, struct wlr_box *bo
 void                  phoc_view_move (PhocView *self, double x, double y);
 bool                  phoc_view_move_to_next_output (PhocView *view, enum wlr_direction direction);
 void                  phoc_view_move_to_corner (PhocView *self, PhocViewCorner corner);
-void                  phoc_view_move_resize (PhocView *view,
+void                  phoc_view_move_resize (PhocView *self,
                                              double    x,
                                              double    y,
                                              uint32_t  width,
                                              uint32_t  height);
 void                  phoc_view_auto_maximize (PhocView *view);
-void                  phoc_view_tile (PhocView             *view,
+void                  phoc_view_tile (PhocView             *self,
                                       PhocViewTileDirection direction,
                                       PhocOutput           *output);
-PhocViewTileDirection phoc_view_get_tile_direction (PhocView *view);
-void                  phoc_view_maximize (PhocView *view, PhocOutput *output);
-void                  phoc_view_restore (PhocView *view);
-void                  phoc_view_set_fullscreen (PhocView   *view,
+PhocViewTileDirection phoc_view_get_tile_direction (PhocView *self);
+void                  phoc_view_maximize (PhocView *self, PhocOutput *output);
+void                  phoc_view_restore (PhocView *self);
+void                  phoc_view_set_fullscreen (PhocView   *self,
                                                 bool        fullscreen,
                                                 PhocOutput *output);
 void                  phoc_view_close (PhocView *self);
@@ -191,8 +190,8 @@ PhocView             *phoc_view_from_wlr_surface (struct wlr_surface *wlr_surfac
 PhocOutput           *phoc_view_get_output (PhocView *view);
 
 pid_t                 phoc_view_get_pid (PhocView *self);
-bool                  phoc_view_is_mapped (PhocView *view);
-PhocViewDecoPart      phoc_view_get_deco_part (PhocView *view, double sx, double sy);
+bool                  phoc_view_is_mapped (PhocView *self);
+PhocViewDecoPart      phoc_view_get_deco_part (PhocView *self, double sx, double sy);
 void                  phoc_view_set_scale_to_fit (PhocView *self, gboolean enable);
 gboolean              phoc_view_get_scale_to_fit (PhocView *self);
 void                  phoc_view_set_activation_token (PhocView *self, const char *token, int type);
