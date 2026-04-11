@@ -35,6 +35,7 @@ enum {
   PROP_ALPHA,
   PROP_DECORATED,
   PROP_STATE,
+  PROP_FULLSCREEN,
   PROP_LAST_PROP
 };
 static GParamSpec *props[PROP_LAST_PROP];
@@ -1045,6 +1046,9 @@ phoc_view_set_fullscreen (PhocView *self, bool fullscreen, PhocOutput *output)
     phoc_view_auto_maximize (self);
   }
 
+  if (was_fullscreen != fullscreen)
+    g_object_notify_by_pspec (G_OBJECT (self), props[PROP_FULLSCREEN]);
+
   phoc_server_set_linux_dmabuf_surface_feedback (server, self, priv->fullscreen_output, fullscreen);
 }
 
@@ -1744,6 +1748,9 @@ phoc_view_get_property (GObject    *object,
   case PROP_STATE:
     g_value_set_enum (value, priv->state);
     break;
+  case PROP_FULLSCREEN:
+    g_value_set_boolean (value, phoc_view_is_fullscreen (self));
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
     break;
@@ -1981,6 +1988,15 @@ phoc_view_class_init (PhocViewClass *klass)
                        PHOC_TYPE_VIEW_STATE,
                        PHOC_VIEW_STATE_FLOATING,
                        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+  /**
+   * PhocView:fullscreen:
+   *
+   * Whether the view is fullscreen
+   */
+  props[PROP_FULLSCREEN] =
+    g_param_spec_boolean ("fullscreen", "", "",
+                          FALSE,
+                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (object_class, PROP_LAST_PROP, props);
 
