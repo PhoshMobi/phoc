@@ -41,6 +41,8 @@ static GParamSpec *props[PROP_LAST_PROP];
 
 enum {
   SURFACE_DESTROY,
+  POS_CHANGED,
+  SIZE_CHANGED,
   N_SIGNALS
 };
 static guint signals[N_SIGNALS] = { 0 };
@@ -700,6 +702,8 @@ phoc_view_resize (PhocView *self, uint32_t width, uint32_t height)
   g_assert (PHOC_IS_VIEW (self));
 
   PHOC_VIEW_GET_CLASS (self)->resize (self, width, height);
+
+  g_signal_emit (self, signals[SIZE_CHANGED], 0);
 }
 
 void
@@ -1540,6 +1544,8 @@ view_update_position (PhocView *self, int x, int y)
   self->box.y = y;
   view_update_output (self, &before);
   phoc_view_damage_whole (self);
+
+  g_signal_emit (self, signals[POS_CHANGED], 0);
 }
 
 void
@@ -1563,6 +1569,8 @@ view_update_size (PhocView *self, int width, int height)
   view_update_scale (self);
   view_update_output (self, &before);
   phoc_view_damage_whole (self);
+
+  g_signal_emit (self, signals[SIZE_CHANGED], 0);
 }
 
 
@@ -1989,6 +1997,30 @@ phoc_view_class_init (PhocViewClass *klass)
                                            NULL, NULL, NULL,
                                            G_TYPE_NONE,
                                            0);
+  /**
+   * PhocView::pos-changed:
+   *
+   * The view moved to a new position.
+   */
+  signals[POS_CHANGED] = g_signal_new ("pos-changed",
+                                       G_TYPE_FROM_CLASS (object_class),
+                                       G_SIGNAL_RUN_LAST,
+                                       0,
+                                       NULL, NULL, NULL,
+                                       G_TYPE_NONE,
+                                       0);
+  /**
+   * PhocView::size-changed:
+   *
+   * The view has a new size
+   */
+  signals[SIZE_CHANGED] = g_signal_new ("size-changed",
+                                        G_TYPE_FROM_CLASS (object_class),
+                                        G_SIGNAL_RUN_LAST,
+                                        0,
+                                        NULL, NULL, NULL,
+                                        G_TYPE_NONE,
+                                        0);
 }
 
 
@@ -2318,6 +2350,8 @@ phoc_view_move (PhocView *self, double x, double y)
   self->pending_centering = false;
 
   PHOC_VIEW_GET_CLASS (self)->move (self, x, y);
+
+  g_signal_emit (self, signals[POS_CHANGED], 0);
 }
 
 
