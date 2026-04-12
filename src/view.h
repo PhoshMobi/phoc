@@ -13,6 +13,9 @@
 
 G_BEGIN_DECLS
 
+/* Used for tiling, focus frames and SSD border width */
+#define PHOC_VIEW_WIN_MARGIN 4
+
 typedef struct _PhocBling PhocBling;
 typedef struct _PhocDesktop PhocDesktop;
 typedef struct _PhocOutput PhocOutput;

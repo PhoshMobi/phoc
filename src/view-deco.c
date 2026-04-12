@@ -17,7 +17,7 @@
 
 #include "render-private.h"
 
-#define PHOC_DECO_BORDER_WIDTH      4
+#define PHOC_DECO_BORDER_WIDTH     PHOC_VIEW_WIN_MARGIN
 #define PHOC_DECO_TITLEBAR_HEIGHT  12
 #define PHOC_DECO_COLOR(alpha)     ((struct wlr_render_color){ 0.2, 0.2, 0.2, (alpha) })
 
