@@ -156,10 +156,14 @@ gboolean              phoc_view_is_floating (PhocView *self);
 gboolean              phoc_view_is_maximized (PhocView *self);
 gboolean              phoc_view_is_tiled (PhocView *self);
 gboolean              phoc_view_is_fullscreen (PhocView *self);
+gboolean              phoc_view_is_modal (PhocView *self);
+
 void                  phoc_view_arrange (PhocView *self, PhocOutput *output, gboolean center);
 void                  phoc_view_get_box (PhocView *self, struct wlr_box *box);
 PhocBox               phoc_view_get_pending_box (PhocView *self);
 void                  phoc_view_get_geometry (PhocView *self, struct wlr_box *box);
+PhocView *            phoc_view_get_root (PhocView *self);
+
 void                  phoc_view_move (PhocView *self, double x, double y);
 bool                  phoc_view_move_to_next_output (PhocView *self, enum wlr_direction direction);
 void                  phoc_view_move_to_corner (PhocView *self, PhocViewCorner corner);
@@ -221,5 +225,6 @@ void                  phoc_view_add_bling (PhocView *self, PhocBling *bling);
 void                  phoc_view_insert_bling (PhocView *self, PhocBling *bling);
 void                  phoc_view_remove_bling (PhocView *self, PhocBling *bling);
 GSList *              phoc_view_get_blings (PhocView *self);
+PhocView *            phoc_view_get_modal_dialog (PhocView *self);
 
 G_END_DECLS

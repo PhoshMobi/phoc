@@ -144,6 +144,8 @@ sources = files(
   'workspace.h',
   'xdg-activation-v1.c',
   'xdg-activation-v1.h',
+  'xdg-dialog.c',
+  'xdg-dialog.h',
   'xdg-popup.c',
   'xdg-popup.h',
   'xdg-toplevel-decoration.c',

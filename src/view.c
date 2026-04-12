@@ -62,6 +62,7 @@ typedef struct _PhocViewPrivate {
   PhocViewTileDirection tile_direction;
   gboolean       always_on_top;
   gboolean       visibility;
+  gboolean       modal;
   guint          suspend_timer_id;
 
   PhocOutput    *fullscreen_output;
@@ -2676,4 +2677,92 @@ phoc_view_set_visibility (PhocView *self, gboolean visibility)
   priv->visibility = visibility;
 
   phoc_view_set_suspended (self, !visibility);
+}
+
+
+void
+phoc_view_set_modal (PhocView *self, gboolean modal)
+{
+  PhocViewPrivate *priv = phoc_view_get_instance_private (self);
+
+  g_assert (PHOC_IS_VIEW (self));
+
+  priv->modal = modal;
+}
+
+
+gboolean
+phoc_view_is_modal (PhocView *self)
+{
+  PhocViewPrivate *priv = phoc_view_get_instance_private (self);
+
+  g_assert (PHOC_IS_VIEW (self));
+
+  return priv->modal;
+}
+
+/**
+ * phoc_view_get_root:
+ * @self: A view
+ *
+ * Get the root of this view's toplevel stack.
+ *
+ * Returns:(transfer none): The root toplevel
+ */
+PhocView *
+phoc_view_get_root (PhocView *self)
+{
+  PhocView *root = self;
+
+  for (PhocView *v = self; v; v = v->parent)
+    root = v;
+
+  return root;
+}
+
+
+static PhocView *
+check_modal (PhocView *self)
+{
+  PhocView *child, *modal = NULL;
+
+  if (!phoc_view_is_mapped (self))
+    return NULL;
+
+  if (phoc_view_is_modal (self))
+    modal = self;
+
+  wl_list_for_each_reverse (child, &self->stack, parent_link) {
+    PhocView *modal_child = check_modal (child);
+    if (modal_child)
+      modal = modal_child;
+  }
+
+  return modal;
+}
+
+/**
+ * phoc_view_get_modal_dialog:
+ * @self: A view
+ *
+ * If the view's stack has a modal dialog return that.
+ *
+ * Returns:(transfer none): The modal dialog or `NULL`.
+ */
+PhocView *
+phoc_view_get_modal_dialog (PhocView *self)
+{
+  PhocView *root, *modal = NULL;
+
+  g_assert (PHOC_IS_VIEW (self));
+
+  if (phoc_view_is_modal (self))
+    return self;
+
+  root = phoc_view_get_root (self);
+  modal = check_modal (root);
+
+  g_debug ("Found modal view %p", modal);
+
+  return modal;
 }

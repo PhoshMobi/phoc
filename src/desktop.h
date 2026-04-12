@@ -33,6 +33,7 @@
 #include <wlr/types/wlr_virtual_pointer_v1.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/types/wlr_xdg_decoration_v1.h>
+#include <wlr/types/wlr_xdg_dialog_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_xdg_activation_v1.h>
 
@@ -75,12 +76,14 @@ struct _PhocDesktop {
   struct wlr_xdg_activation_v1 *xdg_activation_v1;
   struct wlr_xdg_decoration_manager_v1 *xdg_decoration_manager;
   struct wlr_xdg_shell *xdg_shell;
+  struct wlr_xdg_wm_dialog_v1 *xdg_wm_dialog;
 
   struct wl_listener new_output;
   struct wl_listener backend_destroy;
   struct wl_listener keyboard_shortcuts_inhibit_new_inhibitor;
   struct wl_listener layout_change;
   struct wl_listener xdg_shell_toplevel;
+  struct wl_listener xdg_new_dialog;;
   struct wl_listener layer_shell_surface;
   struct wl_listener xdg_toplevel_decoration;
   struct wl_listener virtual_keyboard_new;
