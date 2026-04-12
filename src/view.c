@@ -799,7 +799,7 @@ view_arrange_maximized (PhocView *self, PhocOutput *output)
  * Gets the "visible bounds" a view will use on a given output when
  * tiled.
  *
- * Returns: %TRUE if the box can be maximized, otherwise %FALSE.
+ * Returns: %TRUE if the box can be tiled, otherwise %FALSE.
  */
 gboolean
 phoc_view_get_tiled_box (PhocView               *self,
