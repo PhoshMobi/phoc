@@ -215,6 +215,7 @@ gboolean              phoc_view_get_tiled_box (PhocView             *self,
                                                PhocOutput           *output,
                                                struct wlr_box       *box);
 void                  phoc_view_add_bling (PhocView *self, PhocBling *bling);
+void                  phoc_view_insert_bling (PhocView *self, PhocBling *bling);
 void                  phoc_view_remove_bling (PhocView *self, PhocBling *bling);
 GSList *              phoc_view_get_blings (PhocView *self);
 

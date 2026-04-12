@@ -2461,6 +2461,32 @@ phoc_view_add_bling (PhocView *self, PhocBling *bling)
 }
 
 /**
+ * phoc_view_insert_bling:
+ * @self: The view
+ * @bling: The bling to add
+ *
+ * By adding a [type@Bling] to a view you ensure that it gets rendered
+ * just before the view if both the view and the bling are mapped.
+ *
+ * The view will take a reference on the [type@Bling] that will be
+ * dropped when the bling is removed or the view is destroyed.
+ *
+ * This inserts the bling in a way that makes it rendered last thus
+ * showing above all other blings.
+ */
+void
+phoc_view_insert_bling (PhocView *self, PhocBling *bling)
+{
+  PhocViewPrivate *priv;
+
+  g_assert (PHOC_IS_VIEW (self));
+  g_assert (PHOC_IS_BLING (bling));
+  priv = phoc_view_get_instance_private (self);
+
+  priv->blings = g_slist_append (priv->blings, g_object_ref (bling));
+}
+
+/**
  * phoc_view_remove_bling:
  * @self: The view
  * @bling: The bling to remove
