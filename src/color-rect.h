@@ -15,7 +15,16 @@ G_BEGIN_DECLS
 
 #define PHOC_TYPE_COLOR_RECT (phoc_color_rect_get_type ())
 
-G_DECLARE_FINAL_TYPE (PhocColorRect, phoc_color_rect, PHOC, COLOR_RECT, GObject)
+/**
+ * PhocColorRectClass:
+ * @parent_class: The parent class
+ */
+struct _PhocColorRectClass
+{
+  GObjectClass parent_class;
+};
+
+G_DECLARE_DERIVABLE_TYPE (PhocColorRect, phoc_color_rect, PHOC, COLOR_RECT, GObject)
 
 PhocColorRect      *phoc_color_rect_new                         (PhocBox       *box,
                                                                  PhocColor     *color);
