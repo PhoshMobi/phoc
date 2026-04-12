@@ -268,3 +268,21 @@ phoc_view_deco_get_part (PhocViewDeco *self, double sx, double sy)
 
   return parts;
 }
+
+
+guint
+phoc_view_deco_get_title_bar_height (PhocViewDeco *self)
+{
+  g_assert (PHOC_IS_VIEW_DECO (self));
+
+  return self->titlebar_height;
+}
+
+
+guint
+phoc_view_deco_get_border_width (PhocViewDeco *self)
+{
+  g_assert (PHOC_IS_VIEW_DECO (self));
+
+  return self->border_width;
+}
