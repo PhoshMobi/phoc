@@ -85,7 +85,7 @@ typedef struct _PhocDesktopPrivate {
 
   gboolean           enable_animations;
 
-  GSettings         *settings;
+  GSettings         *legacy_settings;
   GSettings         *interface_settings;
 
   PhocOutputsStates *outputs_states;
@@ -763,12 +763,12 @@ phoc_desktop_constructed (GObject *object)
 
   priv->data_control_manager_v1 = wlr_data_control_manager_v1_create (wl_display);
 
-  /* sm.puri.phoc settings */
-  priv->settings = g_settings_new ("sm.puri.phoc");
-  g_signal_connect_swapped (priv->settings, "changed::auto-maximize",
+  /* Legacy schema */
+  priv->legacy_settings = g_settings_new ("sm.puri.phoc");
+  g_signal_connect_swapped (priv->legacy_settings, "changed::auto-maximize",
                             G_CALLBACK (auto_maximize_changed_cb), self);
-  auto_maximize_changed_cb (self, "auto-maximize", priv->settings);
-  g_settings_bind (priv->settings, "scale-to-fit", self, "scale-to-fit", G_SETTINGS_BIND_DEFAULT);
+  auto_maximize_changed_cb (self, "auto-maximize", priv->legacy_settings);
+  g_settings_bind (priv->legacy_settings, "scale-to-fit", self, "scale-to-fit", G_SETTINGS_BIND_DEFAULT);
 
   /* org.gnome.desktop.interface settings */
   priv->interface_settings = g_settings_new ("org.gnome.desktop.interface");
@@ -817,7 +817,7 @@ phoc_desktop_finalize (GObject *object)
   g_hash_table_unref (self->input_output_map);
 
   g_clear_object (&priv->interface_settings);
-  g_clear_object (&priv->settings);
+  g_clear_object (&priv->legacy_settings);
 
   G_OBJECT_CLASS (phoc_desktop_parent_class)->finalize (object);
 }
