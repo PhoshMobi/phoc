@@ -1276,6 +1276,7 @@ void
 phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
 {
   PhocSeatPrivate *priv;
+  PhocView *token_view;
   PhocOutput *fullscreen_output;
 
   g_assert (PHOC_IS_SEAT (seat));
@@ -1288,7 +1289,7 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
   /* Make sure the view will be rendered on top of others, even if it's
    * already focused in this seat */
   if (view) {
-    PhocView *parent = view;
+    PhocView *modal_dialog, *parent = view;
     /* reorder stack */
     while (parent->parent) {
       wl_list_remove (&parent->parent_link);
@@ -1296,6 +1297,12 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
       parent = parent->parent;
     }
     seat_raise_view_stack (seat, parent);
+
+    token_view = view;
+    /* If the view stack has a modal dialog, focus that instead */
+    modal_dialog = phoc_view_get_modal_dialog (view);
+    if (modal_dialog)
+      view = modal_dialog;
   }
 
   PhocView *prev_focus = phoc_seat_get_focus_view (seat);
@@ -1343,8 +1350,8 @@ phoc_seat_set_focus_view (PhocSeat *seat, PhocView *view)
   g_queue_push_head (priv->views, seat_view);
 
   /* Flush the token early as a layer surface might have focus */
-  if (phoc_view_get_activation_token (view))
-    phoc_view_flush_activation_token (view);
+  if (phoc_view_get_activation_token (token_view))
+    phoc_view_flush_activation_token (token_view);
 
   if (seat->focused_layer) {
     g_debug ("Layer surface has focus, not focusing view %p yet", view);
