@@ -16,6 +16,7 @@
 #include "gtk-shell.h"
 #include "input.h"
 #include "phosh-private.h"
+#include "view-private.h"
 #include "server.h"
 
 #include <gtk-shell-protocol.h>
@@ -46,6 +47,7 @@ struct _PhocGtkSurface {
   struct wlr_xdg_surface *xdg_surface;
   PhocGtkShell      *gtk_shell;
   char              *app_id;
+  gboolean           modal;
 
   struct wl_listener wlr_surface_handle_destroy;
   struct wl_listener xdg_surface_handle_destroy;
@@ -88,7 +90,20 @@ static void
 handle_set_modal (struct wl_client   *client,
                   struct wl_resource *resource)
 {
-  g_debug ("%s not implemented", __func__);
+  PhocGtkSurface *gtk_surface = phoc_gtk_surface_from_resource (resource);
+  PhocView *view;
+
+  if (gtk_surface->wlr_surface == NULL)
+    return;
+
+  g_debug ("GTK surface %p (%p) is modal", gtk_surface, gtk_surface->wlr_surface);
+  gtk_surface->modal = TRUE;
+
+  view = phoc_view_from_wlr_surface (gtk_surface->wlr_surface);
+  if (view == NULL)
+    return;
+
+  phoc_view_set_modal (view, TRUE);
 }
 
 
@@ -96,7 +111,20 @@ static void
 handle_unset_modal (struct wl_client   *client,
                     struct wl_resource *resource)
 {
-  g_debug ("%s not implemented", __func__);
+  PhocGtkSurface *gtk_surface = phoc_gtk_surface_from_resource (resource);
+  PhocView *view;
+
+  if (gtk_surface->wlr_surface == NULL)
+    return;
+
+  g_debug ("GTK surface %p (%p) is not modal", gtk_surface, gtk_surface->wlr_surface);
+  gtk_surface->modal = FALSE;
+
+  view = phoc_view_from_wlr_surface (gtk_surface->wlr_surface);
+  if (view == NULL)
+    return;
+
+  phoc_view_set_modal (view, FALSE);
 }
 
 
@@ -492,4 +520,11 @@ const char *
 phoc_gtk_surface_get_app_id (PhocGtkSurface *gtk_surface)
 {
   return gtk_surface->app_id;
+}
+
+
+gboolean
+phoc_gtk_surface_get_modal (PhocGtkSurface *gtk_surface)
+{
+  return gtk_surface->modal;
 }
