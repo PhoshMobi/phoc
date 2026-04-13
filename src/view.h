@@ -158,14 +158,14 @@ void                  phoc_view_get_box (PhocView *self, struct wlr_box *box);
 PhocBox               phoc_view_get_pending_box (PhocView *self);
 void                  phoc_view_get_geometry (PhocView *self, struct wlr_box *box);
 void                  phoc_view_move (PhocView *self, double x, double y);
-bool                  phoc_view_move_to_next_output (PhocView *view, enum wlr_direction direction);
+bool                  phoc_view_move_to_next_output (PhocView *self, enum wlr_direction direction);
 void                  phoc_view_move_to_corner (PhocView *self, PhocViewCorner corner);
 void                  phoc_view_move_resize (PhocView *self,
                                              double    x,
                                              double    y,
                                              uint32_t  width,
                                              uint32_t  height);
-void                  phoc_view_auto_maximize (PhocView *view);
+void                  phoc_view_auto_maximize (PhocView *self);
 void                  phoc_view_tile (PhocView             *self,
                                       PhocViewTileDirection direction,
                                       PhocOutput           *output);
@@ -186,9 +186,9 @@ struct wlr_surface   *phoc_view_get_wlr_surface_at (PhocView *self,
                                                     double    sy,
                                                     double   *sub_x,
                                                     double   *sub_y);
-PhocView             *phoc_view_from_wlr_surface (struct wlr_surface *wlr_surface);
-PhocOutput           *phoc_view_get_output (PhocView *view);
 
+PhocView *            phoc_view_from_wlr_surface (struct wlr_surface *wlr_surface);
+PhocOutput *          phoc_view_get_output (PhocView *self);
 pid_t                 phoc_view_get_pid (PhocView *self);
 bool                  phoc_view_is_mapped (PhocView *self);
 PhocViewDecoPart      phoc_view_get_deco_part (PhocView *self, double sx, double sy);
