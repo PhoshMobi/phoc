@@ -147,10 +147,13 @@ test_client_xwayland_server_prepare (PhocServer *server, gpointer data)
 {
   PhocDesktop *desktop = phoc_server_get_desktop (server);
   gboolean maximize = GPOINTER_TO_INT (data);
+  g_autoptr (GSettings) settings = g_settings_new ("mobi.phosh.phoc");
 
   g_assert_nonnull (g_getenv ("DISPLAY"));
   g_assert_nonnull (desktop);
   phoc_desktop_set_auto_maximize (desktop, maximize);
+  g_settings_set_boolean (settings, "focus-frame", FALSE);
+
   return TRUE;
 }
 
