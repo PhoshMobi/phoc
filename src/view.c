@@ -706,11 +706,13 @@ phoc_view_remove_focus_frame (PhocView *self)
 void
 phoc_view_appear_activated (PhocView *self, bool activated)
 {
+  gboolean show_frame = phoc_server_get_use_focus_frame (phoc_server_get_default ());
+
   g_assert (PHOC_IS_VIEW (self));
 
   PHOC_VIEW_GET_CLASS (self)->set_active (self, activated);
 
-  if (activated) {
+  if (activated && show_frame) {
     phoc_view_add_focus_frame (self);
   } else {
     phoc_view_remove_focus_frame (self);

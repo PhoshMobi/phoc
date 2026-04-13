@@ -1,4 +1,14 @@
 <schemalist>
+  <schema id="mobi.phosh.phoc" path="/mobi/phosh/phoc/">
+    <key name="focus-frame" type="b">
+      <default>true</default>
+      <summary>Show focus frame</summary>
+      <description>
+        Whether to show a colored frame around the currently focused
+        window.
+      </description>
+    </key>
+  </schema>
 
   <!-- Legacy schema -->
 
