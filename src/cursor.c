@@ -449,7 +449,7 @@ send_pointer_button (PhocSeat                    *seat,
   if (serial)
     phoc_seat_update_last_button_serial (seat, serial);
   else
-    g_debug ("Got a 0 serial on pointer press/releas for %d", button);
+    g_debug ("Got a 0 serial on pointer press/release for %d", button);
 }
 
 

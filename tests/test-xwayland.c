@@ -93,7 +93,7 @@ on_idle (gpointer data)
   g_test_message ("Mapping window");
   xcb_map_window (cdata->conn, cdata->window);
   xcb_flush (cdata->conn);
-  /* Run the main loop in this thread until we timeout of unmap happened */
+  /* Run the main loop in this thread until we timeout or unmap happened */
   xcb_flush (cdata->conn);
 }
 

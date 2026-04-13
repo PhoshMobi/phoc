@@ -1436,7 +1436,7 @@ phoc_seat_set_focus_layer (PhocSeat *seat, struct wlr_layer_surface_v1 *layer)
  * @wlr_surface:(nullable): The surface to focus
  *
  * Focus the given surface. Except from cursor code you want to invoke
- * Seat@focus_view instead.
+ * [method@Seat.set_focus_view] instead.
  */
 void
 phoc_seat_set_focus_surface (PhocSeat *self, struct wlr_surface *wlr_surface)
