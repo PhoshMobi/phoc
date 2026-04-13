@@ -1,6 +1,9 @@
 /*
  * Copyright (C) 2020 Purism SPC
+ *               2021-2026 Phosh.mobi e.V.
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
+ *
  * Author: Guido Günther <agx@sigxcpu.org>
  */
 
@@ -8,12 +11,12 @@
 
 #include "phoc-config.h"
 
-#include "server.h"
 #include "cursor.h"
 #include "desktop.h"
+#include "gtk-shell.h"
 #include "input.h"
 #include "phosh-private.h"
-#include "gtk-shell.h"
+#include "server.h"
 
 #include <gtk-shell-protocol.h>
 #include <wlr/types/wlr_xdg_activation_v1.h>
