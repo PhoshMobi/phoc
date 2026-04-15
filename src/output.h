@@ -60,7 +60,6 @@ typedef struct {
 struct _PhocOutput {
   GObject                   parent;
 
-  PhocDesktop              *desktop;
   struct wlr_output        *wlr_output;
   struct wl_list            link; // PhocDesktop::outputs
 
@@ -74,9 +73,7 @@ struct _PhocOutput {
   struct wl_listener        output_destroy;
 };
 
-PhocOutput *phoc_output_new (PhocDesktop       *desktop,
-                             struct wlr_output *wlr_output,
-                             GError           **error);
+PhocOutput *phoc_output_new (struct wlr_output *wlr_output, GError **error);
 /**
  * PhocSurfaceIterator:
  * @self: The output
