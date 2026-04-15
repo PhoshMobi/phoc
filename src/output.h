@@ -72,9 +72,6 @@ struct _PhocOutput {
 
   struct wl_listener        commit;
   struct wl_listener        output_destroy;
-
-  /* TODO: Should be private, move bits out of renderer */
-  struct wlr_damage_ring    damage_ring;
 };
 
 PhocOutput *phoc_output_new (PhocDesktop       *desktop,

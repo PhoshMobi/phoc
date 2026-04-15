@@ -78,6 +78,8 @@ typedef struct _PhocOutputPrivate {
 
   GSList  *blings;          /* (element-type: PhocBling) */
   GSList  *debug_damage;    /* (element-type: PhocDebugDamageRegion) */
+
+  struct wlr_damage_ring damage_ring;
 } PhocOutputPrivate;
 
 static void phoc_output_initable_iface_init (GInitableIface *iface);
@@ -510,10 +512,10 @@ build_debug_damage_tracking (PhocOutput *self)
   now = g_get_monotonic_time ();
 
   /* Add current damage */
-  if (pixman_region32_not_empty (&self->damage_ring.current)) {
+  if (pixman_region32_not_empty (&priv->damage_ring.current)) {
     PhocDebugDamageRegion *current_damage;
 
-    current_damage = phoc_debug_damage_region_new (&self->damage_ring.current, now);
+    current_damage = phoc_debug_damage_region_new (&priv->damage_ring.current, now);
     priv->debug_damage = g_slist_prepend (priv->debug_damage, current_damage);
   }
 
@@ -537,7 +539,7 @@ build_debug_damage_tracking (PhocOutput *self)
   }
 
   if (pixman_region32_not_empty (&highlight_damage))
-    wlr_damage_ring_add (&self->damage_ring, &highlight_damage);
+    wlr_damage_ring_add (&priv->damage_ring, &highlight_damage);
 
   pixman_region32_fini (&highlight_damage);
 }
@@ -577,7 +579,7 @@ phoc_output_draw (PhocOutput *self)
     return;
 
   needs_frame = wlr_output->needs_frame;
-  needs_frame |= pixman_region32_not_empty (&self->damage_ring.current);
+  needs_frame |= pixman_region32_not_empty (&priv->damage_ring.current);
   needs_frame |= priv->gamma_lut_changed;
 
   if (!needs_frame)
@@ -586,7 +588,7 @@ phoc_output_draw (PhocOutput *self)
   if (G_UNLIKELY (priv->gamma_lut_changed))
     phoc_output_set_gamma_lut (self, &pending);
 
-  wlr_output_state_set_damage (&pending, &self->damage_ring.current);
+  wlr_output_state_set_damage (&pending, &priv->damage_ring.current);
 
   /* Check if we can delegate the fullscreen surface to the output */
   if (self->fullscreen_view)
@@ -609,7 +611,7 @@ phoc_output_draw (PhocOutput *self)
   }
 
   pixman_region32_init (&buffer_damage);
-  wlr_damage_ring_rotate_buffer (&self->damage_ring, buffer, &buffer_damage);
+  wlr_damage_ring_rotate_buffer (&priv->damage_ring, buffer, &buffer_damage);
 
   render_context = (PhocRenderContext){
     .output = self,
@@ -624,7 +626,7 @@ phoc_output_draw (PhocOutput *self)
 
   if (!wlr_render_pass_submit (render_pass)) {
     /* Rerender in case of failure */
-    wlr_damage_ring_add_whole (&self->damage_ring);
+    wlr_damage_ring_add_whole (&priv->damage_ring);
     wlr_buffer_unlock (buffer);
     goto out;
   }
@@ -1039,7 +1041,7 @@ phoc_output_initable_init (GInitable    *initable,
     return FALSE;
   }
 
-  wlr_damage_ring_init (&self->damage_ring);
+  wlr_damage_ring_init (&priv->damage_ring);
   phoc_output_damage_whole (self);
 
   self->output_destroy.notify = phoc_output_handle_destroy;
@@ -1129,7 +1131,7 @@ phoc_output_finalize (GObject *object)
 
   update_output_manager_config (self->desktop);
 
-  wlr_damage_ring_finish (&self->damage_ring);
+  wlr_damage_ring_finish (&priv->damage_ring);
 
   /* Remove all frame callbacks, this will also free associated user data */
   g_clear_slist (&priv->frame_callbacks,
@@ -1889,6 +1891,7 @@ phoc_output_damage_from_surface (PhocOutput         *self,
 gboolean
 phoc_output_damage_region (PhocOutput *self, const pixman_region32_t *region)
 {
+  PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
   pixman_region32_t clipped;
   int width, height;
 
@@ -1904,7 +1907,7 @@ phoc_output_damage_region (PhocOutput *self, const pixman_region32_t *region)
 
   /* Transform to damage ring buffer local coordinates */
   phoc_output_transform_damage (self, &clipped);
-  wlr_damage_ring_add (&self->damage_ring, &clipped);
+  wlr_damage_ring_add (&priv->damage_ring, &clipped);
 
   pixman_region32_fini (&clipped);
   wlr_output_schedule_frame (self->wlr_output);
@@ -1923,6 +1926,7 @@ phoc_output_damage_region (PhocOutput *self, const pixman_region32_t *region)
 gboolean
 phoc_output_damage_box (PhocOutput *self, const struct wlr_box *box)
 {
+  PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
   struct wlr_box clipped;
   int width, height;
 
@@ -1934,7 +1938,7 @@ phoc_output_damage_box (PhocOutput *self, const struct wlr_box *box)
 
   /* Transform to damage ring buffer local coordinates */
   phoc_output_transform_box (self, &clipped);
-  wlr_damage_ring_add_box (&self->damage_ring, &clipped);
+  wlr_damage_ring_add_box (&priv->damage_ring, &clipped);
 
   wlr_output_schedule_frame (self->wlr_output);
   return TRUE;
