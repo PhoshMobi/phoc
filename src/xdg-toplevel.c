@@ -475,6 +475,20 @@ handle_destroy (struct wl_listener *listener, void *data)
 
 
 static void
+check_gtk_shell_modal (PhocXdgToplevel *self)
+{
+  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
+  PhocView *view = PHOC_VIEW (self);
+  PhocGtkShell *gtk_shell = phoc_desktop_get_gtk_shell (desktop);
+  PhocGtkSurface *gtk_surface ;
+
+  gtk_surface = phoc_gtk_shell_get_gtk_surface_from_wlr_surface (gtk_shell, view->wlr_surface);
+  if (gtk_surface && phoc_gtk_surface_get_modal (gtk_surface))
+    phoc_view_set_modal (view, TRUE);
+}
+
+
+static void
 handle_map (struct wl_listener *listener, void *data)
 {
   PhocXdgToplevel *self = wl_container_of (listener, self, map);
@@ -488,6 +502,9 @@ handle_map (struct wl_listener *listener, void *data)
 
   phoc_view_map (view, self->xdg_toplevel->base->surface);
   phoc_view_setup (view);
+
+  /* Catch up with gtk-shell. We need wlr_surface for that so can't do it before map */
+  check_gtk_shell_modal (self);
 }
 
 
