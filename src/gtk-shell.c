@@ -38,11 +38,11 @@ struct _PhocGtkShell {
  * A surface in the gtk_shell1 protocol
  */
 struct _PhocGtkSurface {
-  struct wl_resource *resource;
-  struct wlr_surface *wlr_surface;
+  struct wl_resource     *resource;
+  struct wlr_surface     *wlr_surface;
   struct wlr_xdg_surface *xdg_surface;
-  PhocGtkShell *gtk_shell;
-  char *app_id;
+  PhocGtkShell      *gtk_shell;
+  char              *app_id;
 
   struct wl_listener wlr_surface_handle_destroy;
   struct wl_listener xdg_surface_handle_destroy;
@@ -50,7 +50,7 @@ struct _PhocGtkSurface {
 };
 
 
-static PhocGtkShell *phoc_gtk_shell_from_resource (struct wl_resource *resource);
+static PhocGtkShell *  phoc_gtk_shell_from_resource (struct wl_resource *resource);
 static PhocGtkSurface *phoc_gtk_surface_from_resource (struct wl_resource *resource);
 
 
