@@ -568,8 +568,8 @@ on_input_setting_changed (PhocKeyboard *self,
   g_auto (GStrv) xkb_options = NULL;
   g_autoptr (GVariant) sources = NULL;
   GVariantIter iter;
-  g_autofree char *id = NULL;
-  g_autofree char *type = NULL;
+  char *id = NULL;
+  char *type = NULL;
   g_autofree char *xkb_options_string = NULL;
   const char *layout = NULL;
   const char *variant = NULL;
@@ -592,11 +592,15 @@ on_input_setting_changed (PhocKeyboard *self,
   sources = g_settings_get_value (settings, "sources");
 
   g_variant_iter_init (&iter, sources);
-  g_variant_iter_next (&iter, "(ss)", &type, &id);
+  g_variant_iter_next (&iter, "(&s&s)", &type, &id);
 
-  if (g_strcmp0 (type, "xkb")) {
+  if (type && !g_str_equal (type, "xkb")) {
     g_debug ("Not a xkb layout: '%s' - ignoring", id);
     return;
+  } else if (type == NULL && id == NULL) {
+    g_debug ("Layout is empty using default");
+    type = "xkb";
+    id = "us";
   }
 
   xkb_options = g_settings_get_strv (settings, "xkb-options");
