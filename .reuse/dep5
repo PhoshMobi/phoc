@@ -98,7 +98,7 @@ Files:
  .gitlab-ci/run-docker.sh
  .gitlab-ci/uncrustify.cfg
  .gitlab-ci.yml
- HACKING.md
+ CONTRIBUTING.md
  NEWS
  README.md
  data/icons/mobi.phosh.Phoc.svg
