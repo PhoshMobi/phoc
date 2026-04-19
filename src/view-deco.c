@@ -266,7 +266,5 @@ phoc_view_deco_get_part (PhocViewDeco *self, double sx, double sy)
       parts |= PHOC_VIEW_DECO_PART_TOP_BORDER;
   }
 
-  // TODO corners
-
   return parts;
 }

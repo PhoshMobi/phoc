@@ -726,15 +726,14 @@ seat_view_deco_motion (PhocSeatView *view, double deco_sx, double deco_sy)
   bool is_titlebar = (parts & PHOC_VIEW_DECO_PART_TITLEBAR);
   uint32_t edges = 0;
 
-  if (parts & PHOC_VIEW_DECO_PART_LEFT_BORDER) {
+  if (parts & PHOC_VIEW_DECO_PART_LEFT_BORDER)
     edges |= WLR_EDGE_LEFT;
-  } else if (parts & PHOC_VIEW_DECO_PART_RIGHT_BORDER) {
+  if (parts & PHOC_VIEW_DECO_PART_RIGHT_BORDER)
     edges |= WLR_EDGE_RIGHT;
-  } else if (parts & PHOC_VIEW_DECO_PART_BOTTOM_BORDER) {
+  if (parts & PHOC_VIEW_DECO_PART_BOTTOM_BORDER)
     edges |= WLR_EDGE_BOTTOM;
-  } else if (parts & PHOC_VIEW_DECO_PART_TOP_BORDER) {
+  if (parts & PHOC_VIEW_DECO_PART_TOP_BORDER)
     edges |= WLR_EDGE_TOP;
-  }
 
   if (view->has_button_grab) {
     if (is_titlebar) {
