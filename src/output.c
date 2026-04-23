@@ -38,7 +38,6 @@
 
 enum {
   PROP_0,
-  PROP_DESKTOP,
   PROP_WLR_OUTPUT,
   PROP_LAST_PROP
 };
@@ -78,6 +77,8 @@ typedef struct _PhocOutputPrivate {
 
   GSList  *blings;          /* (element-type: PhocBling) */
   GSList  *debug_damage;    /* (element-type: PhocDebugDamageRegion) */
+
+  struct wlr_damage_ring damage_ring;
 } PhocOutputPrivate;
 
 static void phoc_output_initable_iface_init (GInitableIface *iface);
@@ -217,9 +218,6 @@ phoc_output_set_property (GObject      *object,
   PhocOutput *self = PHOC_OUTPUT (object);
 
   switch (property_id) {
-  case PROP_DESKTOP:
-    self->desktop = g_value_dup_object (value);
-    break;
   case PROP_WLR_OUTPUT:
     self->wlr_output = g_value_get_pointer (value);
     break;
@@ -238,9 +236,6 @@ phoc_output_get_property (GObject    *object,
   PhocOutput *self = PHOC_OUTPUT (object);
 
   switch (property_id) {
-  case PROP_DESKTOP:
-    g_value_set_object (value, self->desktop);
-    break;
   case PROP_WLR_OUTPUT:
     g_value_set_pointer (value, self->wlr_output);
     break;
@@ -315,10 +310,9 @@ phoc_output_init (PhocOutput *self)
 }
 
 PhocOutput *
-phoc_output_new (PhocDesktop *desktop, struct wlr_output *wlr_output, GError **error)
+phoc_output_new (struct wlr_output *wlr_output, GError **error)
 {
   return g_initable_new (PHOC_TYPE_OUTPUT, NULL, error,
-                         "desktop", desktop,
                          "wlr-output", wlr_output,
                          NULL);
 }
@@ -334,7 +328,7 @@ update_output_manager_config (PhocDesktop *desktop)
     struct wlr_box output_box;
 
     config_head = wlr_output_configuration_head_v1_create (config, output->wlr_output);
-    wlr_output_layout_get_box (output->desktop->layout, output->wlr_output, &output_box);
+    wlr_output_layout_get_box (desktop->layout, output->wlr_output, &output_box);
     if (!wlr_box_empty (&output_box)) {
       config_head->state.x = output_box.x;
       config_head->state.y = output_box.y;
@@ -510,10 +504,10 @@ build_debug_damage_tracking (PhocOutput *self)
   now = g_get_monotonic_time ();
 
   /* Add current damage */
-  if (pixman_region32_not_empty (&self->damage_ring.current)) {
+  if (pixman_region32_not_empty (&priv->damage_ring.current)) {
     PhocDebugDamageRegion *current_damage;
 
-    current_damage = phoc_debug_damage_region_new (&self->damage_ring.current, now);
+    current_damage = phoc_debug_damage_region_new (&priv->damage_ring.current, now);
     priv->debug_damage = g_slist_prepend (priv->debug_damage, current_damage);
   }
 
@@ -537,7 +531,7 @@ build_debug_damage_tracking (PhocOutput *self)
   }
 
   if (pixman_region32_not_empty (&highlight_damage))
-    wlr_damage_ring_add (&self->damage_ring, &highlight_damage);
+    wlr_damage_ring_add (&priv->damage_ring, &highlight_damage);
 
   pixman_region32_fini (&highlight_damage);
 }
@@ -577,7 +571,7 @@ phoc_output_draw (PhocOutput *self)
     return;
 
   needs_frame = wlr_output->needs_frame;
-  needs_frame |= pixman_region32_not_empty (&self->damage_ring.current);
+  needs_frame |= pixman_region32_not_empty (&priv->damage_ring.current);
   needs_frame |= priv->gamma_lut_changed;
 
   if (!needs_frame)
@@ -586,7 +580,7 @@ phoc_output_draw (PhocOutput *self)
   if (G_UNLIKELY (priv->gamma_lut_changed))
     phoc_output_set_gamma_lut (self, &pending);
 
-  wlr_output_state_set_damage (&pending, &self->damage_ring.current);
+  wlr_output_state_set_damage (&pending, &priv->damage_ring.current);
 
   /* Check if we can delegate the fullscreen surface to the output */
   if (self->fullscreen_view)
@@ -609,7 +603,7 @@ phoc_output_draw (PhocOutput *self)
   }
 
   pixman_region32_init (&buffer_damage);
-  wlr_damage_ring_rotate_buffer (&self->damage_ring, buffer, &buffer_damage);
+  wlr_damage_ring_rotate_buffer (&priv->damage_ring, buffer, &buffer_damage);
 
   render_context = (PhocRenderContext){
     .output = self,
@@ -624,7 +618,7 @@ phoc_output_draw (PhocOutput *self)
 
   if (!wlr_render_pass_submit (render_pass)) {
     /* Rerender in case of failure */
-    wlr_damage_ring_add_whole (&self->damage_ring);
+    wlr_damage_ring_add_whole (&priv->damage_ring);
     wlr_buffer_unlock (buffer);
     goto out;
   }
@@ -720,6 +714,7 @@ phoc_output_handle_commit (struct wl_listener *listener, void *data)
 {
   PhocOutput *self = wl_container_of (listener, self, commit);
   PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
+  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
   struct wlr_output_event_commit *event = data;
 
   if (event->state->committed & (WLR_OUTPUT_STATE_MODE |
@@ -743,7 +738,7 @@ phoc_output_handle_commit (struct wl_listener *listener, void *data)
                                  WLR_OUTPUT_STATE_MODE |
                                  WLR_OUTPUT_STATE_SCALE |
                                  WLR_OUTPUT_STATE_TRANSFORM)) {
-    update_output_manager_config (self->desktop);
+    update_output_manager_config (desktop);
   }
 
   if (event->state->committed & WLR_OUTPUT_STATE_ENABLED && self->wlr_output->enabled) {
@@ -962,18 +957,19 @@ phoc_output_fill_state (PhocOutput              *self,
 static void
 phoc_output_set_layout_pos (PhocOutput *self, PhocOutputConfig *output_config)
 {
+  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
   struct wlr_box output_box;
 
   if (output_config && output_config->x >= 0 && output_config->y >= 0) {
-    wlr_output_layout_add (self->desktop->layout,
+    wlr_output_layout_add (desktop->layout,
                            self->wlr_output,
                            output_config->x,
                            output_config->y);
   } else {
-    wlr_output_layout_add_auto (self->desktop->layout, self->wlr_output);
+    wlr_output_layout_add_auto (desktop->layout, self->wlr_output);
   }
 
-  wlr_output_layout_get_box (self->desktop->layout, self->wlr_output, &output_box);
+  wlr_output_layout_get_box (desktop->layout, self->wlr_output, &output_box);
   self->lx = output_box.x;
   self->ly = output_box.y;
 }
@@ -1028,7 +1024,7 @@ phoc_output_initable_init (GInitable    *initable,
   struct wlr_output_state pending;
 
   self->wlr_output->data = self;
-  wl_list_insert (&self->desktop->outputs, &self->link);
+  wl_list_insert (&desktop->outputs, &self->link);
 
   if (!wlr_output_init_render (self->wlr_output,
                                phoc_renderer_get_wlr_allocator (renderer),
@@ -1039,7 +1035,7 @@ phoc_output_initable_init (GInitable    *initable,
     return FALSE;
   }
 
-  wlr_damage_ring_init (&self->damage_ring);
+  wlr_damage_ring_init (&priv->damage_ring);
   phoc_output_damage_whole (self);
 
   self->output_destroy.notify = phoc_output_handle_destroy;
@@ -1089,7 +1085,7 @@ phoc_output_initable_init (GInitable    *initable,
   phoc_layer_shell_arrange (self);
   phoc_layer_shell_update_focus ();
 
-  update_output_manager_config (self->desktop);
+  update_output_manager_config (desktop);
 
   if (phoc_output_is_builtin (self)) {
     priv->cutouts = phoc_output_cutouts_new (phoc_server_get_compatibles (server));
@@ -1121,15 +1117,16 @@ phoc_output_finalize (GObject *object)
 {
   PhocOutput *self = PHOC_OUTPUT (object);
   PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
+  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
 
   self->wlr_output->data = NULL;
   self->wlr_output = NULL;
 
   wl_list_remove (&self->link);
 
-  update_output_manager_config (self->desktop);
+  update_output_manager_config (desktop);
 
-  wlr_damage_ring_finish (&self->damage_ring);
+  wlr_damage_ring_finish (&priv->damage_ring);
 
   /* Remove all frame callbacks, this will also free associated user data */
   g_clear_slist (&priv->frame_callbacks,
@@ -1143,7 +1140,6 @@ phoc_output_finalize (GObject *object)
 
   g_clear_object (&priv->cutouts);
   g_clear_object (&priv->shield);
-  g_clear_object (&self->desktop);
 
   G_OBJECT_CLASS (phoc_output_parent_class)->finalize (object);
 }
@@ -1163,15 +1159,6 @@ phoc_output_class_init (PhocOutputClass *klass)
   object_class->get_property = phoc_output_get_property;
   object_class->finalize = phoc_output_finalize;
 
-  /**
-   * PhocOutput:desktop:
-   *
-   * The desktop object
-   */
-  props[PROP_DESKTOP] =
-    g_param_spec_object ("desktop", "", "",
-                         PHOC_TYPE_DESKTOP,
-                         G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
   /**
    * PhocOutput:wlr-output:
    *
@@ -1286,9 +1273,10 @@ phoc_output_view_for_each_surface (PhocOutput          *self,
                                    PhocSurfaceIterator  iterator,
                                    void                *user_data)
 {
+  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
   struct wlr_box output_box;
-  wlr_output_layout_get_box (self->desktop->layout, self->wlr_output, &output_box);
 
+  wlr_output_layout_get_box (desktop->layout, self->wlr_output, &output_box);
   if (wlr_box_empty (&output_box))
     return;
 
@@ -1320,10 +1308,11 @@ phoc_output_xwayland_children_for_each_surface (PhocOutput                  *sel
                                                 PhocSurfaceIterator          iterator,
                                                 void                        *user_data)
 {
+  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
   struct wlr_box output_box;
   struct wlr_xwayland_surface *child;
 
-  wlr_output_layout_get_box (self->desktop->layout, self->wlr_output, &output_box);
+  wlr_output_layout_get_box (desktop->layout, self->wlr_output, &output_box);
   if (wlr_box_empty (&output_box))
     return;
 
@@ -1357,11 +1346,12 @@ phoc_output_unmanaged_for_each_surface (PhocOutput            *self,
                                         void                  *user_data)
 {
 #ifdef PHOC_XWAYLAND
+  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
   int lx, ly;
   struct wlr_box output_box;
   struct wlr_surface *wlr_surface;
 
-  wlr_output_layout_get_box (self->desktop->layout, self->wlr_output, &output_box);
+  wlr_output_layout_get_box (desktop->layout, self->wlr_output, &output_box);
   if (wlr_box_empty (&output_box))
     return;
 
@@ -1573,9 +1563,10 @@ phoc_output_drag_icons_for_each_surface (PhocOutput          *self,
                                          PhocSurfaceIterator  iterator,
                                          void                *user_data)
 {
+  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
   struct wlr_box output_box;
-  wlr_output_layout_get_box (self->desktop->layout, self->wlr_output, &output_box);
 
+  wlr_output_layout_get_box (desktop->layout, self->wlr_output, &output_box);
   if (wlr_box_empty (&output_box))
     return;
 
@@ -1639,8 +1630,9 @@ phoc_output_for_each_surface (PhocOutput          *self,
                               void                *user_data,
                               gboolean             visible_only)
 {
-  PhocInput *input = phoc_server_get_input (phoc_server_get_default ());
-  PhocDesktop *desktop = self->desktop;
+  PhocServer *server = phoc_server_get_default ();
+  PhocInput *input = phoc_server_get_input (server);
+  PhocDesktop *desktop = phoc_server_get_desktop (server);
 
   if (self->fullscreen_view != NULL) {
     PhocView *view = self->fullscreen_view;
@@ -1889,6 +1881,7 @@ phoc_output_damage_from_surface (PhocOutput         *self,
 gboolean
 phoc_output_damage_region (PhocOutput *self, const pixman_region32_t *region)
 {
+  PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
   pixman_region32_t clipped;
   int width, height;
 
@@ -1904,7 +1897,7 @@ phoc_output_damage_region (PhocOutput *self, const pixman_region32_t *region)
 
   /* Transform to damage ring buffer local coordinates */
   phoc_output_transform_damage (self, &clipped);
-  wlr_damage_ring_add (&self->damage_ring, &clipped);
+  wlr_damage_ring_add (&priv->damage_ring, &clipped);
 
   pixman_region32_fini (&clipped);
   wlr_output_schedule_frame (self->wlr_output);
@@ -1923,6 +1916,7 @@ phoc_output_damage_region (PhocOutput *self, const pixman_region32_t *region)
 gboolean
 phoc_output_damage_box (PhocOutput *self, const struct wlr_box *box)
 {
+  PhocOutputPrivate *priv = phoc_output_get_instance_private (self);
   struct wlr_box clipped;
   int width, height;
 
@@ -1934,7 +1928,7 @@ phoc_output_damage_box (PhocOutput *self, const struct wlr_box *box)
 
   /* Transform to damage ring buffer local coordinates */
   phoc_output_transform_box (self, &clipped);
-  wlr_damage_ring_add_box (&self->damage_ring, &clipped);
+  wlr_damage_ring_add_box (&priv->damage_ring, &clipped);
 
   wlr_output_schedule_frame (self->wlr_output);
   return TRUE;

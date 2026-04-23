@@ -490,7 +490,7 @@ phoc_renderer_render_output (PhocRenderer *self, PhocOutput *output, PhocRenderC
   gint64 begin_time_nsec G_GNUC_UNUSED = PHOC_TRACE_CURRENT_TIME;
   PhocServer *server = phoc_server_get_default ();
   struct wlr_output *wlr_output = output->wlr_output;
-  PhocDesktop *desktop = PHOC_DESKTOP (output->desktop);
+  PhocDesktop *desktop = phoc_server_get_desktop (server);
   PhocWorkspace *workspace = phoc_desktop_get_active_workspace (desktop);
   pixman_region32_t *damage = ctx->damage;
 
