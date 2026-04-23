@@ -1,6 +1,18 @@
 <schemalist>
-  <schema id="sm.puri.phoc"
-          path="/sm/puri/phoc/">
+  <schema id="mobi.phosh.phoc" path="/mobi/phosh/phoc/">
+    <key name="focus-frame" type="b">
+      <default>true</default>
+      <summary>Show focus frame</summary>
+      <description>
+        Whether to show a colored frame around the currently focused
+        window.
+      </description>
+    </key>
+  </schema>
+
+  <!-- Legacy schema -->
+
+  <schema id="sm.puri.phoc" path="/sm/puri/phoc/">
     <key name="auto-maximize" type="b">
       <default>true</default>
       <summary>Auto maximize applications</summary>
@@ -9,6 +21,7 @@
         Wayland applications and only their main window.
       </description>
     </key>
+
     <key name="scale-to-fit" type="b">
       <default>false</default>
       <summary>Enable automatic scaling of all oversized windows</summary>

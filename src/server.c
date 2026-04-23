@@ -94,6 +94,7 @@ typedef struct _PhocServer {
 
   struct wl_listener   new_surface;
 
+  GSettings           *settings;
 } PhocServer;
 
 static void phoc_server_initable_iface_init (GInitableIface *iface);
@@ -600,6 +601,8 @@ phoc_server_init (PhocServer *self)
   messages_debug = g_getenv ("G_MESSAGES_DEBUG");
   if (messages_debug)
     self->log_domains = g_strsplit (messages_debug, " ", -1);
+
+  self->settings = g_settings_new ("mobi.phosh.phoc");
 }
 
 /**
@@ -1004,4 +1007,13 @@ phoc_server_get_allow_input (PhocServer *self)
   g_assert (PHOC_IS_SERVER (self));
 
   return self->allow_input;
+}
+
+
+gboolean
+phoc_server_get_use_focus_frame (PhocServer *self)
+{
+  g_assert (PHOC_IS_SERVER (self));
+
+  return g_settings_get_boolean (self->settings, "focus-frame");
 }

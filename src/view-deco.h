@@ -18,6 +18,7 @@ G_DECLARE_FINAL_TYPE (PhocViewDeco, phoc_view_deco, PHOC, VIEW_DECO, GObject)
 
 PhocViewDeco           *phoc_view_deco_new                       (PhocView *view);
 PhocViewDecoPart        phoc_view_deco_get_part                  (PhocViewDeco *self, double sx, double sy);
-
+guint                   phoc_view_deco_get_title_bar_height      (PhocViewDeco *self);
+guint                   phoc_view_deco_get_border_width          (PhocViewDeco *self);
 
 G_END_DECLS

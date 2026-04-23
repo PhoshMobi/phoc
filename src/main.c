@@ -11,6 +11,7 @@
 
 #include "settings.h"
 #include "server.h"
+#include "style-manager.h"
 
 #include <wayland-server-core.h>
 #include <wlr/backend.h>
@@ -128,6 +129,7 @@ main (int argc, char **argv)
   g_autoptr (GError) err = NULL;
   g_autoptr (GMainLoop) loop = NULL;
   g_autoptr (PhocServer) server = NULL;
+  g_autoptr (PhocStyleManager) style_manager = NULL;
   g_autofree char *config_path = NULL;
   g_autofree char *exec = NULL, *socket = NULL;
   PhocServerFlags flags = PHOC_SERVER_FLAG_NONE;
@@ -179,6 +181,8 @@ main (int argc, char **argv)
 
   debug_flags = parse_debug_env ();
   wlr_log_init (WLR_DEBUG, log_glib);
+  style_manager = phoc_style_manager_get_default ();
+  g_assert (style_manager != NULL);
   server = phoc_server_get_default ();
   if (server == NULL) {
     /* phoc_server_get_default already printed an error */

@@ -17,7 +17,7 @@
 
 #include "render-private.h"
 
-#define PHOC_DECO_BORDER_WIDTH      4
+#define PHOC_DECO_BORDER_WIDTH     PHOC_VIEW_WIN_MARGIN
 #define PHOC_DECO_TITLEBAR_HEIGHT  12
 #define PHOC_DECO_COLOR(alpha)     ((struct wlr_render_color){ 0.2, 0.2, 0.2, (alpha) })
 
@@ -267,4 +267,22 @@ phoc_view_deco_get_part (PhocViewDeco *self, double sx, double sy)
   }
 
   return parts;
+}
+
+
+guint
+phoc_view_deco_get_title_bar_height (PhocViewDeco *self)
+{
+  g_assert (PHOC_IS_VIEW_DECO (self));
+
+  return self->titlebar_height;
+}
+
+
+guint
+phoc_view_deco_get_border_width (PhocViewDeco *self)
+{
+  g_assert (PHOC_IS_VIEW_DECO (self));
+
+  return self->border_width;
 }

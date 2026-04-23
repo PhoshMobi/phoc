@@ -40,18 +40,17 @@ enum {
 };
 static GParamSpec *props[PROP_LAST_PROP];
 
-struct _PhocColorRect {
-  GObject        parent;
-
+typedef struct {
   gboolean       mapped;
   PhocBox        box;
   PhocColor      color;
-};
+} PhocColorRectPrivate;
 
 static void bling_interface_init (PhocBlingInterface *iface);
 
 G_DEFINE_TYPE_WITH_CODE (PhocColorRect, phoc_color_rect, G_TYPE_OBJECT,
-                         G_IMPLEMENT_INTERFACE (PHOC_TYPE_BLING, bling_interface_init))
+                         G_IMPLEMENT_INTERFACE (PHOC_TYPE_BLING, bling_interface_init)
+                         G_ADD_PRIVATE (PhocColorRect))
 
 static void
 phoc_color_rect_set_property (GObject      *object,
@@ -60,28 +59,29 @@ phoc_color_rect_set_property (GObject      *object,
                               GParamSpec   *pspec)
 {
   PhocColorRect *self = PHOC_COLOR_RECT (object);
+  PhocColorRectPrivate *priv = phoc_color_rect_get_instance_private (self);
 
   switch (property_id) {
   case PROP_X:
     /* Damage the old box's area */
     phoc_bling_damage_box (PHOC_BLING (self));
-    self->box.x = g_value_get_int (value);
+    priv->box.x = g_value_get_int (value);
     /* Damage the new box's area */
     phoc_bling_damage_box (PHOC_BLING (self));
     break;
   case PROP_Y:
     phoc_bling_damage_box (PHOC_BLING (self));
-    self->box.y = g_value_get_int (value);
+    priv->box.y = g_value_get_int (value);
     phoc_bling_damage_box (PHOC_BLING (self));
     break;
   case PROP_WIDTH:
     phoc_bling_damage_box (PHOC_BLING (self));
-    self->box.width = g_value_get_uint (value);
+    priv->box.width = g_value_get_uint (value);
     phoc_bling_damage_box (PHOC_BLING (self));
     break;
   case PROP_HEIGHT:
     phoc_bling_damage_box (PHOC_BLING (self));
-    self->box.height = g_value_get_uint (value);
+    priv->box.height = g_value_get_uint (value);
     phoc_bling_damage_box (PHOC_BLING (self));
     break;
   case PROP_BOX:
@@ -107,25 +107,26 @@ phoc_color_rect_get_property (GObject    *object,
                               GParamSpec *pspec)
 {
   PhocColorRect *self = PHOC_COLOR_RECT (object);
+  PhocColorRectPrivate *priv = phoc_color_rect_get_instance_private (self);
 
   switch (property_id) {
   case PROP_X:
-    g_value_set_int (value, self->box.x);
+    g_value_set_int (value, priv->box.x);
     break;
   case PROP_Y:
-    g_value_set_int (value, self->box.y);
+    g_value_set_int (value, priv->box.y);
     break;
   case PROP_WIDTH:
-    g_value_set_uint (value, self->box.width);
+    g_value_set_uint (value, priv->box.width);
     break;
   case PROP_HEIGHT:
-    g_value_set_uint (value, self->box.height);
+    g_value_set_uint (value, priv->box.height);
     break;
   case PROP_BOX:
-    g_value_set_boxed (value, &self->box);
+    g_value_set_boxed (value, &priv->box);
     break;
   case PROP_COLOR:
-    g_value_set_boxed (value, &self->color);
+    g_value_set_boxed (value, &priv->color);
     break;
   case PROP_ALPHA:
     g_value_set_float (value, phoc_color_rect_get_alpha (self));
@@ -152,12 +153,13 @@ static void
 bling_render (PhocBling *bling, PhocRenderContext *ctx)
 {
   PhocColorRect *self = PHOC_COLOR_RECT (bling);
+  PhocColorRectPrivate *priv = phoc_color_rect_get_instance_private (self);
   pixman_region32_t damage;
 
-  if (!self->mapped)
+  if (!priv->mapped)
     return;
 
-  struct wlr_box box = self->box;
+  struct wlr_box box = priv->box;
   box.x -= ctx->output->lx;
   box.y -= ctx->output->ly;
   phoc_utils_scale_box (&box, ctx->output->wlr_output->scale);
@@ -171,10 +173,10 @@ bling_render (PhocBling *bling, PhocRenderContext *ctx)
   wlr_render_pass_add_rect (ctx->render_pass, &(struct wlr_render_rect_options){
       .box = box,
       .color = {
-        .r = self->color.red * self->color.alpha,
-        .g = self->color.green * self->color.alpha,
-        .b = self->color.blue * self->color.alpha,
-        .a = self->color.alpha,
+        .r = priv->color.red * priv->color.alpha,
+        .g = priv->color.green * priv->color.alpha,
+        .b = priv->color.blue * priv->color.alpha,
+        .a = priv->color.alpha,
       },
       .clip = &damage,
     });
@@ -195,8 +197,9 @@ static void
 bling_map (PhocBling *bling)
 {
   PhocColorRect *self = PHOC_COLOR_RECT (bling);
+  PhocColorRectPrivate *priv = phoc_color_rect_get_instance_private (self);
 
-  self->mapped = TRUE;
+  priv->mapped = TRUE;
   phoc_bling_damage_box (PHOC_BLING (self));
 }
 
@@ -205,9 +208,10 @@ static void
 bling_unmap (PhocBling *bling)
 {
   PhocColorRect *self = PHOC_COLOR_RECT (bling);
+  PhocColorRectPrivate *priv = phoc_color_rect_get_instance_private (self);
 
   phoc_bling_damage_box (PHOC_BLING (self));
-  self->mapped = FALSE;
+  priv->mapped = FALSE;
 }
 
 
@@ -215,8 +219,9 @@ static gboolean
 bling_is_mapped (PhocBling *bling)
 {
   PhocColorRect *self = PHOC_COLOR_RECT (bling);
+  PhocColorRectPrivate *priv = phoc_color_rect_get_instance_private (self);
 
-  return self->mapped;
+  return priv->mapped;
 }
 
 
@@ -317,9 +322,11 @@ phoc_color_rect_new (PhocBox *box, PhocColor *color)
 PhocBox
 phoc_color_rect_get_box (PhocColorRect *self)
 {
+  PhocColorRectPrivate *priv = phoc_color_rect_get_instance_private (self);
+
   g_assert (PHOC_IS_COLOR_RECT (self));
 
-  return self->box;
+  return priv->box;
 }
 
 /**
@@ -332,10 +339,12 @@ phoc_color_rect_get_box (PhocColorRect *self)
 void
 phoc_color_rect_set_box (PhocColorRect *self, PhocBox *box)
 {
+  PhocColorRectPrivate *priv = phoc_color_rect_get_instance_private (self);
+
   g_assert (PHOC_IS_COLOR_RECT (self));
 
   phoc_bling_damage_box (PHOC_BLING (self));
-  self->box = *box;
+  priv->box = *box;
   phoc_bling_damage_box (PHOC_BLING (self));
 }
 
@@ -349,19 +358,20 @@ phoc_color_rect_set_box (PhocColorRect *self, PhocBox *box)
 void
 phoc_color_rect_set_color (PhocColorRect *self, PhocColor *color)
 {
+  PhocColorRectPrivate *priv = phoc_color_rect_get_instance_private (self);
   float alpha;
 
   g_assert (PHOC_IS_COLOR_RECT (self));
 
-  if (phoc_color_is_equal (&self->color, color))
+  if (phoc_color_is_equal (&priv->color, color))
     return;
 
-  alpha = self->color.alpha;
-  self->color = *color;
+  alpha = priv->color.alpha;
+  priv->color = *color;
   phoc_bling_damage_box (PHOC_BLING (self));
 
   g_object_notify_by_pspec (G_OBJECT (self), props[PROP_COLOR]);
-  if (!G_APPROX_VALUE (self->color.alpha, alpha, FLT_EPSILON))
+  if (!G_APPROX_VALUE (priv->color.alpha, alpha, FLT_EPSILON))
     g_object_notify_by_pspec (G_OBJECT (self), props[PROP_ALPHA]);
 }
 
@@ -376,9 +386,11 @@ phoc_color_rect_set_color (PhocColorRect *self, PhocColor *color)
 PhocColor
 phoc_color_rect_get_color (PhocColorRect *self)
 {
+  PhocColorRectPrivate *priv = phoc_color_rect_get_instance_private (self);
+
   g_assert (PHOC_IS_COLOR_RECT (self));
 
-  return self->color;
+  return priv->color;
 }
 
 /**
@@ -391,12 +403,14 @@ phoc_color_rect_get_color (PhocColorRect *self)
 void
 phoc_color_rect_set_alpha (PhocColorRect *self, float alpha)
 {
+  PhocColorRectPrivate *priv = phoc_color_rect_get_instance_private (self);
+
   g_assert (PHOC_IS_COLOR_RECT (self));
 
-  if (G_APPROX_VALUE (self->color.alpha, alpha, FLT_EPSILON))
+  if (G_APPROX_VALUE (priv->color.alpha, alpha, FLT_EPSILON))
     return;
 
-  self->color.alpha = alpha;
+  priv->color.alpha = alpha;
   phoc_bling_damage_box (PHOC_BLING (self));
 
   g_object_notify_by_pspec (G_OBJECT (self), props[PROP_ALPHA]);
@@ -414,7 +428,9 @@ phoc_color_rect_set_alpha (PhocColorRect *self, float alpha)
 float
 phoc_color_rect_get_alpha (PhocColorRect *self)
 {
+  PhocColorRectPrivate *priv = phoc_color_rect_get_instance_private (self);
+
   g_assert (PHOC_IS_COLOR_RECT (self));
 
-  return self->color.alpha;
+  return priv->color.alpha;
 }

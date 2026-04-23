@@ -8,6 +8,7 @@
 #include "cursor.h"
 #include "view-deco.h"
 #include "desktop.h"
+#include "focus-frame.h"
 #include "input.h"
 #include "seat.h"
 #include "server.h"
@@ -26,7 +27,6 @@
 /* How long should a surface be invisible/occluded before we notify it about it */
 #define PHOC_SUSPEND_TIMEOUT_SECONDS 3
 
-
 enum {
   PROP_0,
   PROP_SCALE_TO_FIT,
@@ -35,12 +35,15 @@ enum {
   PROP_ALPHA,
   PROP_DECORATED,
   PROP_STATE,
+  PROP_FULLSCREEN,
   PROP_LAST_PROP
 };
 static GParamSpec *props[PROP_LAST_PROP];
 
 enum {
   SURFACE_DESTROY,
+  POS_CHANGED,
+  SIZE_CHANGED,
   N_SIGNALS
 };
 static guint signals[N_SIGNALS] = { 0 };
@@ -653,12 +656,67 @@ phoc_view_set_suspended (PhocView *self, bool suspended)
 }
 
 
+static int
+find_focus_border_bling (gconstpointer a, gconstpointer b)
+{
+  const PhocBling *bling = a;
+
+  return !g_object_get_data (G_OBJECT (bling), "focus-border");
+}
+
+
+static void
+phoc_view_add_focus_frame (PhocView *self)
+{
+  PhocViewPrivate *priv = phoc_view_get_instance_private (self);
+  GSList *l;
+
+  g_assert (PHOC_IS_VIEW (self));
+
+  l = g_slist_find_custom (priv->blings, "focus-border", find_focus_border_bling);
+  if (!l) {
+    g_autoptr (PhocBling) bling = PHOC_BLING (phoc_focus_frame_new (self));
+
+    /* Add to bottom of rendering tree */
+    phoc_view_insert_bling (self, bling);
+    g_object_set_data (G_OBJECT (bling), "focus-border", GINT_TO_POINTER (TRUE));
+  }
+}
+
+
+static void
+phoc_view_remove_focus_frame (PhocView *self)
+{
+  GSList *l;
+  g_autoptr (PhocBling) bling = NULL;
+  PhocViewPrivate *priv = phoc_view_get_instance_private (self);
+
+  g_assert (PHOC_IS_VIEW (self));
+
+  l = g_slist_find_custom (priv->blings, "focus-border", find_focus_border_bling);
+  if (!l)
+    return;
+
+  bling = g_object_ref (l->data);
+  phoc_bling_unmap (bling);
+  phoc_view_remove_bling (self, bling);
+}
+
+
 void
 phoc_view_appear_activated (PhocView *self, bool activated)
 {
+  gboolean show_frame = phoc_server_get_use_focus_frame (phoc_server_get_default ());
+
   g_assert (PHOC_IS_VIEW (self));
 
   PHOC_VIEW_GET_CLASS (self)->set_active (self, activated);
+
+  if (activated && show_frame) {
+    phoc_view_add_focus_frame (self);
+  } else {
+    phoc_view_remove_focus_frame (self);
+  }
 }
 
 /**
@@ -700,6 +758,8 @@ phoc_view_resize (PhocView *self, uint32_t width, uint32_t height)
   g_assert (PHOC_IS_VIEW (self));
 
   PHOC_VIEW_GET_CLASS (self)->resize (self, width, height);
+
+  g_signal_emit (self, signals[SIZE_CHANGED], 0);
 }
 
 void
@@ -808,11 +868,17 @@ phoc_view_get_tiled_box (PhocView               *self,
                          struct wlr_box         *box)
 {
   PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
-  PhocViewPrivate *priv;
+  PhocViewPrivate *priv = phoc_view_get_instance_private (self);
+  struct wlr_box output_box, usable_area;
 
   g_assert (box);
   g_assert (PHOC_IS_VIEW (self));
-  priv = phoc_view_get_instance_private (self);
+
+  /* If there's enough room to tile, there's little point to scale-to-fit */
+  if (G_UNLIKELY (G_APPROX_VALUE (priv->scale, 1.0, FLT_EPSILON))) {
+    g_warning ("Resetting scale-to-fit for tiling for view %p", self);
+    priv->scale = 1.0;
+  }
 
   if (phoc_view_is_fullscreen (self))
     return FALSE;
@@ -823,29 +889,33 @@ phoc_view_get_tiled_box (PhocView               *self,
   if (!output)
     return FALSE;
 
-  struct wlr_box output_box;
   wlr_output_layout_get_box (desktop->layout, output->wlr_output, &output_box);
-  struct wlr_box usable_area = output->usable_area;
-  int x;
+  usable_area = output->usable_area;
 
   usable_area.x += output_box.x;
   usable_area.y += output_box.y;
 
+  box->x = PHOC_VIEW_WIN_MARGIN;
+  box->y = PHOC_VIEW_WIN_MARGIN + usable_area.y;
   switch (dir) {
   case PHOC_VIEW_TILE_LEFT:
-    x = usable_area.x;
+    box->x += usable_area.x;
     break;
   case PHOC_VIEW_TILE_RIGHT:
-    x = usable_area.x + (0.5 * usable_area.width);
+    box->x += usable_area.x + (0.5 * usable_area.width);
     break;
   default:
     g_error ("Invalid tiling direction %d", dir);
   }
 
-  box->x = x / priv->scale;
-  box->y = usable_area.y / priv->scale;
-  box->width = usable_area.width / 2 / priv->scale;
-  box->height = usable_area.height / priv->scale;
+  box->width = (usable_area.width / 2) - 2 * PHOC_VIEW_WIN_MARGIN;
+  box->height = usable_area.height - 2 * PHOC_VIEW_WIN_MARGIN;
+
+  /* Make room for the title bar with SSD */
+  if (phoc_view_is_decorated (self)) {
+    box->y += phoc_view_deco_get_title_bar_height (priv->deco);
+    box->height -= phoc_view_deco_get_title_bar_height (priv->deco);
+  }
 
   return TRUE;
 }
@@ -864,8 +934,8 @@ view_arrange_tiled (PhocView *self, PhocOutput *output)
     return;
 
   phoc_view_get_geometry (self, &geom);
-  box.x -= geom.x / priv->scale;
-  box.y -= geom.y / priv->scale;
+  box.x -= geom.x;
+  box.y -= geom.y;
 
   phoc_view_move_resize (self, box.x, box.y, box.width, box.height);
 }
@@ -1040,6 +1110,9 @@ phoc_view_set_fullscreen (PhocView *self, bool fullscreen, PhocOutput *output)
 
     phoc_view_auto_maximize (self);
   }
+
+  if (was_fullscreen != fullscreen)
+    g_object_notify_by_pspec (G_OBJECT (self), props[PROP_FULLSCREEN]);
 
   phoc_server_set_linux_dmabuf_surface_feedback (server, self, priv->fullscreen_output, fullscreen);
 }
@@ -1540,6 +1613,8 @@ view_update_position (PhocView *self, int x, int y)
   self->box.y = y;
   view_update_output (self, &before);
   phoc_view_damage_whole (self);
+
+  g_signal_emit (self, signals[POS_CHANGED], 0);
 }
 
 void
@@ -1563,6 +1638,8 @@ view_update_size (PhocView *self, int width, int height)
   view_update_scale (self);
   view_update_output (self, &before);
   phoc_view_damage_whole (self);
+
+  g_signal_emit (self, signals[SIZE_CHANGED], 0);
 }
 
 
@@ -1735,6 +1812,9 @@ phoc_view_get_property (GObject    *object,
     break;
   case PROP_STATE:
     g_value_set_enum (value, priv->state);
+    break;
+  case PROP_FULLSCREEN:
+    g_value_set_boolean (value, phoc_view_is_fullscreen (self));
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -1973,6 +2053,15 @@ phoc_view_class_init (PhocViewClass *klass)
                        PHOC_TYPE_VIEW_STATE,
                        PHOC_VIEW_STATE_FLOATING,
                        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+  /**
+   * PhocView:fullscreen:
+   *
+   * Whether the view is fullscreen
+   */
+  props[PROP_FULLSCREEN] =
+    g_param_spec_boolean ("fullscreen", "", "",
+                          FALSE,
+                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (object_class, PROP_LAST_PROP, props);
 
@@ -1989,6 +2078,30 @@ phoc_view_class_init (PhocViewClass *klass)
                                            NULL, NULL, NULL,
                                            G_TYPE_NONE,
                                            0);
+  /**
+   * PhocView::pos-changed:
+   *
+   * The view moved to a new position.
+   */
+  signals[POS_CHANGED] = g_signal_new ("pos-changed",
+                                       G_TYPE_FROM_CLASS (object_class),
+                                       G_SIGNAL_RUN_LAST,
+                                       0,
+                                       NULL, NULL, NULL,
+                                       G_TYPE_NONE,
+                                       0);
+  /**
+   * PhocView::size-changed:
+   *
+   * The view has a new size
+   */
+  signals[SIZE_CHANGED] = g_signal_new ("size-changed",
+                                        G_TYPE_FROM_CLASS (object_class),
+                                        G_SIGNAL_RUN_LAST,
+                                        0,
+                                        NULL, NULL, NULL,
+                                        G_TYPE_NONE,
+                                        0);
 }
 
 
@@ -2318,6 +2431,8 @@ phoc_view_move (PhocView *self, double x, double y)
   self->pending_centering = false;
 
   PHOC_VIEW_GET_CLASS (self)->move (self, x, y);
+
+  g_signal_emit (self, signals[POS_CHANGED], 0);
 }
 
 
@@ -2408,6 +2523,32 @@ phoc_view_add_bling (PhocView *self, PhocBling *bling)
   priv = phoc_view_get_instance_private (self);
 
   priv->blings = g_slist_prepend (priv->blings, g_object_ref (bling));
+}
+
+/**
+ * phoc_view_insert_bling:
+ * @self: The view
+ * @bling: The bling to add
+ *
+ * By adding a [type@Bling] to a view you ensure that it gets rendered
+ * just before the view if both the view and the bling are mapped.
+ *
+ * The view will take a reference on the [type@Bling] that will be
+ * dropped when the bling is removed or the view is destroyed.
+ *
+ * This inserts the bling in a way that makes it rendered last thus
+ * showing above all other blings.
+ */
+void
+phoc_view_insert_bling (PhocView *self, PhocBling *bling)
+{
+  PhocViewPrivate *priv;
+
+  g_assert (PHOC_IS_VIEW (self));
+  g_assert (PHOC_IS_BLING (bling));
+  priv = phoc_view_get_instance_private (self);
+
+  priv->blings = g_slist_append (priv->blings, g_object_ref (bling));
 }
 
 /**
