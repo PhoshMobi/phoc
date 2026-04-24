@@ -88,7 +88,7 @@ G_DEFINE_TYPE (PhocKeyboard, phoc_keyboard, PHOC_TYPE_INPUT_DEVICE)
 static ssize_t
 pressed_keysyms_index (const xkb_keysym_t *pressed_keysyms, xkb_keysym_t keysym)
 {
-  for (size_t i = 0; i < PHOC_KEYBOARD_PRESSED_KEYSYMS_CAP; ++i) {
+  for (size_t i = 0; i < PHOC_KEYBOARD_PRESSED_KEYSYMS_CAP; i++) {
     if (pressed_keysyms[i] == keysym)
       return i;
   }
@@ -101,7 +101,7 @@ pressed_keysyms_length (const xkb_keysym_t *pressed_keysyms)
 {
   size_t n = 0;
 
-  for (size_t i = 0; i < PHOC_KEYBOARD_PRESSED_KEYSYMS_CAP; ++i) {
+  for (size_t i = 0; i < PHOC_KEYBOARD_PRESSED_KEYSYMS_CAP; i++) {
     if (pressed_keysyms[i] != XKB_KEY_NoSymbol)
       ++n;
   }
@@ -154,7 +154,7 @@ pressed_keysyms_update (xkb_keysym_t              *pressed_keysyms,
                         size_t                     keysyms_len,
                         enum wl_keyboard_key_state state)
 {
-  for (size_t i = 0; i < keysyms_len; ++i) {
+  for (size_t i = 0; i < keysyms_len; i++) {
     if (keysym_is_modifier (keysyms[i]))
       continue;
     if (state == WL_KEYBOARD_KEY_STATE_PRESSED)
@@ -222,7 +222,7 @@ keyboard_execute_super_key (PhocKeyboard              *self,
     return false;
   }
 
-  for (size_t i = 0; i < keysyms_len; ++i) {
+  for (size_t i = 0; i < keysyms_len; i++) {
     if (keysyms[i] == XKB_KEY_Super_L || keysyms[i] == XKB_KEY_Super_R) {
       PhocKeyCombo combo = { 0, keysyms[i] };
 
@@ -269,7 +269,7 @@ keyboard_execute_binding (PhocKeyboard              *self,
     return false;
 
   /* TODO: should be handled via PhocKeybindings as well */
-  for (size_t i = 0; i < keysyms_len; ++i) {
+  for (size_t i = 0; i < keysyms_len; i++) {
     if (keyboard_execute_compositor_binding (self, keysyms[i]))
       return true;
   }
@@ -301,7 +301,7 @@ keyboard_execute_subscribed_binding (PhocKeyboard              *self,
   bool pressed;
 
   pressed = !!(state == WL_KEYBOARD_KEY_STATE_PRESSED);
-  for (size_t i = 0; i < keysyms_len; ++i) {
+  for (size_t i = 0; i < keysyms_len; i++) {
     PhocKeyCombo combo = { modifiers, keysyms[i] };
     handled |= phoc_phosh_private_forward_keysym (&combo, time, pressed);
   }
