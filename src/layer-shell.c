@@ -33,49 +33,45 @@ apply_exclusive (struct wlr_box *usable_area,
 
   struct {
     uint32_t anchors;
-    int *positive_axis;
-    int *negative_axis;
-    int margin;
+    int     *positive_axis;
+    int     *negative_axis;
+    int      margin;
   } edges[] = {
     {
-      .anchors =
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT |
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP,
+      .anchors = (ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
+                  ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT |
+                  ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP),
       .positive_axis = &usable_area->y,
       .negative_axis = &usable_area->height,
       .margin = margin_top,
     },
     {
-      .anchors =
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT |
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM,
+      .anchors = (ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
+                  ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT |
+                  ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM),
       .positive_axis = NULL,
       .negative_axis = &usable_area->height,
       .margin = margin_bottom,
     },
     {
-      .anchors =
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP |
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM,
+      .anchors = (ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
+                  ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP |
+                  ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM),
       .positive_axis = &usable_area->x,
       .negative_axis = &usable_area->width,
       .margin = margin_left,
     },
     {
-      .anchors =
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT |
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP |
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM,
+      .anchors = (ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT |
+                  ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP |
+                  ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM),
       .positive_axis = NULL,
       .negative_axis = &usable_area->width,
       .margin = margin_right,
     },
   };
 
-  for (size_t i = 0; i < G_N_ELEMENTS (edges); ++i) {
+  for (size_t i = 0; i < G_N_ELEMENTS (edges); i++) {
     if ((anchor & edges[i].anchors) == edges[i].anchors && exclusive + edges[i].margin > 0) {
       if (edges[i].positive_axis)
         *edges[i].positive_axis += exclusive + edges[i].margin;
@@ -298,7 +294,7 @@ phoc_layer_shell_arrange (PhocOutput *output)
 
   wlr_output_effective_resolution (output->wlr_output, &usable_area.width, &usable_area.height);
   /* Arrange exclusive surfaces from top->bottom */
-  for (size_t i = 0; i < G_N_ELEMENTS (layers); ++i)
+  for (size_t i = 0; i < G_N_ELEMENTS (layers); i++)
     sent_configure |= arrange_layer (output, seats, layers[i], &usable_area, true);
 
   usable_area_changed = memcmp (&output->usable_area, &usable_area, sizeof (output->usable_area));
@@ -309,7 +305,7 @@ phoc_layer_shell_arrange (PhocOutput *output)
   }
 
   /* Arrange non-exlusive surfaces from top->bottom */
-  for (size_t i = 0; i < G_N_ELEMENTS (layers); ++i)
+  for (size_t i = 0; i < G_N_ELEMENTS (layers); i++)
     sent_configure |= arrange_layer (output, seats, layers[i], &usable_area, false);
 
   phoc_output_update_shell_reveal (output);
@@ -349,7 +345,7 @@ phoc_layer_shell_update_focus (void)
   /* TODO: Make layer surface focus per-output based on cursor position */
   PhocOutput *output;
   wl_list_for_each (output, &desktop->outputs, link) {
-    for (size_t i = 0; i < G_N_ELEMENTS (layers_above_shell); ++i) {
+    for (size_t i = 0; i < G_N_ELEMENTS (layers_above_shell); i++) {
       wl_list_for_each_reverse (layer_surface, &output->layer_surfaces, link) {
         if (layer_surface->layer != layers_above_shell[i])
           continue;
