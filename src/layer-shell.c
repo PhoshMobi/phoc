@@ -33,42 +33,38 @@ apply_exclusive (struct wlr_box *usable_area,
 
   struct {
     uint32_t anchors;
-    int *positive_axis;
-    int *negative_axis;
-    int margin;
+    int     *positive_axis;
+    int     *negative_axis;
+    int      margin;
   } edges[] = {
     {
-      .anchors =
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT |
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP,
+      .anchors = (ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
+                  ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT |
+                  ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP),
       .positive_axis = &usable_area->y,
       .negative_axis = &usable_area->height,
       .margin = margin_top,
     },
     {
-      .anchors =
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT |
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM,
+      .anchors = (ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
+                  ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT |
+                  ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM),
       .positive_axis = NULL,
       .negative_axis = &usable_area->height,
       .margin = margin_bottom,
     },
     {
-      .anchors =
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP |
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM,
+      .anchors = (ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
+                  ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP |
+                  ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM),
       .positive_axis = &usable_area->x,
       .negative_axis = &usable_area->width,
       .margin = margin_left,
     },
     {
-      .anchors =
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT |
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP |
-      ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM,
+      .anchors = (ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT |
+                  ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP |
+                  ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM),
       .positive_axis = NULL,
       .negative_axis = &usable_area->width,
       .margin = margin_right,
