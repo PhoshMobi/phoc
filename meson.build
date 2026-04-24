@@ -101,6 +101,7 @@ endif
 
 global_c_args = []
 test_c_args = [
+  '-fanalyzer',
   '-Wcast-align',
   '-Wdate-time',
   ['-Werror=format-security', '-Werror=format=2'],
