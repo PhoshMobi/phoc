@@ -582,7 +582,7 @@ on_input_setting_changed (PhocKeyboard *self,
   input_device = PHOC_INPUT_DEVICE (self);
   device = phoc_input_device_get_device (input_device);
 
-  g_debug ("Setting changed, reloading input settings");
+  g_debug ("Setting changed, reloading input settings for %p", self);
 
   if (wlr_input_device_get_virtual_keyboard (device) != NULL) {
     g_debug ("Virtual keyboard in use, not switching layout");
