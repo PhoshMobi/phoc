@@ -1,6 +1,9 @@
 /*
  * Copyright (C) 2020 Purism SPC
+ *               2021-2026 Phosh.mobi e.V.
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
+ *
  * Author: Guido Günther <agx@sigxcpu.org>
  */
 
@@ -8,12 +11,13 @@
 
 #include "phoc-config.h"
 
-#include "server.h"
 #include "cursor.h"
 #include "desktop.h"
+#include "gtk-shell.h"
 #include "input.h"
 #include "phosh-private.h"
-#include "gtk-shell.h"
+#include "view-private.h"
+#include "server.h"
 
 #include <gtk-shell-protocol.h>
 #include <wlr/types/wlr_xdg_activation_v1.h>
@@ -38,11 +42,12 @@ struct _PhocGtkShell {
  * A surface in the gtk_shell1 protocol
  */
 struct _PhocGtkSurface {
-  struct wl_resource *resource;
-  struct wlr_surface *wlr_surface;
+  struct wl_resource     *resource;
+  struct wlr_surface     *wlr_surface;
   struct wlr_xdg_surface *xdg_surface;
-  PhocGtkShell *gtk_shell;
-  char *app_id;
+  PhocGtkShell      *gtk_shell;
+  char              *app_id;
+  gboolean           modal;
 
   struct wl_listener wlr_surface_handle_destroy;
   struct wl_listener xdg_surface_handle_destroy;
@@ -50,7 +55,7 @@ struct _PhocGtkSurface {
 };
 
 
-static PhocGtkShell *phoc_gtk_shell_from_resource (struct wl_resource *resource);
+static PhocGtkShell *  phoc_gtk_shell_from_resource (struct wl_resource *resource);
 static PhocGtkSurface *phoc_gtk_surface_from_resource (struct wl_resource *resource);
 
 
@@ -85,7 +90,20 @@ static void
 handle_set_modal (struct wl_client   *client,
                   struct wl_resource *resource)
 {
-  g_debug ("%s not implemented", __func__);
+  PhocGtkSurface *gtk_surface = phoc_gtk_surface_from_resource (resource);
+  PhocView *view;
+
+  if (gtk_surface->wlr_surface == NULL)
+    return;
+
+  g_debug ("GTK surface %p (%p) is modal", gtk_surface, gtk_surface->wlr_surface);
+  gtk_surface->modal = TRUE;
+
+  view = phoc_view_from_wlr_surface (gtk_surface->wlr_surface);
+  if (view == NULL)
+    return;
+
+  phoc_view_set_modal (view, TRUE);
 }
 
 
@@ -93,7 +111,20 @@ static void
 handle_unset_modal (struct wl_client   *client,
                     struct wl_resource *resource)
 {
-  g_debug ("%s not implemented", __func__);
+  PhocGtkSurface *gtk_surface = phoc_gtk_surface_from_resource (resource);
+  PhocView *view;
+
+  if (gtk_surface->wlr_surface == NULL)
+    return;
+
+  g_debug ("GTK surface %p (%p) is not modal", gtk_surface, gtk_surface->wlr_surface);
+  gtk_surface->modal = FALSE;
+
+  view = phoc_view_from_wlr_surface (gtk_surface->wlr_surface);
+  if (view == NULL)
+    return;
+
+  phoc_view_set_modal (view, FALSE);
 }
 
 
@@ -489,4 +520,11 @@ const char *
 phoc_gtk_surface_get_app_id (PhocGtkSurface *gtk_surface)
 {
   return gtk_surface->app_id;
+}
+
+
+gboolean
+phoc_gtk_surface_get_modal (PhocGtkSurface *gtk_surface)
+{
+  return gtk_surface->modal;
 }

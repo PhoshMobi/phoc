@@ -25,5 +25,6 @@ PhocGtkSurface *phoc_gtk_shell_get_gtk_surface_from_wlr_surface (PhocGtkShell   
                                                                  struct wlr_surface *wlr_surface);
 
 const char     *phoc_gtk_surface_get_app_id                     (PhocGtkSurface     *gtk_surface);
+gboolean        phoc_gtk_surface_get_modal                      (PhocGtkSurface     *gtk_surface);
 
 G_END_DECLS
