@@ -119,13 +119,16 @@ handle_subsurface_clicked (struct wl_listener *listener, void *data)
   PtkDemoSubsurface *demo = wl_container_of (listener, demo, clicked);
   PtkSubsurface *parent = demo->subsurface;
 
-  if (event->button == PTK_POINTER_EVENT_BUTTON_LEFT &&
-      event->state == WL_POINTER_BUTTON_STATE_PRESSED) {
-    PtkDemoSubsurface *new;
+  if ((event->button == PTK_POINTER_EVENT_BUTTON_LEFT ||
+       event->button == PTK_POINTER_EVENT_BUTTON_RIGHT)  &&
+      event->state == WL_POINTER_BUTTON_STATE_RELEASED) {
+    PtkDemoSubsurface *demo_subsurface;
+    gboolean above = event->button == PTK_POINTER_EVENT_BUTTON_LEFT;
 
-    new = ptk_demo_subsurface_new (PTK_SURFACE (parent), parent->root_surface, event->x, event->y);
-    draw (PTK_SURFACE (new->subsurface), new->color);
-    ptk_subsurface_map (new->subsurface);
+    demo_subsurface = ptk_demo_subsurface_new (PTK_SURFACE (parent), parent->root_surface, event->x, event->y);
+    draw (PTK_SURFACE (demo_subsurface->subsurface), demo_subsurface->color);
+    ptk_subsurface_place (demo_subsurface->subsurface, PTK_SURFACE (parent), above);
+    ptk_subsurface_map (demo_subsurface->subsurface);
   }
 }
 

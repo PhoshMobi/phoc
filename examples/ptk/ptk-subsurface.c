@@ -92,15 +92,14 @@ ptk_subsurface_place (PtkSubsurface *self, PtkSurface *sibling, gboolean above)
 {
   PtkSurface *surface = NULL;
 
-  if (self->root_surface->surface == sibling->surface) {
+  /* Surface below root surface */
+  if (self->root_surface == sibling) {
     surface = self->root_surface;
   } else {
-    while (self->parent_surface) {
-      if (self->parent_surface == sibling) {
-        surface = self->parent_surface;
-        break;
-      }
-    }
+    /* Sibling is another subsurface */
+    PtkSubsurface *subsurface = PTK_SUBSURFACE (sibling);
+    if (self->root_surface == subsurface->root_surface)
+      surface = sibling;
   }
 
   g_assert (surface);
