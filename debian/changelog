@@ -1,3 +1,96 @@
+phoc (0.55~rc1) experimental; urgency=medium
+
+  * view: Rename `view` to `self`
+    Clean up the remaining bits
+  * examples/idle: Fix typo
+  * contributing: Add contributing information.
+    As per our https://www.apc.org review as part of
+    https://nlnet.nl/project/Phosh-Notch/
+    the preferred name here is CONTRIBUTING.md so let's use that.
+    While at that shorten and simplify the document moving the
+    coding style recommendations to a web page thus avoiding the
+    libhandy reference.
+  * keyboard: Fall back to default keymap when empty.
+    Use reasonable defaults if the gsetting is unset. Otherwise
+    we e.g. fail to load any keybindings.
+  * cursor: Convert all edges to allow corner resizing.
+    Otherwise we never see the corner resize cursor when using server side
+    decorations.
+    The edges and margins are still hard to hit but that's a separate issue.
+  * output: Make damage-ring private.
+    Since
+    520efc8e3 ("render: Fix debug damage tracking")
+    this doesn't leak into the renderer anymore so fix this TODO.
+  * output: Don't store desktop on output.
+    Get it from the server like everywhere else
+  * data: Make sure to rebuild the schema when it changed
+  * types: Add convenience macro for color creation
+  * view: Emit signals when view moves or changes size
+  * view: Add fullscreen property.
+    Allows to listen for changes
+  * style-manager: New class to track accent color.
+    We'll also move other style information there.
+  * cursor: Use accent color for tile/maximize suggestions
+  * color-rect: Make a derivable class
+  * view-deco: Add getters for border width and title bar height
+  * view: Allow to insert blings at the end.
+    This allows to have them rendered on top of other blings. We could
+    move to a tree here for more granular ordering in a follow up.
+  * view: Add generic margin value.
+    Used for SSD decorations. Will later be used for tile margin
+    and focus border.
+  * view: Don't scale-to-fit tiled views.
+    We reset the scale in this case as there's no point in shrinking views
+    when tiling. Warn the user about it for now.
+  * view: Use a margin when tiling.
+    Add a margin around tiled windows. This will be filled with the focus
+    frame later on. The margin is the same as SSDs so that these fit in
+    perfectly.
+  * view: Add focus border.
+    We introduce a new class that draws a border when the view is focused
+    and should appear activated.
+    Technically we draw a full rectangle until we can make use of the
+    xdg-toplevel-shape protocol.
+  * desktop: Mark legacy schema as such.
+    We'll move that to mobi.phosh but not this cycle
+    as we already have the alpha1 out and don't want
+    to break distros that already ship it.
+  * view: Allow to disable focus frame.
+    It's on by default but people might want to turn it off.
+  * tests: Disable focus frame.
+    That way we don't need to update the screenshots (and then again
+    when we improve the frame rendering). It's not particular useful
+    for the current tests anyway.
+  * renderer: Hook up renderer-lost signal.
+    This allows to recreate the renderer after e.g. GPU resets.
+    Modelled after what sway does.
+    Helps: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/427
+    Helps: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/316
+  * tree: Use same increment.
+    We use `i++` in all for loops except for two files. Fix that up.
+  * xdg-dialog: Track modal dialogs via the xdg-dialog-v1 protocol
+  * gtk-shell: Sort headers alphabetically.
+    Update copyright too.
+  * gtk-shell: Support marking views as modal
+  * seat: Focus modal dialog if possible.
+    We need to make sure we emit the token from the original view.
+    Check with
+        phoc -E gtk4-demo
+    and open the about dialog. Clicking on the main window keeps focus
+    on the about dialog.
+    Closes: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/365
+    Closes: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/199
+  * xdg-toplevel: Catch up with gtk-modal state on map.
+    The view needs to be mapped for this as we need the wlr_surface
+    so do it when seeing the map event.
+  * keyboard: Log which keyboard reloaded settings
+  * ptk: Always set above relationship.
+    We skipped that between subsurfaces thus not checking that
+    code path. Do so and fix it while at that.
+  * build: Enable gcc's analyzer
+
+ -- Guido Günther <agx@sigxcpu.org>  Fri, 08 May 2026 18:06:02 +0200
+
 phoc (0.55~alpha1) experimental; urgency=medium
 
   [ Ryo Nakano ]
