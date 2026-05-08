@@ -1,4 +1,4 @@
-# Japanese translation for pohc.
+# Japanese translation for phoc.
 # Copyright (C) 2026 The Phosh Developers
 # This file is distributed under the same license as the phoc package.
 # Ryo Nakano <ryonakaknock3@gmail.com>, 2026.
