@@ -1,3 +1,12 @@
+phoc (0.55.0) experimental; urgency=medium
+
+  [ nicole mikołajczyk ]
+  * po: Add Polish translation
+  * po: Fix typo
+  * po: Update LINGUAS
+
+ -- Guido Günther <agx@sigxcpu.org>  Fri, 15 May 2026 08:13:42 +0200
+
 phoc (0.55~rc1) experimental; urgency=medium
 
   * view: Rename `view` to `self`
