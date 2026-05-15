@@ -1,5 +1,5 @@
-phoc 0.55~rc1
--------------
+phoc 0.55.0
+-----------
 Released May 2026
 * Update to wlroots 0.20.0
 * Use a margin when tiling left/right
@@ -17,6 +17,7 @@ Released May 2026
     * Guido Günther
 * UI translations:
     * Ryo Nakano (ja)
+    * nicole mikołajczyk (de) (ja) (pl)
 
 phoc 0.54.0
 -----------
