@@ -30,7 +30,9 @@ struct _PhocCairoTexture {
   struct wlr_buffer   buffer;
   cairo_surface_t    *surface;
   cairo_t            *cairo;
+
   struct wlr_texture *texture;
+  struct wl_listener  renderer_destroy;
 };
 
 G_DEFINE_TYPE (PhocCairoTexture, phoc_cairo_texture, G_TYPE_OBJECT)
@@ -115,11 +117,25 @@ phoc_cairo_texture_get_property (GObject    *object,
 
 
 static void
+handle_renderer_destroy (struct wl_listener *listener, void *data)
+{
+  PhocCairoTexture *self = wl_container_of (listener, self, renderer_destroy);
+
+  /* Texter no longer valid */
+  self->texture = NULL;
+
+  wl_list_remove (&self->renderer_destroy.link);
+  wl_list_init (&self->renderer_destroy.link);
+}
+
+
+static void
 phoc_cairo_texture_constructed (GObject *object)
 {
   PhocCairoTexture *self = PHOC_CAIRO_TEXTURE (object);
   PhocServer *server = phoc_server_get_default ();
   PhocRenderer *renderer = phoc_server_get_renderer (server);
+  struct wlr_renderer *wlr_renderer = phoc_renderer_get_wlr_renderer (renderer);
   cairo_status_t surface_status;
 
   G_OBJECT_CLASS (phoc_cairo_texture_parent_class)->constructed (object);
@@ -133,8 +149,9 @@ phoc_cairo_texture_constructed (GObject *object)
     return;
   }
   self->cairo = cairo_create (self->surface);
-  self->texture = wlr_texture_from_buffer (phoc_renderer_get_wlr_renderer (renderer),
-                                           &self->buffer);
+  self->texture = wlr_texture_from_buffer (wlr_renderer, &self->buffer);
+  self->renderer_destroy.notify = handle_renderer_destroy;
+  wl_signal_add (&wlr_renderer->events.destroy, &self->renderer_destroy);
 }
 
 
@@ -147,6 +164,8 @@ phoc_cairo_texture_finalize (GObject *object)
   g_clear_pointer (&self->cairo, cairo_destroy);
   g_clear_pointer (&self->surface, cairo_surface_destroy);
   wlr_buffer_drop (&self->buffer);
+
+  wl_list_remove (&self->renderer_destroy.link);
 
   G_OBJECT_CLASS (phoc_cairo_texture_parent_class)->finalize (object);
 }
