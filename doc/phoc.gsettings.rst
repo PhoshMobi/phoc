@@ -26,20 +26,37 @@ GSettings
 
 These gsettings are used by ``phoc``:
 
-- `sm.puri.phoc`
+- `mobi.phosh.phoc`:
 
-    - `automaximize`
-    - `scale-to-fit`
+    - `focus-frame`: Whether to show a focus frame around focused toplevels
 
-- Animations: `org.gnome.desktop.interface`
+- Input sources: `org.gnome.desktop.input-sources`
+
+    - `sources`: Current input sources
+    - `xkb-options`: XKB Options
+
+- Interface: `org.gnome.desktop.interface`
 
     - `enable-animations`
+    - `cursor-size`: Cursor size
+    - `cursor-theme` : Cursor theme
+
 - Touchscreen: `org.gnome.desktop.peripherals.touchscreen`
+
+    - `output`: EDID information of the output the touchscreen is mapped to. This is a
+       relocatable schema at `/org/gnome/desktop/peripherals/`.
+
 - Pointer: `org.gnome.desktop.peripherals.mouse`
 
     - `middle-click-emulation`
     - `natural-scroll`
     - `speed`
+
+- Tablet: `org.gnome.desktop.peripherals.tablet`
+
+    - `output`: EDID information of the output the tablet is mapped to. This is a
+       relocatable schema at `/org/gnome/desktop/peripherals/`.
+
 - Touchpad: `org.gnome.desktop.peripherals.touchpad`
 
     - `disable-while-typing`
@@ -51,6 +68,13 @@ These gsettings are used by ``phoc``:
     - `tap-and-drag`
     - `tap-to-click`
     - `two-finger-scrolling-enabled`
+
+- Keyboard: `org.gnome.desktop.peripherals.keyboard`
+
+    - `repeat`: Enable key repeat
+    - `repeat-interval`: Delay between repeats in milliseconds
+    - `delay`: Initial key repeat delay in milliseconds
+
 - Keybindings: `org.gnome.desktop.wm.keybindings`
 
     - `always-on-top`
@@ -71,8 +95,15 @@ These gsettings are used by ``phoc``:
     - `toggle-tiled-left`
     - `toggle-tiled-right`
     - `unmaximize`
+
 - `org.gnome.desktop.wm.preferences`
+
     - `num-workspaces`
+
+- Legacy schema: `sm.puri.phoc`
+
+    - `automaximize`
+    - `scale-to-fit`
 
 See also
 --------
