@@ -185,6 +185,7 @@ void                  phoc_view_set_fullscreen (PhocView   *self,
 void                  phoc_view_close (PhocView *self);
 void                  phoc_view_set_app_id (PhocView *self, const char *app_id);
 const char *          phoc_view_get_app_id (PhocView *self);
+const char *          phoc_view_get_tag (PhocView *self);
 void                  phoc_view_for_each_surface (PhocView                   *self,
                                                   wlr_surface_iterator_func_t iterator,
                                                   gpointer                    user_data);
