@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2019 Purism SPC
  *               2023-2024 The Phosh Developers
- *               2025 Phosh.mobi e.V.
+ *               2025-2026 Phosh.mobi e.V.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  * Author: Guido Günther <agx@sigxcpu.org>
@@ -31,6 +31,7 @@
 #include <wlr/types/wlr_ext_image_copy_capture_v1.h>
 #include <wlr/types/wlr_linux_dmabuf_v1.h>
 #include <wlr/types/wlr_security_context_v1.h>
+#include <wlr/types/wlr_xdg_toplevel_tag_v1.h>
 #include <wlr/xwayland.h>
 #include <wlr/xwayland/shell.h>
 
@@ -104,6 +105,7 @@ typedef struct _PhocServer {
   struct wl_listener   xdg_new_dialog;
   struct wl_listener   xdg_shell_toplevel;
   struct wl_listener   xdg_toplevel_decoration;
+  struct wl_listener   xdg_toplevel_tag_manager_v1_set_tag;
 
   GSettings           *settings;
 } PhocServer;
@@ -340,6 +342,8 @@ on_shell_state_changed (PhocServer *self, GParamSpec *pspec, PhocPhoshPrivate *p
 static void
 phoc_server_init_protocols (PhocServer *self)
 {
+  struct wlr_xdg_toplevel_tag_manager_v1 *xdg_toplevel_tag_manager_v1;
+
   self->ext_data_control_manager_v1 = wlr_ext_data_control_manager_v1_create (self->wl_display, 1);
   self->ext_image_copy_capture_manager_v1 =
     wlr_ext_image_copy_capture_manager_v1_create (self->wl_display, 1);
@@ -357,6 +361,16 @@ phoc_server_init_protocols (PhocServer *self)
   wl_signal_add (&self->xdg_decoration_manager->events.new_toplevel_decoration,
                  &self->xdg_toplevel_decoration);
   self->xdg_toplevel_decoration.notify = phoc_handle_xdg_toplevel_decoration;
+
+  xdg_toplevel_tag_manager_v1 = wlr_xdg_toplevel_tag_manager_v1_create (self->wl_display, 1);
+  if (xdg_toplevel_tag_manager_v1) {
+    self->xdg_toplevel_tag_manager_v1_set_tag.notify =
+      phoc_xdg_toplevel_tag_manager_v1_handle_set_tag;
+    wl_signal_add (&xdg_toplevel_tag_manager_v1->events.set_tag,
+                   &self->xdg_toplevel_tag_manager_v1_set_tag);
+  } else {
+    g_critical ("Failed to create XDG toplevel tag manager");
+  }
 }
 
 
@@ -553,6 +567,7 @@ phoc_server_finalize (GObject *object)
 {
   PhocServer *self = PHOC_SERVER (object);
 
+  wl_list_remove (&self->xdg_toplevel_tag_manager_v1_set_tag.link);
   wl_list_remove (&self->xdg_toplevel_decoration.link);
   wl_list_remove (&self->xdg_shell_toplevel.link);
   wl_list_remove (&self->xdg_new_dialog.link);
@@ -623,6 +638,7 @@ phoc_server_init (PhocServer *self)
   wl_list_init (&self->xdg_new_dialog.link);
   wl_list_init (&self->xdg_shell_toplevel.link);
   wl_list_init (&self->xdg_toplevel_decoration.link);
+  wl_list_init (&self->xdg_toplevel_tag_manager_v1_set_tag.link);
 
   /* show a spinner the first time output shield is raised */
   self->show_spinner = TRUE;

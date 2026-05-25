@@ -1763,6 +1763,8 @@ phoc_view_set_tag (PhocView *self, const char *tag)
   if (!g_set_str (&priv->tag, tag))
     return;
 
+  g_debug ("Setting tag '%s' for view %p", tag, self);
+
   g_object_notify_by_pspec (G_OBJECT (self), props[PROP_TAG]);
 }
 

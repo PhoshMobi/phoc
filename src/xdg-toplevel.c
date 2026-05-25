@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2022 Purism SPC
- *               2024-2025 Phosh.mobi e.V.
+ *               2024-2026 Phosh.mobi e.V.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -22,6 +22,7 @@
 
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
+#include <wlr/types/wlr_xdg_toplevel_tag_v1.h>
 #include <wlr/util/edges.h>
 
 #include <wlr/xwayland.h>
@@ -69,6 +70,7 @@ typedef struct _PhocXdgToplevel {
   uint32_t                   pending_move_resize_configure_serial;
 
   PhocXdgToplevelDecoration *decoration;
+  char *tag;
 } PhocXdgToplevel;
 
 G_DEFINE_TYPE (PhocXdgToplevel, phoc_xdg_toplevel, PHOC_TYPE_VIEW)
@@ -685,6 +687,7 @@ phoc_xdg_toplevel_finalize (GObject *object)
   PhocXdgToplevel *self = PHOC_XDG_TOPLEVEL (object);
 
   g_clear_pointer (&self->frame_done_idle, wl_event_source_remove);
+  g_clear_pointer (&self->tag, g_free);
 
   wl_list_remove (&self->surface_commit.link);
   wl_list_remove (&self->destroy.link);
@@ -816,4 +819,14 @@ phoc_xdg_toplevel_is_initialized (PhocXdgToplevel *self)
   g_assert (PHOC_IS_XDG_TOPLEVEL (self));
 
   return !!self->xdg_toplevel->base->initialized;
+}
+
+
+void
+phoc_xdg_toplevel_tag_manager_v1_handle_set_tag (struct wl_listener *listener, void *data)
+{
+  const struct wlr_xdg_toplevel_tag_manager_v1_set_tag_event *event = data;
+  PhocXdgToplevel *self = PHOC_XDG_TOPLEVEL (event->toplevel->base->data);
+
+  phoc_view_set_tag (PHOC_VIEW (self), event->tag);
 }
