@@ -787,7 +787,7 @@ phoc_xdg_toplevel_get_wlr_xdg_surface (PhocXdgToplevel *self)
 void
 phoc_handle_xdg_shell_toplevel (struct wl_listener *listener, void *data)
 {
-  PhocDesktop *desktop = wl_container_of (listener, desktop, xdg_shell_toplevel);
+  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
   struct wlr_xdg_toplevel *toplevel = data;
   PhocGtkShell *gtk_shell;
   PhocGtkSurface *gtk_surface;

@@ -17,6 +17,9 @@
 #include "server-private.h"
 #include "surface.h"
 #include "utils.h"
+#include "xdg-dialog.h"
+#include "xdg-toplevel.h"
+#include "xdg-toplevel-decoration.h"
 
 #include <gmobile.h>
 
@@ -37,6 +40,8 @@
 /* Maximum protocol versions we support */
 #define PHOC_WL_DISPLAY_VERSION 6
 #define PHOC_LINUX_DMABUF_VERSION 5
+#define PHOC_XDG_DIALOG_VERSION 1
+#define PHOC_XDG_SHELL_VERSION 6
 
 enum {
   PROP_0,
@@ -91,8 +96,14 @@ typedef struct _PhocServer {
   struct wlr_data_device_manager *data_device_manager;
   struct wlr_ext_data_control_manager_v1 *ext_data_control_manager_v1;
   struct wlr_ext_image_copy_capture_manager_v1 *ext_image_copy_capture_manager_v1;
+  struct wlr_xdg_decoration_manager_v1 *xdg_decoration_manager;
+  struct wlr_xdg_shell *xdg_shell;
+  struct wlr_xdg_wm_dialog_v1 *xdg_wm_dialog;
 
   struct wl_listener   new_surface;
+  struct wl_listener   xdg_new_dialog;
+  struct wl_listener   xdg_shell_toplevel;
+  struct wl_listener   xdg_toplevel_decoration;
 
   GSettings           *settings;
 } PhocServer;
@@ -333,6 +344,19 @@ phoc_server_init_protocols (PhocServer *self)
   self->ext_image_copy_capture_manager_v1 =
     wlr_ext_image_copy_capture_manager_v1_create (self->wl_display, 1);
   wlr_ext_output_image_capture_source_manager_v1_create (self->wl_display, 1);
+
+  self->xdg_shell = wlr_xdg_shell_create (self->wl_display, PHOC_XDG_SHELL_VERSION);
+  wl_signal_add (&self->xdg_shell->events.new_toplevel, &self->xdg_shell_toplevel);
+  self->xdg_shell_toplevel.notify = phoc_handle_xdg_shell_toplevel;
+
+  self->xdg_wm_dialog = wlr_xdg_wm_dialog_v1_create (self->wl_display, PHOC_XDG_DIALOG_VERSION);
+  wl_signal_add (&self->xdg_wm_dialog->events.new_dialog, &self->xdg_new_dialog);
+  self->xdg_new_dialog.notify = phoc_handle_xdg_new_dialog;
+
+  self->xdg_decoration_manager = wlr_xdg_decoration_manager_v1_create (self->wl_display);
+  wl_signal_add (&self->xdg_decoration_manager->events.new_toplevel_decoration,
+                 &self->xdg_toplevel_decoration);
+  self->xdg_toplevel_decoration.notify = phoc_handle_xdg_toplevel_decoration;
 }
 
 
@@ -529,6 +553,9 @@ phoc_server_finalize (GObject *object)
 {
   PhocServer *self = PHOC_SERVER (object);
 
+  wl_list_remove (&self->xdg_toplevel_decoration.link);
+  wl_list_remove (&self->xdg_shell_toplevel.link);
+  wl_list_remove (&self->xdg_new_dialog.link);
   wl_list_remove (&self->new_surface.link);
 
   g_clear_pointer (&self->dt_compatibles, g_strfreev);
@@ -593,6 +620,9 @@ phoc_server_init (PhocServer *self)
   g_autoptr (GError) err = NULL;
 
   wl_list_init (&self->new_surface.link);
+  wl_list_init (&self->xdg_new_dialog.link);
+  wl_list_init (&self->xdg_shell_toplevel.link);
+  wl_list_init (&self->xdg_toplevel_decoration.link);
 
   /* show a spinner the first time output shield is raised */
   self->show_spinner = TRUE;
