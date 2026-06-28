@@ -1,3 +1,13 @@
+phoc 0.56~rc1
+-------------
+Released June 2026
+* Update to wlroots 0.20.1
+* Some internal cleanups and fixes
+* New protocol support:
+    * xdg-toplevel-tag-v1
+* Contributors:
+    * Guido Günther
+
 phoc 0.55.0
 -----------
 Released May 2026

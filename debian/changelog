@@ -1,3 +1,27 @@
+phoc (0.56~rc1) experimental; urgency=medium
+
+  * cairo-texture: Mark texture as invalid when renderer goes away.
+    This avoids a crash on shutdown when e.g. phoc's spinner is active
+    and phosh aborts during startup. In this case the renderer is
+    disposed so
+      g_clear_pointer (&self->texture, wlr_texture_destroy);
+    would access access free'd memory. Lots of ppl got mislead in
+    thinking that the phoc crash is the root cause, so let's fix this.
+  * doc: Document missing options.
+    This should now cover most of the gsettings we handle
+  * wlroots: Update to 0.20.1.
+    We update two screenshots due to the pixman changes that brings
+    it in line with the GLES2 renderer.
+  * server: Move xdg-toplevel related protocols from desktop.
+    We want new protocols at the server object and since we add new
+    xdg-toplevel related ones, move the existing ones here.
+  * view: Add tag.
+    A view can have a tag. This could set by the xdg-toplevel-tag protocol
+    or `__NET_WM_WINDOW_TAG` atom.
+  * xdg-toplevel: Handle xdg-toplevel-tag protocol
+
+ -- Guido Günther <agx@sigxcpu.org>  Sun, 28 Jun 2026 13:20:04 +0200
+
 phoc (0.55.0) experimental; urgency=medium
 
   [ nicole mikołajczyk ]
