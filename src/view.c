@@ -36,6 +36,7 @@ enum {
   PROP_DECORATED,
   PROP_STATE,
   PROP_FULLSCREEN,
+  PROP_TAG,
   PROP_LAST_PROP
 };
 static GParamSpec *props[PROP_LAST_PROP];
@@ -64,6 +65,7 @@ typedef struct _PhocViewPrivate {
   gboolean       visibility;
   gboolean       modal;
   guint          suspend_timer_id;
+  char          *tag;
 
   PhocOutput    *fullscreen_output;
 
@@ -1743,6 +1745,46 @@ phoc_view_set_app_id (PhocView *self, const char *app_id)
   }
 }
 
+/**
+ * phoc_view_set_tag:
+ * @self: a view
+ * @tag: The tag
+ *
+ * Set the tag of the current view.
+ */
+void
+phoc_view_set_tag (PhocView *self, const char *tag)
+{
+  PhocViewPrivate *priv;
+
+  g_assert (PHOC_IS_VIEW (self));
+  priv = phoc_view_get_instance_private (self);
+
+  if (!g_set_str (&priv->tag, tag))
+    return;
+
+  g_debug ("Setting tag '%s' for view %p", tag, self);
+
+  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_TAG]);
+}
+
+/**
+ * phoc_view_get_tag:
+ * @self: a view
+ *
+ * Get the tag of the current view.
+ */
+const char *
+phoc_view_get_tag (PhocView *self)
+{
+  PhocViewPrivate *priv;
+
+  g_assert (PHOC_IS_VIEW (self));
+  priv = phoc_view_get_instance_private (self);
+
+  return priv->tag;
+}
+
 
 static void
 phoc_view_set_alpha (PhocView *self, float alpha)
@@ -1817,6 +1859,9 @@ phoc_view_get_property (GObject    *object,
   case PROP_FULLSCREEN:
     g_value_set_boolean (value, phoc_view_is_fullscreen (self));
     break;
+  case PROP_TAG:
+    g_value_set_string (value, phoc_view_get_tag (self));
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
     break;
@@ -1830,6 +1875,7 @@ phoc_view_finalize (GObject *object)
   PhocView *self = PHOC_VIEW (object);
   PhocViewPrivate *priv = phoc_view_get_instance_private (self);
 
+  g_clear_pointer (&priv->tag, g_free);
   g_clear_handle_id (&priv->suspend_timer_id, g_source_remove);
 
   /* Unlink from our parent */
@@ -2063,6 +2109,15 @@ phoc_view_class_init (PhocViewClass *klass)
     g_param_spec_boolean ("fullscreen", "", "",
                           FALSE,
                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+  /**
+   * PhocView:tag:
+   *
+   * The view's tag.
+   */
+  props[PROP_TAG] =
+    g_param_spec_string ("tag", "", "",
+                         NULL,
+                         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (object_class, PROP_LAST_PROP, props);
 

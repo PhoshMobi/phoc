@@ -28,5 +28,7 @@ void             phoc_view_set_pending_box           (PhocView *self,
                                                       uint32_t  width,
                                                       uint32_t  height);
 void             phoc_view_set_modal                 (PhocView *self, gboolean modal);
+void             phoc_view_set_tag                   (PhocView *self, const char *tag);
+
 
 G_END_DECLS

@@ -27,5 +27,7 @@ struct wlr_surface *phoc_xdg_toplevel_get_wlr_surface_at (PhocXdgToplevel *self,
 
 void                phoc_handle_xdg_shell_toplevel (struct wl_listener *listener, void *data);
 gboolean            phoc_xdg_toplevel_is_initialized (PhocXdgToplevel *self);
+void                phoc_xdg_toplevel_tag_manager_v1_handle_set_tag (struct wl_listener *listener,
+                                                                     void               *data);
 
 G_END_DECLS

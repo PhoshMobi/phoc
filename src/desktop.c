@@ -28,7 +28,6 @@
 #include <wlr/types/wlr_xdg_foreign_v1.h>
 #include <wlr/types/wlr_xdg_foreign_v2.h>
 #include <wlr/types/wlr_xdg_output_v1.h>
-#include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/box.h>
 
 #include "cursor.h"
@@ -50,16 +49,11 @@
 #include "workspace.h"
 #include "workspace-indicator.h"
 #include "workspace-manager.h"
-#include "xdg-dialog.h"
-#include "xdg-toplevel.h"
-#include "xdg-toplevel-decoration.h"
 #include "xwayland-surface.h"
 
 /* Maximum protocol versions we support */
 #define PHOC_FRACTIONAL_SCALE_VERSION 1
 #define PHOC_EXT_FOREIGN_TOPLEVEL_LIST_VERSION 1
-#define PHOC_XDG_DIALOG_VERSION 1
-#define PHOC_XDG_SHELL_VERSION 6
 #define PHOC_LAYER_SHELL_VERSION 3
 #define PHOC_PRESENTATION_TIME_VERSION 2
 
@@ -661,14 +655,6 @@ phoc_desktop_constructed (GObject *object)
   self->layout_change.notify = handle_layout_change;
   wl_signal_add (&self->layout->events.change, &self->layout_change);
 
-  self->xdg_shell = wlr_xdg_shell_create (wl_display, PHOC_XDG_SHELL_VERSION);
-  wl_signal_add (&self->xdg_shell->events.new_toplevel, &self->xdg_shell_toplevel);
-  self->xdg_shell_toplevel.notify = phoc_handle_xdg_shell_toplevel;
-
-  self->xdg_wm_dialog = wlr_xdg_wm_dialog_v1_create (wl_display, PHOC_XDG_DIALOG_VERSION);
-  wl_signal_add (&self->xdg_wm_dialog->events.new_dialog, &self->xdg_new_dialog);
-  self->xdg_new_dialog.notify = phoc_handle_xdg_new_dialog;
-
   self->layer_shell = wlr_layer_shell_v1_create (wl_display, PHOC_LAYER_SHELL_VERSION);
   wl_signal_add (&self->layer_shell->events.new_surface, &self->layer_shell_surface);
   self->layer_shell_surface.notify = phoc_handle_layer_shell_surface;
@@ -726,12 +712,8 @@ phoc_desktop_constructed (GObject *object)
 
   priv->screencopy_manager_v1 = wlr_screencopy_manager_v1_create (wl_display);
 
-  self->xdg_decoration_manager = wlr_xdg_decoration_manager_v1_create (wl_display);
-  wl_signal_add (&self->xdg_decoration_manager->events.new_toplevel_decoration,
-                 &self->xdg_toplevel_decoration);
-
   priv->xx_cutouts_manager = phoc_xx_cutouts_manager_new ();
-  self->xdg_toplevel_decoration.notify = phoc_handle_xdg_toplevel_decoration;
+
   wlr_viewporter_create (wl_display);
   wlr_single_pixel_buffer_manager_v1_create (wl_display);
   wlr_fractional_scale_manager_v1_create (wl_display, PHOC_FRACTIONAL_SCALE_VERSION);
@@ -797,10 +779,7 @@ phoc_desktop_finalize (GObject *object)
   wl_list_remove (&priv->request_set_cursor_shape.link);
   wl_list_remove (&priv->gamma_control_set_gamma.link);
   wl_list_remove (&self->layout_change.link);
-  wl_list_remove (&self->xdg_new_dialog.link);
-  wl_list_remove (&self->xdg_shell_toplevel.link);
   wl_list_remove (&self->layer_shell_surface.link);
-  wl_list_remove (&self->xdg_toplevel_decoration.link);
   wl_list_remove (&self->virtual_keyboard_new.link);
   wl_list_remove (&self->keyboard_shortcuts_inhibit_new_inhibitor.link);
   wl_list_remove (&self->virtual_pointer_new.link);
