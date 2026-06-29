@@ -1,0 +1,30 @@
+# Georgian translation for phoc.
+# Copyright (C) 2026 phoc's authors.
+# This file is distributed under the same license as the phoc package.
+# Ekaterine Papava <papava.e@gtu.ge>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: phoc\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-12-06 19:45+0100\n"
+"PO-Revision-Date: 2026-06-29 16:38+0200\n"
+"Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
+"Language-Team: Georgian <(nothing)>\n"
+"Language: ka\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.9\n"
+
+#: data/mobi.phosh.Phoc.desktop.in.in:3
+msgid "Phone Compositor"
+msgstr "ტელეფონის კომპოზიტორი"
+
+#: data/mobi.phosh.Phoc.desktop.in.in:4
+msgid "Wayland compositor for mobile"
+msgstr "Wayland-ის კომპოზიტორი მობილურისთვის"
+
+#: src/idle-inhibit.c:89
+msgid "Inhibiting idle session"
+msgstr "უქმე სესიის დათრგუნვა"
