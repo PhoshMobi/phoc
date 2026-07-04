@@ -142,8 +142,8 @@ struct  _PhocEvent {
   };
 };
 
-GType                       phoc_event_get_type                      (void) G_GNUC_CONST;
-GType                       phoc_event_sequence_get_type             (void) G_GNUC_CONST;
+GType                       phoc_event_get_type                      (void);
+GType                       phoc_event_sequence_get_type             (void);
 PhocEvent                  *phoc_event_new                           (PhocEventType    type,
                                                                       const gpointer   wlr_event,
                                                                       gsize            size);

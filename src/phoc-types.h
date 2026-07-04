@@ -29,7 +29,7 @@ G_BEGIN_DECLS
 
 typedef struct wlr_box PhocBox;
 
-GType                   phoc_box_get_type                        (void) G_GNUC_CONST;
+GType                   phoc_box_get_type                        (void);
 PhocBox *               phoc_box_copy                            (const PhocBox *box);
 void                    phoc_box_free                            (PhocBox *box);
 
@@ -42,7 +42,7 @@ typedef struct _PhocColor {
   float alpha;
 } PhocColor;
 
-GType                   phoc_color_get_type                      (void) G_GNUC_CONST;
+GType                   phoc_color_get_type                      (void);
 PhocColor *             phoc_color_copy                          (const PhocColor *color);
 void                    phoc_color_free                          (PhocColor *color);
 gboolean                phoc_color_is_equal                      (PhocColor *c1, PhocColor *c2);
