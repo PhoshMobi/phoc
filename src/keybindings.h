@@ -42,7 +42,7 @@ typedef struct {
 } PhocKeybindingsContext;
 
 #define PHOC_TYPE_KEYBINDINGS_CONTEXT phoc_keybindings_context_get_type ()
-GType                   phoc_keybindings_context_get_type (void) G_GNUC_CONST;
+GType                   phoc_keybindings_context_get_type (void);
 
 PhocKeybindingsContext *phoc_keybindings_context_new (void);
 PhocKeybindingsContext *phoc_keybindings_context_copy (PhocKeybindingsContext *context);
