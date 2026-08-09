@@ -122,6 +122,8 @@ sources = files(
   'tablet-tool.h',
   'tablet.c',
   'tablet.h',
+  'toplevel-pidfd.c',
+  'toplevel-pidfd.h',
   'touch-point.c',
   'touch-point.h',
   'touch.c',

@@ -2558,6 +2558,18 @@ phoc_view_get_pid (PhocView *self)
   return priv->pid;
 }
 
+
+int
+phoc_view_get_pidfd (PhocView *self)
+{
+  g_assert (PHOC_IS_VIEW (self));
+
+  if (PHOC_VIEW_GET_CLASS (self)->get_pidfd)
+    return PHOC_VIEW_GET_CLASS (self)->get_pidfd (self);
+
+  return -1;
+}
+
 /**
  * phoc_view_add_bling:
  * @self: The view
@@ -2732,6 +2744,17 @@ phoc_view_set_visibility (PhocView *self, gboolean visibility)
   priv->visibility = visibility;
 
   phoc_view_set_suspended (self, !visibility);
+}
+
+
+struct wlr_ext_foreign_toplevel_handle_v1 *
+phoc_view_get_ext_foreign_toplevel_handle (PhocView *self)
+{
+  PhocViewPrivate *priv = phoc_view_get_instance_private (self);
+
+  g_assert (PHOC_IS_VIEW (self));
+
+  return priv->ext_foreign_toplevel_v1_handle;
 }
 
 

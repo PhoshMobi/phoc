@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="phoc_foreign_toplevel_pidfd_v1">
+  <copyright>
+    Copyright © 2026 Phosh.mobi e.V.
+
+    Permission to use, copy, modify, distribute, and sell this
+    software and its documentation for any purpose is hereby granted
+    without fee, provided that the above copyright notice appear in
+    all copies and that both that copyright notice and this permission
+    notice appear in supporting documentation, and that the name of
+    the copyright holders not be used in advertising or publicity
+    pertaining to distribution of the software without specific,
+    written prior permission.  The copyright holders make no
+    representations about the suitability of this software for any
+    purpose.  It is provided "as is" without express or implied
+    warranty.
+
+    THE COPYRIGHT HOLDERS DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
+    SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+    FITNESS, IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY
+    SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+    AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+    ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+    THIS SOFTWARE.
+  </copyright>
+
+  <description summary="Get process identifier">
+    The purpose of this protocol is to provide a way for Linux based
+    compositors to identify the process a toplevel belongs to.
+
+    This protocol depends on the ext-foreign-toplevel-list protocol.
+
+    The compositor may choose to restrict this protocol to a special client
+    launched by the compositor itself or expose it to all clients,
+    this is compositor policy.
+
+    The key words "must", "must not", "required", "shall", "shall not",
+    "should", "should not", "recommended",  "may", and "optional" in this
+    document are to be interpreted as described in IETF RFC 2119.
+
+    Warning! The protocol described in this file is currently in the
+    experimental phase. Backwards incompatible major versions of the
+    protocol are to be expected. Exposing this protocol without an opt-in
+    mechanism is discouraged.
+  </description>
+
+  <interface name="phoc_foreign_toplevel_pidfd_manager_v1" version="1">
+
+    <description summary="Get pidfd manager">
+      The global object used to initialize the extension interfaces to
+      get the pidfd of a toplevel.
+    </description>
+
+    <request name="destroy" type="destructor">
+      <description summary="destroy the phoc_foreign_toplevel_pidfd_manager_v1 object">
+        Using this request a client can tell the server that it is not
+        going to use the phoc_foreign_toplevel_pidfd_manager_v1 object anymore.
+
+        Any objects already created through this instance are not affected.
+      </description>
+    </request>
+
+    <request name="get_pidfd">
+      <description summary="create the object to send the pidfd">
+        This request creates an extension object to receive the pidfd
+        for the foreign toplevel.
+
+        It is illegal to destroy the ext_foreign_toplevel_handle_v1 before the
+        phoc_foreign_toplevel_pidfd_v1 object is destroyed and must result in
+        a orphaned error.
+      </description>
+      <arg name="toplevel_handle" type="object" interface="ext_foreign_toplevel_handle_v1"/>
+      <arg name="id" type="new_id" interface="phoc_foreign_toplevel_pidfd_v1"/>
+    </request>
+
+  </interface>
+
+  <interface name="phoc_foreign_toplevel_pidfd_v1" version="1">
+
+    <description summary="Get process identifier">
+      This object receives the toplevels pidfd. It extends the
+      ext_foreign_toplevel_handle_v1 interface.
+
+      If a compositor implementation sends the xx_foreign_toplevel_pidfd_v1.finished event,
+      the compositor must not send any more phoc_foreign_toplevel_pidfd_v1.pidfd events.
+
+      A pidfd references the toplevel's process identifier (pid) via a file descriptor
+      see pidfd_open(1).
+    </description>
+
+    <event name="pidfd">
+      <description summary="The pidfd of the toplevel">
+        This event is emitted for a toplevel window once its pidfds is known to the
+        compositor. If the pidfd can't be determined, no event is sent.
+      </description>
+      <arg name="pidfd" type="fd" summary="pid fd"/>
+    </event>
+
+    <event name="finished">
+      <description summary="the compositor has finished with the pidfd manager">
+        This event indicates that the compositor is done sending events
+        to this object. The client should destroy the object.
+        See phoc_foreign_toplevel_pidfd_v1.destroy for more information.
+      </description>
+    </event>
+
+    <request name="destroy" type="destructor">
+      <description summary="destroy the phoc_foreign_toplevel_pidfd_v1 object">
+        Using this request a client can tell the server that it is not
+        going to use the phoc_foreign_toplevel_pidfd_v1 object anymore.
+      </description>
+    </request>
+
+    <enum name="error">
+      <description summary="ext_foreign_toplevel_state_v1 errors">
+        These errors are sent in response to phoc_foreign_toplevel_pidfd_v1 requests.
+      </description>
+      <entry name="orphaned" value="0"
+             summary="the ext_foreign_toplevel_handle_v1 object was destroyed before the xx_foreign_toplevel_pidfd_v1"/>
+    </enum>
+  </interface>
+
+</protocol>
