@@ -1,3 +1,24 @@
+phoc (0.57~rc1) experimental; urgency=medium
+
+  * ci: Update to latest image.
+    We don't need to pull gmobile from SID anymore either
+  * tree: Drop G_GNUC_CONST from get_type()
+    First call has side effects, see
+    https://gitlab.gnome.org/GNOME/glib/-/merge_requests/5223
+    for details.
+  * wlroots: Update to 0.20.2
+  * view: Get vfunc to get pidfd
+  * xdg-toplevel: Implement get_pidfd.
+    We can get the pidfd from the socket.
+  * phoc-foreign-toplevel-pidfd: Add protocol implementation.
+    This allows us to send a pidfd to privileged clients
+  * examples: Add client that tracks toplevels and their pids
+  * xdg-toplevel: Define SO_PEERPIDFD if missing.
+    This helps musl until it catched up
+    Thanks to Achill Gilgenast
+
+ -- Guido Günther <agx@sigxcpu.org>  Mon, 10 Aug 2026 15:39:22 +0200
+
 phoc (0.56.0) experimental; urgency=medium
 
   [ Ekaterine Papava ]
