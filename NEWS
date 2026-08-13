@@ -1,3 +1,12 @@
+phoc 0.57~rc1
+-------------
+Released August 2026
+* Update to wlroots 0.20.2
+* New protocol support:
+    * phoc-foreign-toplevel-pidfd
+* Contributors:
+    * Guido Günther
+
 phoc 0.56.0
 -----------
 Released July 2026
