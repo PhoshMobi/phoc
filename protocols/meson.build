@@ -17,6 +17,7 @@ wayland_protocols = [
   ['gtk-shell.xml'],
   ['input-method-unstable-v2.xml'],
   ['phoc-device-state-unstable-v1.xml'],
+  ['phoc-foreign-toplevel-identifier-v1.xml'],
   ['phoc-foreign-toplevel-pidfd-v1.xml'],
   ['phoc-layer-shell-effects-unstable-v1.xml'],
   ['phosh-private.xml'],
