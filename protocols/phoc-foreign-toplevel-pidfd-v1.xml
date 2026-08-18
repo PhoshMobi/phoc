@@ -82,7 +82,7 @@
       This object receives the toplevels pidfd. It extends the
       ext_foreign_toplevel_handle_v1 interface.
 
-      If a compositor implementation sends the xx_foreign_toplevel_pidfd_v1.finished event,
+      If a compositor implementation sends the phoc_foreign_toplevel_pidfd_v1.finished event,
       the compositor must not send any more phoc_foreign_toplevel_pidfd_v1.pidfd events.
 
       A pidfd references the toplevel's process identifier (pid) via a file descriptor
@@ -117,7 +117,7 @@
         These errors are sent in response to phoc_foreign_toplevel_pidfd_v1 requests.
       </description>
       <entry name="orphaned" value="0"
-             summary="the ext_foreign_toplevel_handle_v1 object was destroyed before the xx_foreign_toplevel_pidfd_v1"/>
+             summary="the ext_foreign_toplevel_handle_v1 object was destroyed before the phoc_foreign_toplevel_pidfd_v1"/>
     </enum>
   </interface>
 
