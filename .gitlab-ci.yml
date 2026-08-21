@@ -269,8 +269,6 @@ package-deb-debian-forky:arm64:
     PHOSH_DOCKER_IMAGE: debian:forky
     DEB_BUILD_PROFILES: 'pkg.phoc.embedwlroots'
   extends: .phosh-build-debian-package
-  tags:
-    - aarch64
 
 package-deb-debian-forky:sanitizers:arm64:
   stage: package
