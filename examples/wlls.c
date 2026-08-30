@@ -54,7 +54,7 @@ pidfd_get_pid (int32_t pidfd)
 
   return info.pid;
 #else
-  return -1
+  return -1;
 #endif
 }
 
