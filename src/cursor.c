@@ -1752,9 +1752,9 @@ handle_touch_frame (struct wl_listener *listener, void *data)
   PhocCursor *self = PHOC_CURSOR (wl_container_of (listener, self, touch_frame));
   struct wlr_seat *wlr_seat = self->seat->seat;
 
-  wlr_seat_touch_notify_frame(wlr_seat);
+  wlr_seat_touch_notify_frame (wlr_seat);
 
-  // make sure to always send frame events when necessary even when bypassing seat grabs
+  /* make sure to always send frame events when necessary even when bypassing seat grabs */
   wlr_seat_touch_send_frame (wlr_seat);
 }
 
