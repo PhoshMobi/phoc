@@ -1081,7 +1081,7 @@ on_drag_update (PhocGesture *gesture, double off_x, double off_y, PhocCursor *se
     if (phoc_seat_has_touch (self->seat)) {
       PhocLayerSurface *layer_surface =
         phoc_draggable_layer_surface_get_layer_surface (priv->drag_surface);
-      GList *seqs = phoc_gesture_get_sequences (gesture);
+      g_autoptr (GList) seqs = phoc_gesture_get_sequences (gesture);
       g_assert (g_list_length (seqs) == 1);
       int touch_id = GPOINTER_TO_INT (seqs->data);
       struct wlr_touch_point *point = wlr_seat_touch_get_point (self->seat->seat, touch_id);
