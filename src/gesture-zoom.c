@@ -93,7 +93,7 @@ _phoc_gesture_zoom_get_distance (PhocGestureZoom *zoom,
     phoc_gesture_get_point (gesture, sequences->next->data, &x2, &y2);
 
     dx = x1 - x2;
-    dy = y1 - y2;;
+    dy = y1 - y2;
     *distance = sqrt ((dx * dx) + (dy * dy));
   }
 
