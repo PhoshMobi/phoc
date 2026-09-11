@@ -988,7 +988,7 @@ phoc_desktop_set_auto_maximize (PhocDesktop *self, gboolean enable)
 
   phoc_desktop_for_each_view (self,
                               toggle_auto_max_iterator,
-                              (gpointer)&(struct toggle_auto_max_data) {
+                              &(struct toggle_auto_max_data) {
                                 .input = input,
                                 .enable = enable,
                               });
