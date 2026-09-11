@@ -20,18 +20,18 @@
  *    there's no input method available. Cleared once text-input is entered.
  */
 typedef struct _PhocTextInput {
-  PhocInputMethodRelay *relay;
+  PhocInputMethodRelay     *relay;
 
   struct wlr_text_input_v3 *input;
-  struct wlr_surface *pending_focused_surface;
+  struct wlr_surface       *pending_focused_surface;
 
   struct wl_list link;
 
-  struct wl_listener pending_focused_surface_destroy;
-  struct wl_listener enable;
-  struct wl_listener commit;
-  struct wl_listener disable;
-  struct wl_listener destroy;
+  struct wl_listener        pending_focused_surface_destroy;
+  struct wl_listener        enable;
+  struct wl_listener        commit;
+  struct wl_listener        disable;
+  struct wl_listener        destroy;
 } PhocTextInput;
 
 
