@@ -91,20 +91,20 @@ typedef struct _PhocDesktopPrivate {
   struct wlr_data_control_manager_v1 *data_control_manager_v1;
   struct wlr_idle_notifier_v1        *idle_notifier_v1;
   struct wlr_screencopy_manager_v1   *screencopy_manager_v1;
-  struct wl_listener     gamma_control_set_gamma;
-  struct wl_listener     request_set_cursor_shape;
+  struct wl_listener        gamma_control_set_gamma;
+  struct wl_listener        request_set_cursor_shape;
 
   /* Protocols without upstreamable implementations */
-  PhocPhoshPrivate      *phosh;
-  PhocGtkShell          *gtk_shell;
+  PhocPhoshPrivate         *phosh;
+  PhocGtkShell             *gtk_shell;
 
   /* Protocols that should go upstream */
-  PhocLayerShellEffects *layer_shell_effects;
+  PhocLayerShellEffects    *layer_shell_effects;
 
-  PhocWorkspaceManager  *workspace_manager;
-  PhocWorkspace         *active_workspace;
+  PhocWorkspaceManager     *workspace_manager;
+  PhocWorkspace            *active_workspace;
 
-  PhocXxCutoutsManager  *xx_cutouts_manager;
+  PhocXxCutoutsManager     *xx_cutouts_manager;
   PhocToplevelPidfdManager *toplevel_pidfd_manager;
 } PhocDesktopPrivate;
 
@@ -572,8 +572,7 @@ on_output_destroyed (PhocDesktop *self, PhocOutput *destroyed_output)
   wlr_output_layout_remove (self->layout, phoc_output_get_wlr_output (destroyed_output));
 
   g_hash_table_iter_init (&iter, self->input_output_map);
-  while (g_hash_table_iter_next (&iter, (gpointer) &input_name,
-                                 (gpointer) &output)) {
+  while (g_hash_table_iter_next (&iter, (gpointer)&input_name, (gpointer)&output)) {
     if (destroyed_output == output) {
       g_debug ("Removing mapping for input device '%s' to output '%s'",
                input_name, output->wlr_output->name);
@@ -759,7 +758,9 @@ phoc_desktop_constructed (GObject *object)
   g_signal_connect_swapped (priv->legacy_settings, "changed::auto-maximize",
                             G_CALLBACK (auto_maximize_changed_cb), self);
   auto_maximize_changed_cb (self, "auto-maximize", priv->legacy_settings);
-  g_settings_bind (priv->legacy_settings, "scale-to-fit", self, "scale-to-fit", G_SETTINGS_BIND_DEFAULT);
+  g_settings_bind (priv->legacy_settings, "scale-to-fit",
+                   self, "scale-to-fit",
+                   G_SETTINGS_BIND_DEFAULT);
 
   /* org.gnome.desktop.interface settings */
   priv->interface_settings = g_settings_new ("org.gnome.desktop.interface");
@@ -944,8 +945,8 @@ phoc_desktop_new (void)
 
 
 struct toggle_auto_max_data {
-  PhocInput   *input;
-  gboolean     enable;
+  PhocInput *input;
+  gboolean   enable;
 };
 
 
@@ -973,7 +974,7 @@ toggle_auto_max_iterator (PhocDesktop *self, PhocView *view, gpointer user_data)
 void
 phoc_desktop_set_auto_maximize (PhocDesktop *self, gboolean enable)
 {
-  PhocServer *server = phoc_server_get_default();
+  PhocServer *server = phoc_server_get_default ();
   PhocInput *input = phoc_server_get_input (server);
 
   if (G_UNLIKELY (phoc_server_check_debug_flags (server, PHOC_SERVER_DEBUG_FLAG_AUTO_MAXIMIZE))) {
@@ -1336,8 +1337,8 @@ phoc_desktop_move_view_to_top (PhocDesktop *self, PhocView *view)
 
   /* Fast path: check active workspace */
   if (phoc_workspace_has_view (priv->active_workspace, view)) {
-      phoc_workspace_move_view_to_top (priv->active_workspace, view);
-      return;
+    phoc_workspace_move_view_to_top (priv->active_workspace, view);
+    return;
   }
 
   n_workspaces = phoc_workspace_manager_get_n_workspaces (priv->workspace_manager);
