@@ -6,4 +6,8 @@ depth=1
 
 # Phoc specific patches
 diff_files =
+  wlroots/text-input-v2/0001-text-input-v3-Introduce-version.patch,
+  wlroots/text-input-v2/0002-text-input-Add-version-2-events.patch,
+  wlroots/text-input-v2/0003-text-input-v3-Add-version-2-requests.patch,
+  wlroots/text-input-v2/0004-text-input-v3-Bump-protocol-version-to-2.patch,
   wlroots/0001-Revert-layer-shell-error-on-0-dimension-without-anch.patch

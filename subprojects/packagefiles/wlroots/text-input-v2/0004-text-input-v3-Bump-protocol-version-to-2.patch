@@ -1,0 +1,32 @@
+From 2049e1494b7e99d816cfb469111cb4a290e422dc Mon Sep 17 00:00:00 2001
+Message-ID: <2049e1494b7e99d816cfb469111cb4a290e422dc.1789130119.git.agx@sigxcpu.org>
+In-Reply-To: <48f2eeff1bd020877b9c14c2b84e1a94bf79f3d8.1789130119.git.agx@sigxcpu.org>
+References: <48f2eeff1bd020877b9c14c2b84e1a94bf79f3d8.1789130119.git.agx@sigxcpu.org>
+From: =?UTF-8?q?Guido=20G=C3=BCnther?= <agx@sigxcpu.org>
+Date: Fri, 11 Sep 2026 13:13:02 +0200
+Subject: [PATCH 4/4] text-input-v3: Bump protocol version to 2
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Guido Günther <agx@sigxcpu.org>
+---
+ types/wlr_text_input_v3.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/types/wlr_text_input_v3.c b/types/wlr_text_input_v3.c
+index 3fba5bc35..9a6be20a2 100644
+--- a/types/wlr_text_input_v3.c
++++ b/types/wlr_text_input_v3.c
+@@ -6,7 +6,7 @@
+ #include <wlr/util/log.h>
+ #include "text-input-unstable-v3-protocol.h"
+ 
+-#define TEXT_INPUT_VERSION 1
++#define TEXT_INPUT_VERSION 2
+ 
+ static void text_input_clear_focused_surface(struct wlr_text_input_v3 *text_input) {
+ 	wl_list_remove(&text_input->surface_destroy.link);
+-- 
+2.53.0
+

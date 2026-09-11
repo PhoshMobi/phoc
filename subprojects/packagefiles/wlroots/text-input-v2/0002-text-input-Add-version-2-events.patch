@@ -1,0 +1,85 @@
+From c562da78f972c8abd1521a2787d38307f1ffa6dd Mon Sep 17 00:00:00 2001
+Message-ID: <c562da78f972c8abd1521a2787d38307f1ffa6dd.1789130119.git.agx@sigxcpu.org>
+In-Reply-To: <48f2eeff1bd020877b9c14c2b84e1a94bf79f3d8.1789130119.git.agx@sigxcpu.org>
+References: <48f2eeff1bd020877b9c14c2b84e1a94bf79f3d8.1789130119.git.agx@sigxcpu.org>
+From: =?UTF-8?q?Guido=20G=C3=BCnther?= <agx@sigxcpu.org>
+Date: Fri, 11 Sep 2026 12:10:43 +0200
+Subject: [PATCH 2/4] text-input: Add version 2 events
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Guido Günther <agx@sigxcpu.org>
+---
+ include/wlr/types/wlr_text_input_v3.h |  9 +++++++++
+ types/wlr_text_input_v3.c             | 28 +++++++++++++++++++++++++++
+ 2 files changed, 37 insertions(+)
+
+diff --git a/include/wlr/types/wlr_text_input_v3.h b/include/wlr/types/wlr_text_input_v3.h
+index 8a3e566d8..14285688c 100644
+--- a/include/wlr/types/wlr_text_input_v3.h
++++ b/include/wlr/types/wlr_text_input_v3.h
+@@ -13,6 +13,8 @@
+ #include <wlr/types/wlr_seat.h>
+ #include <wlr/util/box.h>
+ 
++#include "text-input-unstable-v3-protocol.h"
++
+ struct wlr_surface;
+ 
+ enum wlr_text_input_v3_features {
+@@ -99,5 +101,12 @@ void wlr_text_input_v3_send_delete_surrounding_text(
+ 	struct wlr_text_input_v3 *text_input, uint32_t before_length,
+ 	uint32_t after_length);
+ void wlr_text_input_v3_send_done(struct wlr_text_input_v3 *text_input);
++// v2 additions
++void wlr_text_input_v3_action(struct wlr_text_input_v3 *text_input,
++	enum zwp_text_input_v3_action action);
++void wlr_text_input_v3_send_language(struct wlr_text_input_v3 *text_input,
++	const char *language);
++void wlr_text_input_v3_send_preedit_hint(struct wlr_text_input_v3 *text_input,
++	uint32_t start, uint32_t end, enum zwp_text_input_v3_preedit_hint hint);
+ 
+ #endif
+diff --git a/types/wlr_text_input_v3.c b/types/wlr_text_input_v3.c
+index 7a543f1a7..5ec84e120 100644
+--- a/types/wlr_text_input_v3.c
++++ b/types/wlr_text_input_v3.c
+@@ -65,6 +65,34 @@ void wlr_text_input_v3_send_done(struct wlr_text_input_v3 *text_input) {
+ 		text_input->current_serial);
+ }
+ 
++void wlr_text_input_v3_action(struct wlr_text_input_v3 *text_input,
++		enum zwp_text_input_v3_action action) {
++	uint32_t serial = wl_display_next_serial(text_input->seat->display);
++	uint32_t version = wl_resource_get_version(text_input->resource);
++	if (version >= ZWP_TEXT_INPUT_V3_ACTION_SINCE_VERSION) {
++		zwp_text_input_v3_send_action(text_input->resource, action,
++			serial);
++	}
++}
++
++void wlr_text_input_v3_send_language(struct wlr_text_input_v3 *text_input,
++		const char *language) {
++	uint32_t version = wl_resource_get_version(text_input->resource);
++	if (version >= ZWP_TEXT_INPUT_V3_LANGUAGE_SINCE_VERSION) {
++		zwp_text_input_v3_send_language(text_input->resource, language);
++	}
++}
++
++void wlr_text_input_v3_send_preedit_hint(struct wlr_text_input_v3 *text_input,
++		uint32_t start, uint32_t end,
++		enum zwp_text_input_v3_preedit_hint hint) {
++	uint32_t version = wl_resource_get_version(text_input->resource);
++	if (version >= ZWP_TEXT_INPUT_V3_PREEDIT_HINT_SINCE_VERSION) {
++		zwp_text_input_v3_send_preedit_hint(text_input->resource,
++			start, end, hint);
++	}
++}
++
+ static void wlr_text_input_destroy(struct wlr_text_input_v3 *text_input) {
+ 	wl_signal_emit_mutable(&text_input->events.destroy, NULL);
+ 
+-- 
+2.53.0
+

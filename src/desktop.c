@@ -57,6 +57,7 @@
 #define PHOC_EXT_FOREIGN_TOPLEVEL_LIST_VERSION 1
 #define PHOC_LAYER_SHELL_VERSION 3
 #define PHOC_PRESENTATION_TIME_VERSION 2
+#define PHOC_TEXT_INPUT_VERSION 2
 
 #define PHOC_ANIM_ALWAYS_ON_TOP_DURATION  300
 #define PHOC_ANIM_ALWAYS_ON_TOP_COLOR_ON  (PhocColor){0.5f, 0.0f, 0.3f, 0.5f}
@@ -683,7 +684,7 @@ phoc_desktop_constructed (GObject *object)
     wlr_primary_selection_v1_device_manager_create (wl_display);
 
   self->input_method = wlr_input_method_manager_v2_create (wl_display);
-  self->text_input = wlr_text_input_manager_v3_create (wl_display);
+  self->text_input = wlr_text_input_manager_v3_create (wl_display, PHOC_TEXT_INPUT_VERSION);
 
   priv->idle_notifier_v1 = wlr_idle_notifier_v1_create (wl_display);
   priv->idle_inhibit = phoc_idle_inhibit_create ();

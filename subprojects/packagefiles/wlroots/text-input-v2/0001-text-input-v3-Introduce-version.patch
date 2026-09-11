@@ -1,0 +1,64 @@
+From 48f2eeff1bd020877b9c14c2b84e1a94bf79f3d8 Mon Sep 17 00:00:00 2001
+Message-ID: <48f2eeff1bd020877b9c14c2b84e1a94bf79f3d8.1789130119.git.agx@sigxcpu.org>
+From: =?UTF-8?q?Guido=20G=C3=BCnther?= <agx@sigxcpu.org>
+Date: Fri, 11 Sep 2026 10:57:59 +0200
+Subject: [PATCH 1/4] text-input-v3: Introduce version
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Guido Günther <agx@sigxcpu.org>
+---
+ include/wlr/types/wlr_text_input_v3.h | 2 +-
+ types/wlr_text_input_v3.c             | 8 ++++++--
+ 2 files changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/include/wlr/types/wlr_text_input_v3.h b/include/wlr/types/wlr_text_input_v3.h
+index 29feb7e6c..8a3e566d8 100644
+--- a/include/wlr/types/wlr_text_input_v3.h
++++ b/include/wlr/types/wlr_text_input_v3.h
+@@ -84,7 +84,7 @@ struct wlr_text_input_manager_v3 {
+ };
+ 
+ struct wlr_text_input_manager_v3 *wlr_text_input_manager_v3_create(
+-	struct wl_display *wl_display);
++	struct wl_display *wl_display, uint32_t version);
+ 
+ // Sends enter to the surface and saves it
+ void wlr_text_input_v3_send_enter(struct wlr_text_input_v3 *text_input,
+diff --git a/types/wlr_text_input_v3.c b/types/wlr_text_input_v3.c
+index bbae3a076..7a543f1a7 100644
+--- a/types/wlr_text_input_v3.c
++++ b/types/wlr_text_input_v3.c
+@@ -6,6 +6,8 @@
+ #include <wlr/util/log.h>
+ #include "text-input-unstable-v3-protocol.h"
+ 
++#define TEXT_INPUT_VERSION 1
++
+ static void text_input_clear_focused_surface(struct wlr_text_input_v3 *text_input) {
+ 	wl_list_remove(&text_input->surface_destroy.link);
+ 	wl_list_init(&text_input->surface_destroy.link);
+@@ -324,7 +326,9 @@ static void handle_display_destroy(struct wl_listener *listener, void *data) {
+ }
+ 
+ struct wlr_text_input_manager_v3 *wlr_text_input_manager_v3_create(
+-		struct wl_display *display) {
++		struct wl_display *display, uint32_t version) {
++	assert(version <= TEXT_INPUT_VERSION);
++
+ 	struct wlr_text_input_manager_v3 *manager = calloc(1, sizeof(*manager));
+ 	if (!manager) {
+ 		return NULL;
+@@ -336,7 +340,7 @@ struct wlr_text_input_manager_v3 *wlr_text_input_manager_v3_create(
+ 	wl_signal_init(&manager->events.destroy);
+ 
+ 	manager->global = wl_global_create(display,
+-		&zwp_text_input_manager_v3_interface, 1, manager,
++		&zwp_text_input_manager_v3_interface, version, manager,
+ 		text_input_manager_bind);
+ 	if (!manager->global) {
+ 		free(manager);
+-- 
+2.53.0
+
