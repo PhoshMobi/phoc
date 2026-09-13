@@ -69,48 +69,48 @@ typedef struct _PhocServer {
   PhocInput           *input;
   PhocConfig          *config;
   PhocServerFlags      flags;
-  GStrv                log_domains;
+  GStrv log_domains;
   PhocServerDebugFlags debug_flags;
   PhocDebugControl    *debug_control;
 
   PhocRenderer        *renderer;
   PhocDesktop         *desktop;
 
-  char                *session_exec;
-  GPid                 session_pid;
-  gint                 exit_status;
-  GMainLoop           *mainloop;
+  char                                         *session_exec;
+  GPid                                          session_pid;
+  gint                                          exit_status;
+  GMainLoop                                    *mainloop;
 
-  GStrv                dt_compatibles;
+  GStrv                                         dt_compatibles;
 
-  struct rlimit        saved_nofile_rlimit;
+  struct rlimit                                 saved_nofile_rlimit;
 
-  struct wl_display   *wl_display;
-  guint                wl_source;
+  struct wl_display                            *wl_display;
+  guint                                         wl_source;
 
-  struct wlr_compositor    *compositor;
-  struct wlr_subcompositor *subcompositor;
-  struct wlr_backend       *backend;
-  struct wlr_session       *session;
+  struct wlr_compositor                        *compositor;
+  struct wlr_subcompositor                     *subcompositor;
+  struct wlr_backend                           *backend;
+  struct wlr_session                           *session;
 
   /* Protocols */
-  struct wlr_linux_dmabuf_v1     *linux_dmabuf_v1;
-  struct wlr_data_device_manager *data_device_manager;
-  struct wlr_ext_data_control_manager_v1 *ext_data_control_manager_v1;
+  struct wlr_linux_dmabuf_v1                   *linux_dmabuf_v1;
+  struct wlr_data_device_manager               *data_device_manager;
+  struct wlr_ext_data_control_manager_v1       *ext_data_control_manager_v1;
   struct wlr_ext_image_copy_capture_manager_v1 *ext_image_copy_capture_manager_v1;
-  struct wlr_xdg_decoration_manager_v1 *xdg_decoration_manager;
-  struct wlr_xdg_shell *xdg_shell;
-  struct wlr_xdg_wm_dialog_v1 *xdg_wm_dialog;
-  PhocToplevelPidfdManager *toplevel_pidfd_manager;
-  PhocXxCutoutsManager *xx_cutouts_manager;
+  struct wlr_xdg_decoration_manager_v1         *xdg_decoration_manager;
+  struct wlr_xdg_shell                         *xdg_shell;
+  struct wlr_xdg_wm_dialog_v1                  *xdg_wm_dialog;
+  PhocToplevelPidfdManager                     *toplevel_pidfd_manager;
+  PhocXxCutoutsManager                         *xx_cutouts_manager;
 
-  struct wl_listener   new_surface;
-  struct wl_listener   xdg_new_dialog;
-  struct wl_listener   xdg_shell_toplevel;
-  struct wl_listener   xdg_toplevel_decoration;
-  struct wl_listener   xdg_toplevel_tag_manager_v1_set_tag;
+  struct wl_listener                            new_surface;
+  struct wl_listener                            xdg_new_dialog;
+  struct wl_listener                            xdg_shell_toplevel;
+  struct wl_listener                            xdg_toplevel_decoration;
+  struct wl_listener                            xdg_toplevel_tag_manager_v1_set_tag;
 
-  GSettings           *settings;
+  GSettings                                    *settings;
 } PhocServer;
 
 static void phoc_server_initable_iface_init (GInitableIface *iface);
