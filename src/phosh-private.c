@@ -77,10 +77,16 @@ typedef struct {
   PhocPhoshPrivate   *phosh;
 } PhocPhoshPrivateStartupTracker;
 
-static PhocPhoshPrivate *phoc_phosh_private_from_resource (struct wl_resource *resource);
-static PhocPhoshPrivateKeyboardEventData *phoc_phosh_private_keyboard_event_from_resource (struct wl_resource *resource);
-static PhocPhoshPrivateScreencopyFrame *phoc_phosh_private_screencopy_frame_from_resource(struct wl_resource *resource);
-static PhocPhoshPrivateStartupTracker *phoc_phosh_private_startup_tracker_from_resource(struct wl_resource *resource);
+static PhocPhoshPrivate *                 phoc_phosh_private_from_resource (
+  struct wl_resource *resource);
+static PhocPhoshPrivateKeyboardEventData *phoc_phosh_private_keyboard_event_from_resource (
+  struct wl_resource *resource);
+static PhocPhoshPrivateScreencopyFrame *  phoc_phosh_private_screencopy_frame_from_resource (
+  struct wl_resource *resource);
+static PhocPhoshPrivateStartupTracker *   phoc_phosh_private_startup_tracker_from_resource (
+  struct wl_resource *resource);
+static PhocPhoshPrivateThumbnail *        phoc_phosh_private_thumbnail_from_resource (
+  struct wl_resource *resource);
 
 #define PHOSH_PRIVATE_VERSION 7
 
