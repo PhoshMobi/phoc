@@ -1845,21 +1845,3 @@ phoc_desktop_get_xx_cutouts_manager (PhocDesktop *self)
 
   return priv->xx_cutouts_manager;
 }
-
-/**
- * phoc_desktop_get_toplevel_pidfd_manager:
- * @self: the desktop
- *
- * Get the toplevel pidfd protocol manager
- *
- * Returns:(transfer none): The toplevel pidfd manager
- */
-PhocToplevelPidfdManager *
-phoc_desktop_get_toplevel_pidfd_manager (PhocDesktop *self)
-{
-  PhocDesktopPrivate *priv = phoc_desktop_get_instance_private (self);
-
-  g_assert (PHOC_IS_DESKTOP (self));
-
-  return priv->toplevel_pidfd_manager;
-}
