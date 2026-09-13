@@ -10,6 +10,8 @@
 
 #include "ext-foreign-toplevel-list-v1-client-protocol.h"
 #include "phoc-foreign-toplevel-pidfd-v1-client-protocol.h"
+#include "phoc-foreign-toplevel-identifier-v1-client-protocol.h"
+#include "wlr-foreign-toplevel-management-unstable-v1-client-protocol.h"
 
 #include <wayland-client-protocol.h>
 #include <wayland-client.h>
@@ -26,6 +28,8 @@
 
 struct ext_foreign_toplevel_list_v1 *ext_toplevel_list;
 struct phoc_foreign_toplevel_pidfd_manager_v1 *phoc_toplevel_pidfd_manager;
+struct phoc_foreign_toplevel_identifier_manager_v1 *phoc_toplevel_identifier_manager;
+struct zwlr_foreign_toplevel_manager_v1 *zwlr_foreign_toplevel_manager;
 
 typedef struct {
   char   *title;
@@ -39,6 +43,14 @@ typedef struct {
   struct ext_foreign_toplevel_handle_v1 *handle;
   struct phoc_foreign_toplevel_pidfd_v1 *pidfd_v1;
 } Toplevel;
+
+typedef struct {
+  char *title;
+  char *app_id;
+
+  struct zwlr_foreign_toplevel_handle_v1 *handle;
+  struct phoc_foreign_toplevel_identifier_v1 *id_v1;
+} WlrToplevel;
 
 
 static pid_t
@@ -210,6 +222,162 @@ handle_toplevel (void                                  *data,
 
 
 static void
+wlr_toplevel_destroy (WlrToplevel *toplevel)
+{
+  g_clear_pointer (&toplevel->id_v1, phoc_foreign_toplevel_identifier_v1_destroy);
+  g_clear_pointer (&toplevel->handle, zwlr_foreign_toplevel_handle_v1_destroy);
+
+  g_free (toplevel->title);
+  g_free (toplevel->app_id);
+
+  g_free (toplevel);
+}
+
+
+static void
+handle_wlr_toplevel_title (void                                   *data,
+                           struct zwlr_foreign_toplevel_handle_v1 *handle,
+                           const char                             *title)
+{
+  WlrToplevel *toplevel = data;
+
+  g_free (toplevel->title);
+  toplevel->title = g_strdup (title);
+}
+
+
+static void
+handle_wlr_toplevel_app_id (void                                   *data,
+                            struct zwlr_foreign_toplevel_handle_v1 *handle,
+                            const char                             *app_id)
+{
+  WlrToplevel *toplevel = data;
+
+  g_free (toplevel->app_id);
+  toplevel->app_id = g_strdup (app_id);
+}
+
+
+static void
+handle_wlr_toplevel_output_enter (void                                   *data,
+                                  struct zwlr_foreign_toplevel_handle_v1 *handle,
+                                  struct wl_output                       *output)
+{
+}
+
+
+static void
+handle_wlr_toplevel_output_leave (void                                   *data,
+                                  struct zwlr_foreign_toplevel_handle_v1 *handle,
+                                  struct wl_output                       *output)
+{
+}
+
+
+static void
+handle_wlr_toplevel_state (void                                   *data,
+                           struct zwlr_foreign_toplevel_handle_v1 *handle,
+                           struct wl_array                        *state)
+{
+}
+
+
+static void
+handle_wlr_toplevel_done (void                                   *data,
+                          struct zwlr_foreign_toplevel_handle_v1 *handle)
+{
+}
+
+
+static void
+handle_wlr_toplevel_closed (void                                   *data,
+                            struct zwlr_foreign_toplevel_handle_v1 *handle)
+{
+  WlrToplevel *toplevel = data;
+
+  g_print ("%s: wlr toplevel closed\n", toplevel->app_id);
+
+  wlr_toplevel_destroy (toplevel);
+}
+
+
+static const struct zwlr_foreign_toplevel_handle_v1_listener wlr_toplevel_handle_listener =
+{
+  .title = handle_wlr_toplevel_title,
+  .app_id = handle_wlr_toplevel_app_id,
+  .output_enter = handle_wlr_toplevel_output_enter,
+  .output_leave = handle_wlr_toplevel_output_leave,
+  .state = handle_wlr_toplevel_state,
+  .done = handle_wlr_toplevel_done,
+  .closed = handle_wlr_toplevel_closed,
+};
+
+
+static void
+handle_id (void                                       *data,
+           struct phoc_foreign_toplevel_identifier_v1 *phoc_foreign_toplevel_identifier_v1,
+           const char                                 *identifier)
+{
+  WlrToplevel *toplevel = data;
+
+  g_print ("%s: (title='%s', wlr toplevel maps to ext id='%s')\n",
+           toplevel->app_id,
+           toplevel->title,
+           identifier);
+}
+
+
+static void
+handle_id_finished (void                                       *data,
+                    struct phoc_foreign_toplevel_identifier_v1 *phoc_foreign_toplevel_identifier_v1)
+{
+  WlrToplevel *toplevel = data;
+
+  g_clear_pointer (&toplevel->id_v1, phoc_foreign_toplevel_identifier_v1_destroy);
+}
+
+
+static const struct phoc_foreign_toplevel_identifier_v1_listener toplevel_id_listener =
+{
+  .id = handle_id,
+  .finished = handle_id_finished,
+};
+
+
+static void
+handle_wlr_toplevel (void                                    *data,
+                     struct zwlr_foreign_toplevel_manager_v1 *manager,
+                     struct zwlr_foreign_toplevel_handle_v1  *handle)
+{
+  WlrToplevel *toplevel = g_new0 (WlrToplevel, 1);
+
+  toplevel->handle = handle;
+
+  zwlr_foreign_toplevel_handle_v1_add_listener (handle, &wlr_toplevel_handle_listener, toplevel);
+
+  toplevel->id_v1 =
+    phoc_foreign_toplevel_identifier_manager_v1_get_id (phoc_toplevel_identifier_manager, handle);
+  phoc_foreign_toplevel_identifier_v1_add_listener (toplevel->id_v1,
+                                                    &toplevel_id_listener,
+                                                    toplevel);
+}
+
+
+static void
+handle_wlr_finished (void                                    *data,
+                     struct zwlr_foreign_toplevel_manager_v1 *manager)
+{
+  g_clear_pointer (&zwlr_foreign_toplevel_manager, zwlr_foreign_toplevel_manager_v1_destroy);
+}
+
+
+static const struct zwlr_foreign_toplevel_manager_v1_listener wlr_toplevel_manager_listener = {
+  .toplevel = handle_wlr_toplevel,
+  .finished = handle_wlr_finished,
+};
+
+
+static void
 handle_finished (void                                *data,
                  struct ext_foreign_toplevel_list_v1 *ext_foreign_toplevel_list_v1)
 {
@@ -238,6 +406,18 @@ handle_global (void *data, struct wl_registry *registry,
       wl_registry_bind (registry,
                         name,
                         &phoc_foreign_toplevel_pidfd_manager_v1_interface,
+                        1);
+  } else if (strcmp (interface, phoc_foreign_toplevel_identifier_manager_v1_interface.name) == 0) {
+    phoc_toplevel_identifier_manager =
+      wl_registry_bind (registry,
+                        name,
+                        &phoc_foreign_toplevel_identifier_manager_v1_interface,
+                        1);
+  } else if (strcmp (interface, zwlr_foreign_toplevel_manager_v1_interface.name) == 0) {
+    zwlr_foreign_toplevel_manager =
+      wl_registry_bind (registry,
+                        name,
+                        &zwlr_foreign_toplevel_manager_v1_interface,
                         1);
   }
 }
@@ -294,9 +474,22 @@ main (int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
+  if (phoc_toplevel_identifier_manager == NULL) {
+    g_critical ("Compositor doesn't support phoc-foreign-identifier-v1 protocol");
+    return EXIT_FAILURE;
+  }
+
+  if (zwlr_foreign_toplevel_manager == NULL) {
+    g_critical ("Compositor doesn't support wlr-foreign-toplevel-manager-v1 protocol");
+    return EXIT_FAILURE;
+  }
+
   ext_foreign_toplevel_list_v1_add_listener (ext_toplevel_list,
                                              &toplevel_list_listener,
                                              NULL);
+  zwlr_foreign_toplevel_manager_v1_add_listener (zwlr_foreign_toplevel_manager,
+                                                 &wlr_toplevel_manager_listener,
+                                                 NULL);
   g_debug ("Listing toplevels");
 
   while (wl_display_dispatch (display) != -1)
