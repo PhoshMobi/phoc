@@ -104,8 +104,6 @@ typedef struct _PhocDesktopPrivate {
 
   PhocWorkspaceManager     *workspace_manager;
   PhocWorkspace            *active_workspace;
-
-  PhocXxCutoutsManager     *xx_cutouts_manager;
 } PhocDesktopPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (PhocDesktop, phoc_desktop, G_TYPE_OBJECT);
@@ -713,8 +711,6 @@ phoc_desktop_constructed (GObject *object)
 
   priv->screencopy_manager_v1 = wlr_screencopy_manager_v1_create (wl_display);
 
-  priv->xx_cutouts_manager = phoc_xx_cutouts_manager_new ();
-
   wlr_viewporter_create (wl_display);
   wlr_single_pixel_buffer_manager_v1_create (wl_display);
   wlr_fractional_scale_manager_v1_create (wl_display, PHOC_FRACTIONAL_SCALE_VERSION);
@@ -798,7 +794,6 @@ phoc_desktop_finalize (GObject *object)
   g_clear_object (&priv->phosh);
   g_clear_pointer (&priv->gtk_shell, phoc_gtk_shell_destroy);
   g_clear_object (&priv->layer_shell_effects);
-  g_clear_object (&priv->xx_cutouts_manager);
   g_clear_pointer (&self->layout, wlr_output_layout_destroy);
 
   g_clear_object (&priv->outputs_states);
@@ -1822,22 +1817,4 @@ phoc_desktop_get_active_workspace (PhocDesktop *self)
   g_assert (PHOC_IS_DESKTOP (self));
 
   return priv->active_workspace;
-}
-
-/**
- * phoc_desktop_get_xx_cutouts_manager:
- * @self: the desktop
- *
- * Get the cutouts manager
- *
- * Returns:(transfer none): The cutouts manager
- */
-PhocXxCutoutsManager *
-phoc_desktop_get_xx_cutouts_manager (PhocDesktop *self)
-{
-  PhocDesktopPrivate *priv = phoc_desktop_get_instance_private (self);
-
-  g_assert (PHOC_IS_DESKTOP (self));
-
-  return priv->xx_cutouts_manager;
 }

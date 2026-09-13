@@ -102,6 +102,7 @@ typedef struct _PhocServer {
   struct wlr_xdg_shell *xdg_shell;
   struct wlr_xdg_wm_dialog_v1 *xdg_wm_dialog;
   PhocToplevelPidfdManager *toplevel_pidfd_manager;
+  PhocXxCutoutsManager *xx_cutouts_manager;
 
   struct wl_listener   new_surface;
   struct wl_listener   xdg_new_dialog;
@@ -375,6 +376,7 @@ phoc_server_init_protocols (PhocServer *self)
   }
 
   self->toplevel_pidfd_manager = phoc_toplevel_pidfd_manager_new ();
+  self->xx_cutouts_manager = phoc_xx_cutouts_manager_new ();
 }
 
 
@@ -579,6 +581,7 @@ phoc_server_finalize (GObject *object)
   wl_list_remove (&self->new_surface.link);
 
   /* Protocols */
+  g_clear_object (&self->xx_cutouts_manager);
   g_clear_object (&self->toplevel_pidfd_manager);
 
   g_clear_pointer (&self->dt_compatibles, g_strfreev);
@@ -1070,4 +1073,20 @@ phoc_server_get_use_focus_frame (PhocServer *self)
   g_assert (PHOC_IS_SERVER (self));
 
   return g_settings_get_boolean (self->settings, "focus-frame");
+}
+
+/**
+ * phoc_server_get_xx_cutouts_manager:
+ * @self: the server
+ *
+ * Get the cutouts manager
+ *
+ * Returns:(transfer none): The cutouts manager
+ */
+PhocXxCutoutsManager *
+phoc_server_get_xx_cutouts_manager (PhocServer *self)
+{
+  g_assert (PHOC_IS_SERVER (self));
+
+  return self->xx_cutouts_manager;
 }

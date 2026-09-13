@@ -86,5 +86,7 @@ void                   phoc_server_set_linux_dmabuf_surface_feedback (PhocServer
                                                                       bool        enable);
 gboolean               phoc_server_get_allow_input         (PhocServer *self);
 gboolean               phoc_server_get_use_focus_frame     (PhocServer *self);
+PhocXxCutoutsManager * phoc_server_get_xx_cutouts_manager  (PhocServer *self);
+
 
 G_END_DECLS
