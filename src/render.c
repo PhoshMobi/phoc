@@ -18,6 +18,7 @@
 #include "cursor.h"
 #include "input.h"
 #include "layer-surface.h"
+#include "phosh-private.h"
 #include "render-private.h"
 #include "render.h"
 #include "seat.h"
@@ -96,6 +97,8 @@ struct render_view_data {
   int       height;
   struct wlr_render_pass *render_pass;
 };
+
+static void render_thumbnail_overlay (PhocPhoshPrivateThumbnail *thumbnail, PhocRenderContext *ctx);
 
 
 
@@ -326,13 +329,109 @@ render_layer (enum zwlr_layer_shell_v1_layer layer, PhocRenderContext *ctx)
 
   for (GList *l = layer_surfaces->head; l; l = l->next) {
     PhocLayerSurface *layer_surface = PHOC_LAYER_SURFACE (l->data);
+    PhocPhoshPrivateThumbnail *thumbnail;
 
     ctx->alpha = phoc_layer_surface_get_alpha (layer_surface);
     phoc_output_layer_surface_for_each_surface (ctx->output,
                                                 layer_surface,
                                                 render_surface_iterator,
                                                 ctx);
+
+    /* Compositor rendered thumbnail overlays are drawn on top of the
+     * layer surface's own (transparent) content. */
+    thumbnail = phoc_phosh_private_thumbnail_from_layer_surface (layer_surface);
+    if (thumbnail)
+      render_thumbnail_overlay (thumbnail, ctx);
   }
+}
+
+
+typedef struct {
+  PhocOutput        *output;
+  PhocPhoshPrivateThumbnail *thumbnail;
+  PhocRenderContext *ctx;
+  struct wlr_box     geo;
+} ThumbnailRenderData;
+
+static void
+render_thumbnail_surface_iterator (struct wlr_surface *surface, int sx, int sy, void *_data)
+{
+  ThumbnailRenderData *data = _data;
+  PhocRenderContext *ctx = data->ctx;
+  struct wlr_output *wlr_output = data->output->wlr_output;
+  float alpha = 1.0;
+
+  if (!wlr_surface_has_buffer (surface))
+    return;
+
+  struct wlr_texture *texture = wlr_surface_get_texture (surface);
+  if (!texture)
+    return;
+
+  struct wlr_fbox src_box;
+  wlr_surface_get_buffer_source_box (surface, &src_box);
+
+  /* The view's geometry top-left is mapped to (x, y), everything else is
+   * offset and scaled relative to it */
+  struct wlr_box dst_box = {
+    .x = data->thumbnail->x + (sx - data->geo.x) * data->thumbnail->scale,
+    .y = data->thumbnail->y + (sy - data->geo.y) * data->thumbnail->scale,
+    .width = surface->current.width * data->thumbnail->scale,
+    .height = surface->current.height * data->thumbnail->scale,
+  };
+  struct wlr_box clip_box = dst_box;
+
+  phoc_utils_scale_box (&dst_box, wlr_output->scale);
+  phoc_output_transform_box (data->output, &dst_box);
+
+  phoc_utils_scale_box (&clip_box, wlr_output->scale);
+  phoc_output_transform_box (data->output, &clip_box);
+
+  render_texture (data->output,
+                  texture,
+                  &src_box,
+                  &dst_box,
+                  &clip_box,
+                  surface->current.transform,
+                  alpha,
+                  ctx);
+}
+
+
+static void
+render_thumbnail_overlay (PhocPhoshPrivateThumbnail *thumbnail, PhocRenderContext *ctx)
+{
+  PhocOutput *output = ctx->output;
+  PhocView *view = thumbnail->view;
+  float fade;
+
+  if (view == NULL || view->wlr_surface == NULL)
+    return;
+
+  if (thumbnail->layer_surface == NULL)
+    return;
+
+  /* The fade (a fullscreen black rect) is driven by the layer surface's
+   * alpha which is set by the client via set_properties */
+  fade = phoc_layer_surface_get_alpha (thumbnail->layer_surface);
+  wlr_render_pass_add_rect (ctx->render_pass, &(struct wlr_render_rect_options){
+    .color = { 0, 0, 0, fade },
+    .clip = ctx->damage,
+  });
+
+  struct wlr_box geo;
+  phoc_view_get_geometry (view, &geo);
+
+  ThumbnailRenderData data = {
+    .output = output,
+    .thumbnail = thumbnail,
+    .ctx = ctx,
+    .geo = geo,
+  };
+
+  wlr_surface_for_each_surface (view->wlr_surface,
+                                render_thumbnail_surface_iterator,
+                                &data);
 }
 
 
