@@ -106,7 +106,6 @@ typedef struct _PhocDesktopPrivate {
   PhocWorkspace            *active_workspace;
 
   PhocXxCutoutsManager     *xx_cutouts_manager;
-  PhocToplevelPidfdManager *toplevel_pidfd_manager;
 } PhocDesktopPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (PhocDesktop, phoc_desktop, G_TYPE_OBJECT);
@@ -737,7 +736,6 @@ phoc_desktop_constructed (GObject *object)
   self->foreign_toplevel_manager_v1 = wlr_foreign_toplevel_manager_v1_create (wl_display);
   self->ext_foreign_toplevel_list_v1 =
     wlr_ext_foreign_toplevel_list_v1_create (wl_display, PHOC_EXT_FOREIGN_TOPLEVEL_LIST_VERSION);
-  priv->toplevel_pidfd_manager = phoc_toplevel_pidfd_manager_new ();
   self->relative_pointer_manager = wlr_relative_pointer_manager_v1_create (wl_display);
   self->pointer_gestures = wlr_pointer_gestures_v1_create (wl_display);
 
@@ -801,7 +799,6 @@ phoc_desktop_finalize (GObject *object)
   g_clear_pointer (&priv->gtk_shell, phoc_gtk_shell_destroy);
   g_clear_object (&priv->layer_shell_effects);
   g_clear_object (&priv->xx_cutouts_manager);
-  g_clear_object (&priv->toplevel_pidfd_manager);
   g_clear_pointer (&self->layout, wlr_output_layout_destroy);
 
   g_clear_object (&priv->outputs_states);
@@ -1300,7 +1297,6 @@ phoc_desktop_is_privileged_protocol (PhocDesktop *self, const struct wl_global *
   is_priv = (
     global == phoc_layer_shell_effects_get_global (priv->layer_shell_effects) ||
     global == phoc_phosh_private_get_global (priv->phosh) ||
-    global == phoc_toplevel_pidfd_manager_get_global (priv->toplevel_pidfd_manager) ||
     global == priv->data_control_manager_v1->global ||
     global == priv->screencopy_manager_v1->global ||
     global == self->export_dmabuf_manager_v1->global ||

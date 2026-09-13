@@ -93,6 +93,7 @@ typedef struct _PhocServer {
   struct wlr_backend       *backend;
   struct wlr_session       *session;
 
+  /* Protocols */
   struct wlr_linux_dmabuf_v1     *linux_dmabuf_v1;
   struct wlr_data_device_manager *data_device_manager;
   struct wlr_ext_data_control_manager_v1 *ext_data_control_manager_v1;
@@ -100,6 +101,7 @@ typedef struct _PhocServer {
   struct wlr_xdg_decoration_manager_v1 *xdg_decoration_manager;
   struct wlr_xdg_shell *xdg_shell;
   struct wlr_xdg_wm_dialog_v1 *xdg_wm_dialog;
+  PhocToplevelPidfdManager *toplevel_pidfd_manager;
 
   struct wl_listener   new_surface;
   struct wl_listener   xdg_new_dialog;
@@ -371,6 +373,8 @@ phoc_server_init_protocols (PhocServer *self)
   } else {
     g_critical ("Failed to create XDG toplevel tag manager");
   }
+
+  self->toplevel_pidfd_manager = phoc_toplevel_pidfd_manager_new ();
 }
 
 
@@ -393,6 +397,7 @@ phoc_server_is_privileged_protocol (PhocServer *self, const struct wl_global *gl
     return true;
 
   return
+    global == phoc_toplevel_pidfd_manager_get_global (self->toplevel_pidfd_manager) ||
     global == self->ext_data_control_manager_v1->global ||
     global == self->ext_image_copy_capture_manager_v1->global;
 }
@@ -572,6 +577,9 @@ phoc_server_finalize (GObject *object)
   wl_list_remove (&self->xdg_shell_toplevel.link);
   wl_list_remove (&self->xdg_new_dialog.link);
   wl_list_remove (&self->new_surface.link);
+
+  /* Protocols */
+  g_clear_object (&self->toplevel_pidfd_manager);
 
   g_clear_pointer (&self->dt_compatibles, g_strfreev);
   g_clear_handle_id (&self->wl_source, g_source_remove);
