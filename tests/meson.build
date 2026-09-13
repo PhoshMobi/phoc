@@ -47,6 +47,7 @@ tests = [
   'settings',
   'server',
   'timed-animation',
+  'toplevel-identifier',
   'toplevel-pidfd',
   'utils',
   'workspace-manager',

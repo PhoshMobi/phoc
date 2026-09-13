@@ -9,6 +9,7 @@
 #include "ext-foreign-toplevel-list-v1-client-protocol.h"
 #include "gtk-shell-client-protocol.h"
 #include "input-method-unstable-v2-client-protocol.h"
+#include "phoc-foreign-toplevel-identifier-v1-client-protocol.h"
 #include "phoc-foreign-toplevel-pidfd-v1-client-protocol.h"
 #include "phoc-layer-shell-effects-unstable-v1-client-protocol.h"
 #include "wlr-foreign-toplevel-management-unstable-v1-client-protocol.h"
@@ -84,6 +85,7 @@ struct _PhocTestClientGlobals {
   struct ext_foreign_toplevel_list_v1     *ext_toplevel_list;
   GSList *ext_foreign_toplevels;
   struct phoc_foreign_toplevel_pidfd_manager_v1 *toplevel_pidfd_manager;
+  struct phoc_foreign_toplevel_identifier_manager_v1 *toplevel_identifier_manager;
   struct phosh_private                    *phosh;
   struct gtk_shell1                       *gtk_shell1;
   /* TODO: handle multiple outputs */

@@ -16,6 +16,7 @@
 #include "seat.h"
 #include "server-private.h"
 #include "surface.h"
+#include "toplevel-identifier.h"
 #include "utils.h"
 #include "xdg-dialog.h"
 #include "xdg-toplevel.h"
@@ -101,6 +102,7 @@ typedef struct _PhocServer {
   struct wlr_xdg_decoration_manager_v1         *xdg_decoration_manager;
   struct wlr_xdg_shell                         *xdg_shell;
   struct wlr_xdg_wm_dialog_v1                  *xdg_wm_dialog;
+  PhocToplevelIdentifierManager                *toplevel_identifier_manager;
   PhocToplevelPidfdManager                     *toplevel_pidfd_manager;
   PhocXxCutoutsManager                         *xx_cutouts_manager;
 
@@ -375,6 +377,7 @@ phoc_server_init_protocols (PhocServer *self)
     g_critical ("Failed to create XDG toplevel tag manager");
   }
 
+  self->toplevel_identifier_manager = phoc_toplevel_identifier_manager_new ();
   self->toplevel_pidfd_manager = phoc_toplevel_pidfd_manager_new ();
   self->xx_cutouts_manager = phoc_xx_cutouts_manager_new ();
 }
@@ -399,6 +402,7 @@ phoc_server_is_privileged_protocol (PhocServer *self, const struct wl_global *gl
     return true;
 
   return
+    global == phoc_toplevel_identifier_manager_get_global (self->toplevel_identifier_manager) ||
     global == phoc_toplevel_pidfd_manager_get_global (self->toplevel_pidfd_manager) ||
     global == self->ext_data_control_manager_v1->global ||
     global == self->ext_image_copy_capture_manager_v1->global;
@@ -583,6 +587,7 @@ phoc_server_finalize (GObject *object)
   /* Protocols */
   g_clear_object (&self->xx_cutouts_manager);
   g_clear_object (&self->toplevel_pidfd_manager);
+  g_clear_object (&self->toplevel_identifier_manager);
 
   g_clear_pointer (&self->dt_compatibles, g_strfreev);
   g_clear_handle_id (&self->wl_source, g_source_remove);

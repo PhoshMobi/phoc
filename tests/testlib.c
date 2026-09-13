@@ -491,6 +491,9 @@ registry_handle_global (void               *data,
     globals->toplevel_pidfd_manager = wl_registry_bind (registry, name,
                                                         &phoc_foreign_toplevel_pidfd_manager_v1_interface,
                                                         1);
+  } else if (!g_strcmp0 (interface, phoc_foreign_toplevel_identifier_manager_v1_interface.name)) {
+    globals->toplevel_identifier_manager =
+      wl_registry_bind (registry, name, &phoc_foreign_toplevel_identifier_manager_v1_interface, 1);
   }
 }
 
@@ -540,6 +543,8 @@ wl_client_run (GTask *task, gpointer source, gpointer data, GCancellable *cancel
   else
     success = TRUE;
 
+  g_clear_pointer (&globals.toplevel_identifier_manager,
+                   phoc_foreign_toplevel_identifier_manager_v1_destroy);
   g_clear_pointer (&globals.toplevel_pidfd_manager, phoc_foreign_toplevel_pidfd_manager_v1_destroy);
   g_clear_pointer (&globals.ext_toplevel_list, ext_foreign_toplevel_list_v1_destroy);
   g_slist_free_full (g_steal_pointer (&globals.ext_foreign_toplevels),
