@@ -25,7 +25,7 @@
 #endif
 
 struct ext_foreign_toplevel_list_v1 *ext_toplevel_list;
-struct phoc_foreign_toplevel_pidfd_manager_v1 *xx_toplevel_pidfd_manager;
+struct phoc_foreign_toplevel_pidfd_manager_v1 *phoc_toplevel_pidfd_manager;
 
 typedef struct {
   char   *title;
@@ -201,8 +201,8 @@ handle_toplevel (void                                  *data,
   ext_foreign_toplevel_handle_v1_add_listener (handle, &toplevel_handle_listener, toplevel);
 
   toplevel->pidfd_v1 =
-    phoc_foreign_toplevel_pidfd_manager_v1_get_pidfd (xx_toplevel_pidfd_manager,
-                                                          handle);
+    phoc_foreign_toplevel_pidfd_manager_v1_get_pidfd (phoc_toplevel_pidfd_manager,
+                                                      handle);
   phoc_foreign_toplevel_pidfd_v1_add_listener (toplevel->pidfd_v1,
                                                    &toplevel_pidfd_listener,
                                                    toplevel);
@@ -234,7 +234,7 @@ handle_global (void *data, struct wl_registry *registry,
                                           &ext_foreign_toplevel_list_v1_interface,
                                           1);
   } else if (strcmp (interface, phoc_foreign_toplevel_pidfd_manager_v1_interface.name) == 0) {
-    xx_toplevel_pidfd_manager =
+    phoc_toplevel_pidfd_manager =
       wl_registry_bind (registry,
                         name,
                         &phoc_foreign_toplevel_pidfd_manager_v1_interface,
@@ -289,8 +289,8 @@ main (int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  if (xx_toplevel_pidfd_manager == NULL) {
-    g_critical ("Compositor doesn't support xx-linux-foreign-toplevel-pidfd-v1 protocol");
+  if (phoc_toplevel_pidfd_manager == NULL) {
+    g_critical ("Compositor doesn't support phoc-linux-foreign-toplevel-pidfd-v1 protocol");
     return EXIT_FAILURE;
   }
 
