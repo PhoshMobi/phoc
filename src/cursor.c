@@ -1081,7 +1081,7 @@ on_drag_update (PhocGesture *gesture, double off_x, double off_y, PhocCursor *se
     if (phoc_seat_has_touch (self->seat)) {
       PhocLayerSurface *layer_surface =
         phoc_draggable_layer_surface_get_layer_surface (priv->drag_surface);
-      GList *seqs = phoc_gesture_get_sequences (gesture);
+      g_autoptr (GList) seqs = phoc_gesture_get_sequences (gesture);
       g_assert (g_list_length (seqs) == 1);
       int touch_id = GPOINTER_TO_INT (seqs->data);
       struct wlr_touch_point *point = wlr_seat_touch_get_point (self->seat->seat, touch_id);
@@ -1600,7 +1600,7 @@ void
 phoc_cursor_handle_touch_up (PhocCursor                *self,
                              struct wlr_touch_up_event *event)
 {
-  struct wlr_touch_point *point = wlr_seat_touch_get_point (self->seat->seat, event->touch_id);
+  struct wlr_touch_point *point;
   PhocTouchPoint *touch_point;
   PhocCursorPrivate *priv = phoc_cursor_get_instance_private (self);
 
@@ -1619,7 +1619,8 @@ phoc_cursor_handle_touch_up (PhocCursor                *self,
     self->seat->touch_id = -1;
 
   /* If the gesture got canceled don't notify any clients */
-  if (!point)
+  point = wlr_seat_touch_get_point (self->seat->seat, event->touch_id);
+  if (point == NULL)
     return;
 
   if (priv->mode != PHOC_CURSOR_PASSTHROUGH) {
@@ -1752,9 +1753,9 @@ handle_touch_frame (struct wl_listener *listener, void *data)
   PhocCursor *self = PHOC_CURSOR (wl_container_of (listener, self, touch_frame));
   struct wlr_seat *wlr_seat = self->seat->seat;
 
-  wlr_seat_touch_notify_frame(wlr_seat);
+  wlr_seat_touch_notify_frame (wlr_seat);
 
-  // make sure to always send frame events when necessary even when bypassing seat grabs
+  /* make sure to always send frame events when necessary even when bypassing seat grabs */
   wlr_seat_touch_send_frame (wlr_seat);
 }
 

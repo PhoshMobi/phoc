@@ -66,18 +66,17 @@ _phoc_gesture_zoom_get_distance (PhocGestureZoom *zoom,
   const PhocEvent *last_event;
   gdouble x1, y1, x2, y2;
   PhocGesture *gesture;
-  GList *sequences = NULL;
+  g_autoptr (GList) sequences = NULL;
   gdouble dx, dy;
-  gboolean retval = FALSE;
 
   gesture = PHOC_GESTURE (zoom);
 
   if (!phoc_gesture_is_recognized (gesture))
-    goto out;
+    return FALSE;
 
   sequences = phoc_gesture_get_sequences (gesture);
   if (!sequences)
-    goto out;
+    return FALSE;
 
   last_event = phoc_gesture_get_last_event (gesture, sequences->data);
 
@@ -87,20 +86,17 @@ _phoc_gesture_zoom_get_distance (PhocGestureZoom *zoom,
     *distance = last_event->touchpad_pinch_update.scale;
   } else {
     if (!sequences->next)
-      goto out;
+      return FALSE;
 
     phoc_gesture_get_point (gesture, sequences->data, &x1, &y1);
     phoc_gesture_get_point (gesture, sequences->next->data, &x2, &y2);
 
     dx = x1 - x2;
-    dy = y1 - y2;;
+    dy = y1 - y2;
     *distance = sqrt ((dx * dx) + (dy * dy));
   }
 
-  retval = TRUE;
-out:
-  g_list_free (sequences);
-  return retval;
+  return TRUE;
 }
 
 static gboolean
