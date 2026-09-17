@@ -16,7 +16,7 @@
 
 #include <glib-object.h>
 
-#define LAYER_SHELL_EFFECTS_VERSION 3
+#define LAYER_SHELL_EFFECTS_VERSION 4
 #define DRAG_ACCEPT_THRESHOLD_DISTANCE 16
 #define DRAG_REJECT_THRESHOLD_DISTANCE 24
 #define SLIDE_ANIM_DURATION_MS 300 /* ms */
@@ -1145,6 +1145,7 @@ on_output_frame_callback (PhocAnimatable *animatable, guint64 last_frame, gpoint
     apply_state (drag_surface, PHOC_DRAGGABLE_SURFACE_STATE_NONE);
     drag_surface->drag.anim_id = 0;
   } else {
+    int version;
     gint64 now = g_get_monotonic_time ();
 
     drag_surface->drag.anim_t += ((float)(now - last_frame)) / drag_surface->drag.anim_duration;
@@ -1161,7 +1162,12 @@ on_output_frame_callback (PhocAnimatable *animatable, guint64 last_frame, gpoint
     default:
       g_assert_not_reached ();
     }
-    zphoc_draggable_layer_surface_v1_send_dragged (drag_surface->resource, (int32_t)margin);
+
+    version = wl_resource_get_version (drag_surface->resource);
+    if (version >= ZPHOC_DRAGGABLE_LAYER_SURFACE_V1_ANIMATED_SINCE_VERSION)
+      zphoc_draggable_layer_surface_v1_send_animated (drag_surface->resource, (int32_t)margin);
+    else
+      zphoc_draggable_layer_surface_v1_send_dragged (drag_surface->resource, (int32_t)margin);
   }
 
   apply_margin (drag_surface, margin);
