@@ -20,18 +20,21 @@
  *    there's no input method available. Cleared once text-input is entered.
  */
 typedef struct _PhocTextInput {
-  PhocInputMethodRelay *relay;
+  PhocInputMethodRelay     *relay;
 
   struct wlr_text_input_v3 *input;
-  struct wlr_surface *pending_focused_surface;
+  struct wlr_surface       *pending_focused_surface;
 
   struct wl_list link;
 
-  struct wl_listener pending_focused_surface_destroy;
-  struct wl_listener enable;
-  struct wl_listener commit;
-  struct wl_listener disable;
-  struct wl_listener destroy;
+  struct wl_listener        pending_focused_surface_destroy;
+  struct wl_listener        enable;
+  struct wl_listener        commit;
+  struct wl_listener        disable;
+  struct wl_listener        destroy;
+  /* text_input_v3 version 2 */
+  struct wl_listener        show_input_panel;
+  struct wl_listener        hide_input_panel;
 } PhocTextInput;
 
 
@@ -224,6 +227,18 @@ relay_send_im_done (PhocInputMethodRelay *relay, struct wlr_text_input_v3 *input
 
 
 static void
+activate_osk (PhocTextInput *text_input)
+{
+  PhocInputMethodRelay *relay = text_input->relay;
+
+  wlr_input_method_v2_send_activate (relay->input_method);
+  relay_send_im_done (relay, text_input->input);
+
+  elevate_osk (text_input->input->focused_surface);
+}
+
+
+static void
 handle_text_input_enable (struct wl_listener *listener, void *data)
 {
   PhocTextInput *text_input = wl_container_of (listener, text_input, enable);
@@ -239,10 +254,33 @@ handle_text_input_enable (struct wl_listener *listener, void *data)
   if (!text_input_is_focused (text_input->input))
     return;
 
-  wlr_input_method_v2_send_activate (relay->input_method);
-  relay_send_im_done (relay, text_input->input);
+  /* TODO: only for osk input-methods */
+  if (wl_resource_get_version (text_input->input->resource) >=
+      ZWP_TEXT_INPUT_V3_SHOW_INPUT_PANEL_SINCE_VERSION)
+    return;
 
-  elevate_osk (text_input->input->focused_surface);
+  activate_osk (text_input);
+}
+
+
+static void
+handle_text_input_show_input_panel (struct wl_listener *listener, void *data)
+{
+  PhocTextInput *text_input = wl_container_of (listener, text_input, show_input_panel);
+  PhocInputMethodRelay *relay = text_input->relay;
+
+  if (relay->input_method == NULL) {
+    g_debug ("Enabling text input when input method is gone");
+    return;
+  }
+  /* relay_send_im_done protects from receiving unfocussed done,
+   * but activate must be prevented too.
+   * TODO: when enter happens? */
+  if (!text_input_is_focused (text_input->input))
+    return;
+
+  g_debug ("Explcit request to show input panel");
+  activate_osk (text_input);
 }
 
 
@@ -279,6 +317,17 @@ relay_disable_text_input (PhocInputMethodRelay *relay, PhocTextInput *text_input
 
   wlr_input_method_v2_send_deactivate (relay->input_method);
   relay_send_im_done (relay, text_input->input);
+}
+
+
+static void
+handle_text_input_hide_input_panel (struct wl_listener *listener, void *data)
+{
+  PhocTextInput *text_input = wl_container_of (listener, text_input, hide_input_panel);
+  PhocInputMethodRelay *relay = text_input->relay;
+
+  g_debug ("Explcit request to hide input panel");
+  relay_disable_text_input (relay, text_input);
 }
 
 
@@ -342,6 +391,8 @@ handle_text_input_destroy (struct wl_listener *listener, void *data)
   wl_list_remove (&text_input->destroy.link);
   wl_list_remove (&text_input->disable.link);
   wl_list_remove (&text_input->enable.link);
+  wl_list_remove (&text_input->show_input_panel.link);
+  wl_list_remove (&text_input->hide_input_panel.link);
   wl_list_remove (&text_input->link);
   text_input->input = NULL;
   free (text_input);
@@ -381,6 +432,12 @@ phoc_text_input_create (PhocInputMethodRelay *relay, struct wlr_text_input_v3 *t
 
   wl_signal_add (&text_input->events.destroy, &input->destroy);
   input->destroy.notify = handle_text_input_destroy;
+
+  wl_signal_add (&text_input->events.show_input_panel, &input->show_input_panel);
+  input->show_input_panel.notify = handle_text_input_show_input_panel;
+
+  wl_signal_add (&text_input->events.hide_input_panel, &input->hide_input_panel);
+  input->hide_input_panel.notify = handle_text_input_hide_input_panel;
 
   input->pending_focused_surface_destroy.notify = handle_pending_focused_surface_destroy;
   wl_list_init (&input->pending_focused_surface_destroy.link);
