@@ -1,3 +1,20 @@
+phoc 0.58~alpha1
+----------------
+Released September 2026
+* Improved protocol support:
+  * text-input-v3: Add basic support for version 2 to work around an
+    issue in GTK 4.24
+  * layer-shell-effects: Add support for version 4 so clients can
+    distinguish compositor and user driven surface moves
+* Fix fling related crash (sometimes triggered by fling closing
+  phosh's top panel)
+* Issues fixed:
+    * https://gitlab.gnome.org/World/Phosh/phoc/-/work_items/408
+    * https://gitlab.gnome.org/World/Phosh/phoc/-/work_items/295
+* Contributors:
+    * Guido Günther
+    * Sebastian Krzyszkowiak
+
 phoc 0.57.0
 -----------
 Released August 2026

@@ -1,3 +1,28 @@
+phoc (0.58~alpha1) experimental; urgency=medium
+
+  [ Guido Günther ]
+  * cursor: Fix indent
+  * gesture/zoom: Fix indent
+  * gesture/zoom: Use automatic cleanup.
+    That way we can avoid the gotos.
+  * cursor: Don't leak sequences.
+    It's transfer-container.
+  * cursor: Check touch point right before use
+    Closes: https://gitlab.gnome.org/World/Phosh/phoc/-/work_items/408
+  * layer-shell-effects: Separate user and compositor driven surface movement.
+    Send `animated` instead of `dragged` event when the compositor side animation
+    drives the surface move.
+    Closes: https://gitlab.gnome.org/World/Phosh/phoc/-/work_items/295
+  * desktop: Drop superfluous cast
+  * input-method-relay: Add basic text-input-v3 version 2 support.
+    For that we backport the text-input-v3 version 2 support
+
+  [ Sebastian Krzyszkowiak ]
+  * examples: Fix a syntax error in non-Linux branch.
+    Fixes: 475019176780 ("examples: Add client that tracks toplevels and their pids")
+
+ -- Guido Günther <agx@sigxcpu.org>  Sat, 19 Sep 2026 17:05:13 +0200
+
 phoc (0.57.0) experimental; urgency=medium
 
   * No changes over rc1
