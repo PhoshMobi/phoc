@@ -4,7 +4,7 @@ include:
     ref: '4a59c2bce9fe230614431a21638a05f3a30da7f3'
     file: '/ci/phosh-common-jobs.yml'
   - project: 'Infrastructure/freedesktop-ci-templates'
-    ref: 'd03cddbcff35f26861429fc816c00323f48e99af'
+    ref: 'e668bdb25853cd079d1322e09521177b553f8f8f'
     file: '/templates/ci-fairy.yml'
 
 stages:
