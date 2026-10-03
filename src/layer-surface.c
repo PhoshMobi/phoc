@@ -42,6 +42,12 @@ enum {
 };
 static GParamSpec *props[PROP_LAST_PROP];
 
+enum {
+  SIGNAL_DESTROY,
+  N_SIGNALS
+};
+static guint signals[N_SIGNALS];
+
 static void phoc_layer_surface_child_root_iface_init (PhocChildRootInterface *iface);
 static void phoc_animatable_interface_init (PhocAnimatableInterface *iface);
 
@@ -393,6 +399,9 @@ handle_destroy (struct wl_listener *listener, void *data)
 {
   PhocLayerSurface *self = wl_container_of (listener, self, destroy);
 
+  /* Emit this before dropping the last ref so reference holders can react
+   * while the object is still alive. */
+  g_signal_emit (self, signals[SIGNAL_DESTROY], 0);
   g_object_unref (self);
 }
 
@@ -525,6 +534,20 @@ phoc_layer_surface_class_init (PhocLayerSurfaceClass *klass)
 
   object_class->constructed = phoc_layer_surface_constructed;
   object_class->finalize = phoc_layer_surface_finalize;
+
+  /**
+   * PhocLayerSurface::destroy:
+   *
+   * Emitted just before the layer surface's last ref is dropped so reference
+   * holders can react.
+   */
+  signals[SIGNAL_DESTROY] = g_signal_new ("destroy",
+                                          G_TYPE_FROM_CLASS (object_class),
+                                          G_SIGNAL_RUN_LAST,
+                                          0,
+                                          NULL, NULL, NULL,
+                                          G_TYPE_NONE,
+                                          0);
 
   props[PROP_WLR_LAYER_SURFACE] =
     g_param_spec_pointer ("wlr-layer-surface", "", "",
