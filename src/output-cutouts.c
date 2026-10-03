@@ -98,8 +98,10 @@ output_cutouts_set_compatibles (PhocOutputCutouts *self, const char *const *comp
   info = gm_device_info_new ((const char * const *)self->compatibles);
   panel = gm_device_info_get_display_panel (info);
 
-  if (panel == NULL)
+  if (panel == NULL) {
     g_warning ("No panel found for compatibles");
+    return;
+  }
 
   g_debug ("Found panel '%s'", gm_display_panel_get_name (panel));
   g_set_object (&self->panel, panel);
