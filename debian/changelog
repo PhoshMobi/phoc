@@ -1,3 +1,25 @@
+phoc (0.58.0) experimental; urgency=medium
+
+  [ Guido Günther ]
+  * ci: Update ci-fairy.
+    That way gitlab's no-reply addresses should pass
+  * cutouts: Return if we can't find a panel for the compatibles.
+    Fixes: ca8bd25d3 ("ouput: Allow to render display cutout")
+
+  [ David_Dharma ]
+  * gesture: Incorrect key used when retrieving a sequence state
+
+  [ nikodunk ]
+  * layer-surface: Add destroy signal.
+    Emitted when the layer surface is about to be destroyed
+  * phosh: Fix indent
+  * phosh: Add interface to render thumbnail overlays for views.
+    This allows the client to drive view thumbnail rendering on the
+    compositor side so the Phosh's thumbnail overlay becomes less
+    CPU intensive.
+
+ -- Guido Günther <agx@sigxcpu.org>  Sat, 03 Oct 2026 12:43:58 +0200
+
 phoc (0.58~alpha1) experimental; urgency=medium
 
   [ Guido Günther ]

@@ -1,19 +1,24 @@
-phoc 0.58~alpha1
+phoc 0.58.0
 ----------------
-Released September 2026
+Released October 2026
 * Improved protocol support:
   * text-input-v3: Add basic support for version 2 to work around an
     issue in GTK 4.24
   * layer-shell-effects: Add support for version 4 so clients can
     distinguish compositor and user driven surface moves
+  * phosh-private: Add interface for thumbnail rendering
+    This will be used on the Phosh side to speed up the
+    thumbnail-overlay.
 * Fix fling related crash (sometimes triggered by fling closing
   phosh's top panel)
 * Issues fixed:
     * https://gitlab.gnome.org/World/Phosh/phoc/-/work_items/408
     * https://gitlab.gnome.org/World/Phosh/phoc/-/work_items/295
 * Contributors:
+    * David_Dharma
     * Guido Günther
     * Sebastian Krzyszkowiak
+    * nikodunk
 
 phoc 0.57.0
 -----------
