@@ -82,12 +82,16 @@ static void
 send_frame_done (void *user_data)
 {
   PhocXdgToplevel *self = PHOC_XDG_TOPLEVEL (user_data);
+  PhocView *view = PHOC_VIEW (self);
   struct timespec now;
 
   self->frame_done_idle = NULL;
 
+  if (!view->wlr_surface)
+    return;
+
   clock_gettime (CLOCK_MONOTONIC, &now);
-  wlr_surface_send_frame_done (PHOC_VIEW (self)->wlr_surface, &now);
+  wlr_surface_send_frame_done (view->wlr_surface, &now);
 }
 
 /**
