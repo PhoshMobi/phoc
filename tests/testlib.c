@@ -369,7 +369,8 @@ registry_handle_global (void               *data,
     zwlr_foreign_toplevel_manager_v1_add_listener (globals->foreign_toplevel_manager,
                                                    &foreign_toplevel_manager_listener, globals);
   } else if (!g_strcmp0 (interface, phosh_private_interface.name)) {
-    globals->phosh = wl_registry_bind (registry, name, &phosh_private_interface, 6);
+    globals->phosh = wl_registry_bind (registry, name, &phosh_private_interface,
+                                       MIN (version, (uint32_t)phosh_private_interface.version));
   } else if (!g_strcmp0 (interface, gtk_shell1_interface.name)) {
     globals->gtk_shell1 = wl_registry_bind (registry, name, &gtk_shell1_interface, 3);
   } else if (!g_strcmp0 (interface, zphoc_layer_shell_effects_v1_interface.name)) {
