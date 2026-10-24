@@ -673,24 +673,17 @@ handle_add_thumbnail_view (struct wl_client   *wl_client,
   PhocPhoshPrivateThumbnail *thumbnail;
   struct wlr_foreign_toplevel_handle_v1 *toplevel_handle;
   struct wlr_layer_surface_v1 *wlr_layer_surface;
-  PhocView *view;
-  PhocLayerSurface *layer_surface;
+  PhocView *view = NULL;
+  PhocLayerSurface *layer_surface = NULL;
 
+  /* Create inert resource when object is already gone */
   toplevel_handle = wl_resource_get_user_data (toplevel_resource);
-  if (!toplevel_handle)
-    return;
-
-  view = toplevel_handle->data;
-  if (!view)
-    return;
+  if (toplevel_handle)
+    view = toplevel_handle->data;
 
   wlr_layer_surface = wl_resource_get_user_data (layer_surface_resource);
-  if (!wlr_layer_surface || !wlr_layer_surface->data)
-    return;
-
-  layer_surface = wlr_layer_surface->data;
-  if (!PHOC_IS_LAYER_SURFACE (layer_surface))
-    return;
+  if (wlr_layer_surface && PHOC_IS_LAYER_SURFACE (wlr_layer_surface->data))
+    layer_surface = wlr_layer_surface->data;
 
   thumbnail = g_new0 (PhocPhoshPrivateThumbnail, 1);
   thumbnail->view = view;
@@ -715,14 +708,18 @@ handle_add_thumbnail_view (struct wl_client   *wl_client,
                                   thumbnail,
                                   thumbnail_resource_destroy);
 
-  g_object_set_data (G_OBJECT (layer_surface), "phoc-thumbnail", thumbnail);
-  g_signal_connect (layer_surface,
-                    "destroy",
-                    G_CALLBACK (thumbnail_layer_surface_destroy),
-                    thumbnail);
+  if (layer_surface) {
+    g_object_set_data (G_OBJECT (layer_surface), "phoc-thumbnail", thumbnail);
+    g_signal_connect (layer_surface,
+                      "destroy",
+                      G_CALLBACK (thumbnail_layer_surface_destroy),
+                      thumbnail);
+  }
 
-  g_signal_connect (view, "surface-destroy", G_CALLBACK (on_thumbnail_view_surface_destroy),
-                    thumbnail);
+  if (view) {
+    g_signal_connect (view, "surface-destroy", G_CALLBACK (on_thumbnail_view_surface_destroy),
+                      thumbnail);
+  }
 }
 
 
