@@ -608,8 +608,8 @@ thumbnail_handle_set_properties (struct wl_client   *wl_client,
 
   thumbnail->x = x;
   thumbnail->y = y;
-  thumbnail->scale = wl_fixed_to_double (scale);
-  thumbnail->alpha = wl_fixed_to_double (alpha);
+  thumbnail->scale = MAX (0.0, wl_fixed_to_double (scale));
+  thumbnail->alpha = CLAMP (wl_fixed_to_double (alpha), 0.0, 1.0);
 
   if (thumbnail->layer_surface == NULL)
     return;
