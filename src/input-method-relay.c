@@ -116,10 +116,11 @@ handle_im_keyboard_grab_destroy (struct wl_listener *listener, void *data)
 {
   PhocInputMethodRelay *relay =
     wl_container_of (listener, relay, input_method_keyboard_grab_destroy);
-  struct wlr_input_method_keyboard_grab_v2 *keyboard_grab = data;
+  struct wlr_input_method_keyboard_grab_v2 *keyboard_grab;
 
   wl_list_remove (&relay->input_method_keyboard_grab_destroy.link);
 
+  keyboard_grab = relay->input_method->keyboard_grab;
   if (keyboard_grab->keyboard) {
     /* send modifier state to original client */
     wlr_seat_keyboard_notify_modifiers (keyboard_grab->input_method->seat,
