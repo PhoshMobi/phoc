@@ -340,6 +340,11 @@ registry_handle_global (void               *data,
   } else if (!g_strcmp0 (interface, wl_shm_interface.name)) {
     globals->shm = wl_registry_bind (registry, name, &wl_shm_interface, 1);
     wl_shm_add_listener (globals->shm, &shm_listener, globals);
+  } else if (!g_strcmp0 (interface, wl_seat_interface.name)) {
+    globals->seat = wl_registry_bind (registry, name, &wl_seat_interface, 1);
+  } else if (!g_strcmp0 (interface, zwp_input_method_manager_v2_interface.name)) {
+    globals->input_method_manager = wl_registry_bind (registry, name,
+                                                      &zwp_input_method_manager_v2_interface, 1);
   } else if (!g_strcmp0 (interface, wl_output_interface.name)) {
     /* TODO: only one output atm */
     g_assert_null (globals->output.output);
@@ -426,6 +431,8 @@ wl_client_run (GTask *task, gpointer source, gpointer data, GCancellable *cancel
     success = TRUE;
 
   g_clear_pointer (&globals.cutouts_manager, xx_cutouts_manager_v1_destroy);
+  g_clear_pointer (&globals.input_method_manager, zwp_input_method_manager_v2_destroy);
+  g_clear_pointer (&globals.seat, wl_seat_destroy);
   g_clear_pointer (&globals.decoration_manager, zxdg_decoration_manager_v1_destroy);
   wl_proxy_destroy ((struct wl_proxy *)globals.gtk_shell1);
   wl_proxy_destroy ((struct wl_proxy *)globals.phosh);

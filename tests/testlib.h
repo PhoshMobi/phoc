@@ -7,6 +7,7 @@
 #include "server.h"
 
 #include "gtk-shell-client-protocol.h"
+#include "input-method-unstable-v2-client-protocol.h"
 #include "phoc-layer-shell-effects-unstable-v1-client-protocol.h"
 #include "wlr-foreign-toplevel-management-unstable-v1-client-protocol.h"
 #include "wlr-layer-shell-unstable-v1-client-protocol.h"
@@ -62,7 +63,9 @@ struct _PhocTestClientGlobals {
   struct wl_display                       *display;
   struct wl_compositor                    *compositor;
   struct wl_shm                           *shm;
+  struct wl_seat                          *seat;
   struct xdg_wm_base                      *xdg_shell;
+  struct zwp_input_method_manager_v2      *input_method_manager;
   struct xx_cutouts_manager_v1            *cutouts_manager;
   struct zwlr_layer_shell_v1              *layer_shell;
   struct zphoc_layer_shell_effects_v1     *layer_shell_effects;

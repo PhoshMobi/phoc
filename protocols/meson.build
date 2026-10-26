@@ -15,6 +15,7 @@ wayland_protocols = [
   [wl_protocol_dir, 'unstable/text-input/text-input-unstable-v3.xml'],
   [wl_protocol_dir, 'unstable/xdg-decoration/xdg-decoration-unstable-v1.xml'],
   ['gtk-shell.xml'],
+  ['input-method-unstable-v2.xml'],
   ['phoc-device-state-unstable-v1.xml'],
   ['phoc-foreign-toplevel-pidfd-v1.xml'],
   ['phoc-layer-shell-effects-unstable-v1.xml'],

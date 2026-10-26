@@ -11,6 +11,7 @@ License: GPL-3.0-or-later
 
 # Imported from wlroots
 Files:
+ protocols/input-method-unstable-v2.xml
  protocols/wlr-foreign-toplevel-management-unstable-v1.xml
  protocols/wlr-layer-shell-unstable-v1.xml
  protocols/wlr-output-power-management-unstable-v1.xml
