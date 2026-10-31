@@ -36,6 +36,7 @@ test_link_args = ['-fPIC']
 tests = [
   'client',
   'color-rect',
+  'input-method-relay',
   'keybindings',
   'layer-shell',
   'layer-shell-effects',
