@@ -5,6 +5,7 @@
  */
 
 #include "testlib.h"
+#include "testlib-layer-shell.h"
 #include "gtk-shell-client-protocol.h"
 
 typedef struct _PhocTestThumbnail
@@ -82,6 +83,93 @@ test_phosh_private_thumbnail_simple (void)
   g_assert_cmpstr (g_getenv ("WLR_RENDERER"), ==, "pixman");
 
   phoc_test_client_run (TEST_PHOC_CLIENT_TIMEOUT, &iface, GINT_TO_POINTER (FALSE));
+}
+
+/*
+ * The toplevel can be gone by the time the compositor handles
+ * `add_thumbnail_view` (e.g. an app closing while the overview opens). The
+ * client already allocated the thumbnail's id and will send requests on it so
+ * the compositor must still create the resource. Otherwise the client gets
+ * disconnected with "invalid object".
+ */
+static gboolean
+test_client_phosh_private_thumbnail_view_gone (PhocTestClientGlobals *globals, gpointer unused)
+{
+  PhocTestXdgToplevelSurface *toplevel;
+  PhocTestLayerSurface *layer_surface;
+  PhocTestForeignToplevel *foreign_toplevel;
+  struct zwlr_foreign_toplevel_handle_v1 *handle;
+  struct phosh_private_thumbnail *thumbnail;
+  struct wl_event_queue *queue;
+  const struct wl_interface *iface = NULL;
+  guint32 id, code;
+  int ret;
+
+  g_assert_cmpint (phosh_private_get_version (globals->phosh), >=,
+                   PHOSH_PRIVATE_ADD_THUMBNAIL_VIEW_SINCE_VERSION);
+
+  toplevel = phoc_test_xdg_toplevel_new_with_buffer (globals, 0, 0, "gone", 0xFF00FF00);
+  g_assert_nonnull (toplevel);
+  foreign_toplevel = toplevel->foreign_toplevel;
+  handle = foreign_toplevel->handle;
+
+  /* Park the toplevel handle's events on a queue. Our testlib
+   * destroys the handle on `closed`, the allows us to control when it
+   * happens. */
+  queue = wl_display_create_queue (globals->display);
+  wl_proxy_set_queue ((struct wl_proxy *)handle, queue);
+
+  layer_surface = phoc_test_layer_surface_new (globals, 0, 0, 0x00000000,
+                                               (ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP |
+                                                ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM |
+                                                ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
+                                                ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT),
+                                               -1);
+  g_assert_nonnull (layer_surface);
+
+  /* Close the xdg-toplevel, handle resource becomes inert */
+  phoc_test_xdg_toplevel_free (toplevel);
+  g_assert_cmpint (wl_display_roundtrip (globals->display), !=, -1);
+
+  thumbnail = phosh_private_add_thumbnail_view (globals->phosh, handle,
+                                                layer_surface->layer_surface);
+  g_assert_nonnull (thumbnail);
+  /* Set thumbnail properties where the toplevel handle is inert */
+  phosh_private_thumbnail_set_properties (thumbnail, 0, 0,
+                                          wl_fixed_from_double (1.0),
+                                          wl_fixed_from_double (1.0));
+
+  ret = wl_display_roundtrip (globals->display);
+  if (ret == -1) {
+    code = wl_display_get_protocol_error (globals->display, &iface, &id);
+    g_test_message ("Protocol error: %s@%u code %u, errno %d",
+                    iface ? iface->name : "(none)", id, code,
+                    wl_display_get_error (globals->display));
+  }
+  g_assert_cmpint (ret, !=, -1);
+
+  phosh_private_thumbnail_destroy (thumbnail);
+  g_assert_cmpint (wl_display_roundtrip (globals->display), !=, -1);
+
+  /* Deliver our parked `closed` event: this frees the handle and "proves"
+   * that the toplevel was already gone when we sent the request above.*/
+  g_assert_cmpint (wl_display_roundtrip_queue (globals->display, queue), !=, -1);
+  g_assert_cmpint (g_slist_index (globals->foreign_toplevels, foreign_toplevel), ==, -1);
+  wl_event_queue_destroy (queue);
+
+  phoc_test_layer_surface_free (layer_surface);
+  return TRUE;
+}
+
+static void
+test_phosh_private_thumbnail_view_gone (void)
+{
+  PhocTestClientIface iface = {
+    .client_run = test_client_phosh_private_thumbnail_view_gone,
+    .debug_flags = PHOC_SERVER_DEBUG_FLAG_DISABLE_ANIMATIONS,
+  };
+
+  phoc_test_client_run (TEST_PHOC_CLIENT_TIMEOUT, &iface, NULL);
 }
 
 static void
@@ -301,6 +389,7 @@ main (int argc, char *argv[])
   g_test_init (&argc, &argv, NULL);
 
   PHOC_TEST_ADD ("/phoc/phosh/thumbnail/simple", test_phosh_private_thumbnail_simple);
+  PHOC_TEST_ADD ("/phoc/phosh/thumbnail/view-gone", test_phosh_private_thumbnail_view_gone);
   PHOC_TEST_ADD ("/phoc/phosh/kbevents/simple", test_phosh_private_kbevents_simple);
   PHOC_TEST_ADD ("/phoc/phosh/startup-tracker/simple", test_phosh_private_startup_tracker_simple);
   return g_test_run ();
