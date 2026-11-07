@@ -48,6 +48,7 @@ tests = [
   'server',
   'timed-animation',
   'utils',
+  'workspace-manager',
   'xdg-decoration',
   'xdg-shell',
   'xx-cutouts',
