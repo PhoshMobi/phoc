@@ -279,6 +279,9 @@ phoc_workspace_insert_unmanaged (PhocWorkspace         *self,
   g_assert (PHOC_IS_WORKSPACE (self));
 
   g_queue_push_head (self->unmanaged, unmanaged);
+#ifdef PHOC_XWAYLAND
+  phoc_xwayland_unmanaged_damage_whole (unmanaged);
+#endif
 }
 
 /**

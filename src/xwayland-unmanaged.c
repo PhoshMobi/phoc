@@ -471,3 +471,12 @@ phoc_xwayland_unmanaged_is_mapped (PhocXWaylandUnmanaged *self)
 
   return !!(self->state & PHOC_XWAYLAND_SURFACE_STATE_MAPPED);
 }
+
+
+void
+phoc_xwayland_unmanaged_damage_whole (PhocXWaylandUnmanaged *self)
+{
+  g_assert (PHOC_IS_XWAYLAND_UNMANAGED (self));
+
+  phoc_xwayland_unmanaged_damage (self, TRUE);
+}
