@@ -83,6 +83,40 @@ phoc_workspace_insert_view (PhocWorkspace *self, PhocView *view)
 }
 
 /**
+ * phoc_workspace_append_view:
+ * @self: the workspace
+ * @view: the view to append
+ *
+ * Insert the view at the end of the queue of views so it appears
+ * below other views. Always-on-top views are still placed above
+ * regular views (but below other always-on-top views).
+ *
+ * See also [method@Workspace.insert_view].
+ */
+void
+phoc_workspace_append_view (PhocWorkspace *self, PhocView *view)
+{
+  GList *l = NULL;
+
+  g_assert (PHOC_IS_WORKSPACE (self));
+  g_assert (PHOC_IS_VIEW (view));
+
+  if (G_UNLIKELY (phoc_view_is_always_on_top (view))) {
+    for (l = self->views->head; l; l = l->next) {
+      PhocView *v = PHOC_VIEW (l->data);
+
+      if (!phoc_view_is_always_on_top (v))
+        break;
+    }
+  }
+
+  /* NULL sibling pushes to the end of the queue */
+  g_queue_insert_before (self->views, l, view);
+
+  phoc_view_damage_whole (view);
+}
+
+/**
  * phoc_workspace_move_view_to_top:
  * @self: the workspace
  * @view: a view

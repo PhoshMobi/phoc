@@ -34,6 +34,8 @@ typedef gboolean (*PhocWorkspaceViewIter)(PhocWorkspace *self, PhocView *view, g
 PhocWorkspace *         phoc_workspace_new                       (void);
 void                    phoc_workspace_insert_view               (PhocWorkspace *self,
                                                                   PhocView      *view);
+void                    phoc_workspace_append_view               (PhocWorkspace *self,
+                                                                  PhocView      *view);
 GQueue *                phoc_workspace_get_views                 (PhocWorkspace *self);
 gboolean                phoc_workspace_has_view                  (PhocWorkspace *self,
                                                                   PhocView      *view);
