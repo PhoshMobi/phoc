@@ -1,3 +1,12 @@
+phoc 0.59~rc1
+-------------
+Released November 2026
+* Mulitple fixes, including crash fixes.
+* Contributors:
+    * Guido Günther
+    * Sebastian Krzyszkowiak
+    * Xu Qianhui
+
 phoc 0.58.0
 ----------------
 Released October 2026
