@@ -1,3 +1,33 @@
+phoc (0.59~rc1) experimental; urgency=medium
+
+  [ Sebastian Krzyszkowiak ]
+  * xdg-toplevel: Guard against NULL wlr_surface in send_frame_done.
+    The view might have been unmapped since the idle callback was installed.
+    Fixes: 17d82ab351c8 ("xdg-surface: Send frame-done when Wayland event loop becomes idle")
+
+  [ Xu Qianhui ]
+  * input-method-relay: Fix keyboard-grab NULL deref.
+    Since 06275103f ("input-method-v2: Destroy keyboard grab before input
+    method") wlroots emits this signal with NULL data so use the grab
+    stored on the wlr_input_method instead.
+
+  [ Guido Günther ]
+  * input-method-relay: Add simple grab / release keyboard test.
+    Tests like this already catch such obvious regressions. We do that
+    as separate commit so the unfixed phoc can be easily tested by a
+    simple revert.
+  * phosh-private: Clamp alpha and scale.
+    Makes us more robust against a misbehaving client
+    Fixes: c9919cba2 ("phosh: Add interface to render thumbnail overlays for views")
+  * phosh-private: Create inert object when surfaces are gone.
+    The client got an id already. If one of the surfaces go destroyed it
+    sees an error and gets disconnected.
+    Fixes: c9919cba2 ("phosh: Add interface to render thumbnail overlays for views")
+  * phosh-private: Test inert thumbnail path.
+    Without the previous commit this fails with
+
+ -- Guido Günther <agx@sigxcpu.org>  Sun, 08 Nov 2026 15:24:49 +0100
+
 phoc (0.58.0) experimental; urgency=medium
 
   [ Guido Günther ]
