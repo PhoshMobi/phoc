@@ -611,7 +611,7 @@ thumbnail_handle_set_properties (struct wl_client   *wl_client,
   /* Damage the whole layer surface region: thumbnail may have moved, alpha changed */
   output = phoc_layer_surface_get_output (layer_surface);
   if (output)
-    phoc_output_damage_whole (output);
+    phoc_output_damage_from_layer_surface (output, layer_surface, TRUE);
 }
 
 
