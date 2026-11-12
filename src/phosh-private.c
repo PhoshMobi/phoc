@@ -11,7 +11,7 @@
 #include "phoc-config.h"
 
 #include "phoc-enums.h"
-#include "phosh-thumbnail.h"
+#include "phosh-thumbnail-private.h"
 #include "phosh-private.h"
 
 

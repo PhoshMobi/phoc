@@ -95,6 +95,7 @@ sources = files(
   'phosh-private.h',
   'phosh-thumbnail.c',
   'phosh-thumbnail.h',
+  'phosh-thumbnail-private.h',
   'pointer.c',
   'pointer.h',
   'render-private.h',

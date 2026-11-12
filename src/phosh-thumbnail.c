@@ -10,7 +10,7 @@
 
 #include "phoc-config.h"
 
-#include "phosh-thumbnail.h"
+#include "phosh-thumbnail-private.h"
 
 enum {
   PROP_0,
@@ -182,6 +182,89 @@ phoc_phosh_thumbnail_new (PhocView *view, PhocLayerSurface *layer_surface)
                        "view", view,
                        "layer-surface", layer_surface,
                        NULL);
+}
+
+float
+phoc_phosh_thumbnail_get_x (PhocPhoshThumbnail* self)
+{
+  g_assert (PHOC_IS_PHOSH_THUMBNAIL (self));
+
+  return self->x;
+}
+
+
+float
+phoc_phosh_thumbnail_get_y (PhocPhoshThumbnail* self)
+{
+  g_assert (PHOC_IS_PHOSH_THUMBNAIL (self));
+
+  return self->y;
+}
+
+
+float
+phoc_phosh_thumbnail_get_alpha (PhocPhoshThumbnail* self)
+{
+  g_assert (PHOC_IS_PHOSH_THUMBNAIL (self));
+
+  return self->alpha;
+}
+
+
+float
+phoc_phosh_thumbnail_get_scale (PhocPhoshThumbnail* self)
+{
+  g_assert (PHOC_IS_PHOSH_THUMBNAIL (self));
+
+  return self->scale;
+}
+
+/**
+ * phoc_phosh_thumbnail_get_view:
+ * @self: The thumbnail
+ *
+ * Get the view the thumbnail represents.
+ *
+ * Returns:(transfer none)(nullable): The view
+ */
+PhocView *
+phoc_phosh_thumbnail_get_view (PhocPhoshThumbnail* self)
+{
+  g_assert (PHOC_IS_PHOSH_THUMBNAIL (self));
+
+  return self->view;
+}
+
+/**
+ * phoc_phosh_thumbnail_get_layer_surface:
+ * @self: The thumbnail
+ *
+ * Get layer-surface the thumbnail is rendered on
+ *
+ * Returns:(transfer none)(nullable): The layer-surface
+ */
+PhocLayerSurface *
+phoc_phosh_thumbnail_get_layer_surface (PhocPhoshThumbnail* self)
+{
+  g_assert (PHOC_IS_PHOSH_THUMBNAIL (self));
+
+  return self->layer_surface;
+}
+
+
+void
+phoc_phosh_thumbnail_set_props (PhocPhoshThumbnail* self,
+                                float               x,
+                                float               y,
+                                float               scale,
+                                float               alpha)
+{
+  g_assert (PHOC_IS_PHOSH_THUMBNAIL (self));
+
+  self->x = x;
+  self->y = y;
+  self->scale = scale;
+  self->alpha = alpha;
 }
 
 /**

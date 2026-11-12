@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "view.h"
 #include "layer-surface.h"
 
 G_BEGIN_DECLS
@@ -35,7 +36,13 @@ typedef struct _PhocPhoshThumbnail {
   float alpha;
 } PhocPhoshThumbnail;
 
-PhocPhoshThumbnail *phoc_phosh_thumbnail_new (PhocView *view, PhocLayerSurface *layer_surface);
 PhocPhoshThumbnail *phoc_phosh_thumbnail_from_layer_surface (PhocLayerSurface *layer_surface);
+
+float               phoc_phosh_thumbnail_get_x (PhocPhoshThumbnail* self);
+float               phoc_phosh_thumbnail_get_y (PhocPhoshThumbnail* self);
+float               phoc_phosh_thumbnail_get_alpha (PhocPhoshThumbnail* self);
+float               phoc_phosh_thumbnail_get_scale (PhocPhoshThumbnail* self);
+PhocView *          phoc_phosh_thumbnail_get_view (PhocPhoshThumbnail* self);
+PhocLayerSurface *  phoc_phosh_thumbnail_get_layer_surface (PhocPhoshThumbnail* self);
 
 G_END_DECLS
