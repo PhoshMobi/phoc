@@ -93,6 +93,8 @@ sources = files(
   'phoc-types.h',
   'phosh-private.c',
   'phosh-private.h',
+  'phosh-thumbnail.c',
+  'phosh-thumbnail.h',
   'pointer.c',
   'pointer.h',
   'render-private.h',

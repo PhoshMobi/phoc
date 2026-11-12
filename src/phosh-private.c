@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2019,2021 Purism SPC
+ *               2022-2026 Phosh.mobi e.V.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  * Author: Guido Günther <agx@sigxcpu.org>
@@ -8,8 +9,11 @@
 #define G_LOG_DOMAIN "phoc-phosh-private"
 
 #include "phoc-config.h"
+
 #include "phoc-enums.h"
+#include "phosh-thumbnail.h"
 #include "phosh-private.h"
+
 
 #include <assert.h>
 #include <stdlib.h>
@@ -85,7 +89,7 @@ static PhocPhoshPrivateScreencopyFrame *  phoc_phosh_private_screencopy_frame_fr
   struct wl_resource *resource);
 static PhocPhoshPrivateStartupTracker *   phoc_phosh_private_startup_tracker_from_resource (
   struct wl_resource *resource);
-static PhocPhoshPrivateThumbnail *        phoc_phosh_private_thumbnail_from_resource (
+static PhocPhoshThumbnail *               phoc_phosh_private_thumbnail_from_resource (
   struct wl_resource *resource);
 
 #define PHOSH_PRIVATE_VERSION 8
@@ -572,7 +576,7 @@ handle_get_thumbnail (struct wl_client *client,
 
 
 static void
-on_thumbnail_view_surface_destroy (PhocView *view, PhocPhoshPrivateThumbnail *thumbnail)
+on_thumbnail_view_surface_destroy (PhocView *view, PhocPhoshThumbnail *thumbnail)
 {
   g_assert (PHOC_IS_VIEW (view));
 
@@ -582,8 +586,8 @@ on_thumbnail_view_surface_destroy (PhocView *view, PhocPhoshPrivateThumbnail *th
 
 
 static void
-thumbnail_layer_surface_destroy (PhocLayerSurface          *layer_surface,
-                                 PhocPhoshPrivateThumbnail *thumbnail)
+thumbnail_layer_surface_destroy (PhocLayerSurface   *layer_surface,
+                                 PhocPhoshThumbnail *thumbnail)
 {
   g_debug ("Thumbnail %p: layer surface %p went away", thumbnail, layer_surface);
 
@@ -600,7 +604,7 @@ thumbnail_handle_set_properties (struct wl_client   *wl_client,
                                  wl_fixed_t          scale,
                                  wl_fixed_t          alpha)
 {
-  PhocPhoshPrivateThumbnail *thumbnail =
+  PhocPhoshThumbnail *thumbnail =
     phoc_phosh_private_thumbnail_from_resource (thumbnail_resource);
   PhocOutput *output;
 
@@ -643,7 +647,7 @@ static const struct phosh_private_thumbnail_interface phoc_phosh_private_thumbna
 static void
 thumbnail_resource_destroy (struct wl_resource *resource)
 {
-  PhocPhoshPrivateThumbnail *thumbnail = phoc_phosh_private_thumbnail_from_resource (resource);
+  PhocPhoshThumbnail *thumbnail = phoc_phosh_private_thumbnail_from_resource (resource);
 
   if (thumbnail == NULL)
     return;
@@ -669,7 +673,7 @@ handle_add_thumbnail_view (struct wl_client   *wl_client,
                            struct wl_resource *toplevel_resource,
                            struct wl_resource *layer_surface_resource)
 {
-  PhocPhoshPrivateThumbnail *thumbnail;
+  PhocPhoshThumbnail *thumbnail;
   struct wlr_foreign_toplevel_handle_v1 *toplevel_handle;
   struct wlr_layer_surface_v1 *wlr_layer_surface;
   PhocView *view = NULL;
@@ -685,7 +689,7 @@ handle_add_thumbnail_view (struct wl_client   *wl_client,
   if (wlr_layer_surface && PHOC_IS_LAYER_SURFACE (wlr_layer_surface->data))
     layer_surface = wlr_layer_surface->data;
 
-  thumbnail = g_new0 (PhocPhoshPrivateThumbnail, 1);
+  thumbnail = g_new0 (PhocPhoshThumbnail, 1);
   thumbnail->view = view;
   thumbnail->layer_surface = layer_surface;
   thumbnail->scale = 1.0;
@@ -899,29 +903,12 @@ phoc_phosh_private_startup_tracker_from_resource (struct wl_resource *resource)
 }
 
 
-static PhocPhoshPrivateThumbnail *
+static PhocPhoshThumbnail *
 phoc_phosh_private_thumbnail_from_resource (struct wl_resource *resource)
 {
   g_assert (wl_resource_instance_of (resource, &phosh_private_thumbnail_interface,
                                      &phoc_phosh_private_thumbnail_impl));
   return wl_resource_get_user_data (resource);
-}
-
-
-/**
- * phoc_phosh_private_thumbnail_from_layer_surface: (skip)
- * @layer_surface: The layer surface
- *
- * Get the thumbnail attached to the given layer surface.
- *
- * Returns: (transfer none) (nullable): The thumbnail or %NULL if none
- */
-PhocPhoshPrivateThumbnail *
-phoc_phosh_private_thumbnail_from_layer_surface (PhocLayerSurface *layer_surface)
-{
-  g_return_val_if_fail (PHOC_IS_LAYER_SURFACE (layer_surface), NULL);
-
-  return g_object_get_data (G_OBJECT (layer_surface), "phoc-thumbnail");
 }
 
 

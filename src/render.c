@@ -18,7 +18,7 @@
 #include "cursor.h"
 #include "input.h"
 #include "layer-surface.h"
-#include "phosh-private.h"
+#include "phosh-thumbnail.h"
 #include "render-private.h"
 #include "render.h"
 #include "seat.h"
@@ -98,7 +98,7 @@ struct render_view_data {
   struct wlr_render_pass *render_pass;
 };
 
-static void render_thumbnail_overlay (PhocPhoshPrivateThumbnail *thumbnail, PhocRenderContext *ctx);
+static void render_thumbnail_overlay (PhocPhoshThumbnail *thumbnail, PhocRenderContext *ctx);
 
 static void
 recreate_renderer (void *data)
@@ -327,7 +327,7 @@ render_layer (enum zwlr_layer_shell_v1_layer layer, PhocRenderContext *ctx)
 
   for (GList *l = layer_surfaces->head; l; l = l->next) {
     PhocLayerSurface *layer_surface = PHOC_LAYER_SURFACE (l->data);
-    PhocPhoshPrivateThumbnail *thumbnail;
+    PhocPhoshThumbnail *thumbnail;
 
     ctx->alpha = phoc_layer_surface_get_alpha (layer_surface);
     phoc_output_layer_surface_for_each_surface (ctx->output,
@@ -337,7 +337,7 @@ render_layer (enum zwlr_layer_shell_v1_layer layer, PhocRenderContext *ctx)
 
     /* Compositor rendered thumbnail overlays are drawn on top of the
      * layer surface's own (transparent) content. */
-    thumbnail = phoc_phosh_private_thumbnail_from_layer_surface (layer_surface);
+    thumbnail = phoc_phosh_thumbnail_from_layer_surface (layer_surface);
     if (thumbnail)
       render_thumbnail_overlay (thumbnail, ctx);
   }
@@ -345,10 +345,10 @@ render_layer (enum zwlr_layer_shell_v1_layer layer, PhocRenderContext *ctx)
 
 
 typedef struct {
-  PhocOutput        *output;
-  PhocPhoshPrivateThumbnail *thumbnail;
-  PhocRenderContext *ctx;
-  struct wlr_box     geo;
+  PhocOutput         *output;
+  PhocPhoshThumbnail *thumbnail;
+  PhocRenderContext  *ctx;
+  struct wlr_box      geo;
 } ThumbnailRenderData;
 
 static void
@@ -397,7 +397,7 @@ render_thumbnail_surface_iterator (struct wlr_surface *surface, int sx, int sy, 
 
 
 static void
-render_thumbnail_overlay (PhocPhoshPrivateThumbnail *thumbnail, PhocRenderContext *ctx)
+render_thumbnail_overlay (PhocPhoshThumbnail *thumbnail, PhocRenderContext *ctx)
 {
   PhocOutput *output = ctx->output;
   PhocView *view = thumbnail->view;
