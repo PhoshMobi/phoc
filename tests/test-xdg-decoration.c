@@ -14,7 +14,7 @@ static gboolean
 test_client_xdg_decoration_server_side (PhocTestClientGlobals *globals, gpointer data)
 {
   PhocTestXdgToplevelSurface *xs;
-  guint32 color = 0xFF00FF00;
+  guint32 color = PHOC_TEST_OPAQUE | PHOC_TEST_GREEN;
   struct zxdg_toplevel_decoration_v1 *toplevel_decoration;
 
   xs = phoc_test_xdg_toplevel_new (globals, 0, 0, "server-side-decoration");

@@ -56,7 +56,10 @@ test_client_phosh_private_thumbnail_simple (PhocTestClientGlobals *globals, gpoi
   PhocTestXdgToplevelSurface *toplevel_green;
   PhocTestScreencopyFrame *green_thumbnail;
 
-  toplevel_green = phoc_test_xdg_toplevel_new_with_buffer (globals, 0, 0, "green", 0xFF00FF00);
+  toplevel_green = phoc_test_xdg_toplevel_new_with_buffer (globals,
+                                                           0, 0,
+                                                           "green",
+                                                           PHOC_TEST_OPAQUE | PHOC_TEST_GREEN);
   g_assert_nonnull (toplevel_green);
   phoc_assert_screenshot (globals, "test-phosh-private-thumbnail-simple-1.png");
 
@@ -108,7 +111,10 @@ test_client_phosh_private_thumbnail_view_gone (PhocTestClientGlobals *globals, g
   g_assert_cmpint (phosh_private_get_version (globals->phosh), >=,
                    PHOSH_PRIVATE_ADD_THUMBNAIL_VIEW_SINCE_VERSION);
 
-  toplevel = phoc_test_xdg_toplevel_new_with_buffer (globals, 0, 0, "gone", 0xFF00FF00);
+  toplevel = phoc_test_xdg_toplevel_new_with_buffer (globals,
+                                                     0, 0,
+                                                     "gone",
+                                                     PHOC_TEST_OPAQUE | PHOC_TEST_GREEN);
   g_assert_nonnull (toplevel);
   foreign_toplevel = toplevel->foreign_toplevel;
   handle = foreign_toplevel->handle;

@@ -248,7 +248,7 @@ const struct xx_cutouts_v1_listener cutouts_unhandled_listener = {
 static gboolean
 test_client_xx_cutouts_unhandled_client_run (PhocTestClientGlobals *globals, gpointer data)
 {
-  guint32 color = 0xFF00FF00;
+  guint32 color = PHOC_TEST_OPAQUE | PHOC_TEST_GREEN;
   struct xx_cutouts_v1 *cutouts;
   PhocTestXdgToplevelSurface *xs;
   g_autoptr (CutoutsInfo) info = cutouts_info_new (globals);
@@ -324,7 +324,7 @@ test_client_xx_cutouts_common_client_run (PhocTestClientGlobals *globals, gpoint
 {
   struct xx_cutouts_v1 *cutouts;
   PhocTestXdgToplevelSurface *xs;
-  guint32 color = 0xFF00FF00;
+  guint32 color = PHOC_TEST_OPAQUE | PHOC_TEST_GREEN;
   CutoutsInfo *info = data;
 
   xs = phoc_test_xdg_toplevel_new_with_buffer (globals, 0, 0, "xx-cutouts-common", color);

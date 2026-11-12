@@ -277,12 +277,14 @@ test_client_layer_shell_anchor (PhocTestClientGlobals *globals, gpointer data)
 {
   PhocTestLayerSurface *ls_green, *ls_red;
 
-  ls_green = phoc_test_layer_surface_new (globals, WIDTH, HEIGHT, 0xFF00FF00,
+  ls_green = phoc_test_layer_surface_new (globals, WIDTH, HEIGHT,
+                                          PHOC_TEST_OPAQUE | PHOC_TEST_GREEN,
                                           ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP, 0);
   g_assert_nonnull (ls_green);
   phoc_assert_screenshot (globals, "test-layer-shell-anchor-1.png");
 
-  ls_red = phoc_test_layer_surface_new (globals, WIDTH * 2, HEIGHT * 2, 0xFFFF0000,
+  ls_red = phoc_test_layer_surface_new (globals, WIDTH * 2, HEIGHT * 2,
+                                        PHOC_TEST_OPAQUE | PHOC_TEST_RED,
                                         ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM, 0);
   g_assert_nonnull (ls_red);
   phoc_assert_screenshot (globals, "test-layer-shell-anchor-2.png");
@@ -308,7 +310,8 @@ test_client_layer_shell_exclusive_zone (PhocTestClientGlobals *globals, gpointer
 {
   PhocTestLayerSurface *ls_green, *ls_red;
 
-  ls_green = phoc_test_layer_surface_new (globals, 0, HEIGHT, 0xFF00FF00,
+  ls_green = phoc_test_layer_surface_new (globals, 0, HEIGHT,
+                                          PHOC_TEST_OPAQUE | PHOC_TEST_GREEN,
                                           ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
                                           | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
                                           | ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT,
@@ -316,7 +319,8 @@ test_client_layer_shell_exclusive_zone (PhocTestClientGlobals *globals, gpointer
   g_assert_nonnull (ls_green);
   phoc_assert_screenshot (globals, "test-layer-shell-exclusive-zone-1.png");
 
-  ls_red = phoc_test_layer_surface_new (globals, WIDTH * 2, HEIGHT * 2, 0xFFFF0000,
+  ls_red = phoc_test_layer_surface_new (globals, WIDTH * 2, HEIGHT * 2,
+                                        PHOC_TEST_OPAQUE | PHOC_TEST_RED,
                                         ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP, 0);
   g_assert_nonnull (ls_red);
   phoc_assert_screenshot (globals, "test-layer-shell-exclusive-zone-2.png");
@@ -342,14 +346,16 @@ test_client_layer_shell_set_layer (PhocTestClientGlobals *globals, gpointer data
 {
   PhocTestLayerSurface *ls_green, *ls_red;
 
-  ls_green = phoc_test_layer_surface_new (globals, 0, HEIGHT, 0xFF00FF00,
+  ls_green = phoc_test_layer_surface_new (globals, 0, HEIGHT,
+                                          PHOC_TEST_OPAQUE | PHOC_TEST_GREEN,
                                           ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
                                           | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
                                           | ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT,
                                           0);
   g_assert_nonnull (ls_green);
 
-  ls_red = phoc_test_layer_surface_new (globals, WIDTH * 2, HEIGHT * 2, 0xFFFF0000,
+  ls_red = phoc_test_layer_surface_new (globals, WIDTH * 2, HEIGHT * 2,
+                                        PHOC_TEST_OPAQUE | PHOC_TEST_RED,
                                         ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP, 0);
   g_assert_nonnull (ls_red);
 
@@ -385,13 +391,17 @@ test_client_layer_shell_popup (PhocTestClientGlobals *globals, gpointer data)
   PhocTestLayerSurface *ls_green;
   PhocTestPopup *popup;
 
-  ls_green = phoc_test_layer_surface_new (globals, 0, HEIGHT, 0xFF00FF00,
+  ls_green = phoc_test_layer_surface_new (globals, 0, HEIGHT,
+                                          PHOC_TEST_OPAQUE | PHOC_TEST_GREEN,
                                           ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
                                           | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
                                           | ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT,
                                           0);
   g_assert_nonnull (ls_green);
-  popup = phoc_test_popup_new (globals, 10, 10, 100, 100, 0xFF00FF00, ls_green);
+  popup = phoc_test_popup_new (globals,
+                               10, 10, 100, 100,
+                               PHOC_TEST_OPAQUE | PHOC_TEST_GREEN,
+                               ls_green);
   g_assert_nonnull (popup);
 
   phoc_test_popup_reposition (globals, popup);
