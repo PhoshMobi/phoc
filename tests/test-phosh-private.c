@@ -308,6 +308,85 @@ test_phosh_private_thumbnail_view_damage (void)
 }
 
 
+/* Make sure the thumbnail gets clipped to the layersurface */
+static gboolean
+test_client_phosh_private_thumbnail_move_damage (PhocTestClientGlobals *globals, gpointer unused)
+{
+  PhocTestXdgToplevelSurface *toplevel;
+  PhocTestLayerSurface *layer_surface;
+  struct phosh_private_thumbnail *thumbnail;
+  PhocTestBuffer *screenshot;
+
+  toplevel = phoc_test_xdg_toplevel_new_with_buffer (globals,
+                                                     THUMBNAIL_TEST_VIEW_WIDTH,
+                                                     THUMBNAIL_TEST_VIEW_HEIGHT,
+                                                     "thumbnail-move",
+                                                     PHOC_TEST_OPAQUE | PHOC_TEST_RED);
+  g_assert_nonnull (toplevel);
+  g_assert_cmpuint (toplevel->width, ==, THUMBNAIL_TEST_VIEW_WIDTH);
+  g_assert_cmpuint (toplevel->height, ==, THUMBNAIL_TEST_VIEW_HEIGHT);
+
+  layer_surface = phoc_test_layer_surface_new (globals, 300, 300,
+                                               PHOC_TEST_OPAQUE | PHOC_TEST_BLACK,
+                                               (ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP |
+                                                ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT),
+                                               -1);
+  g_assert_nonnull (layer_surface);
+  /* Move to 15,20 to check offset */
+  zwlr_layer_surface_v1_set_margin (layer_surface->layer_surface, 20, 0, 0, 15);
+  wl_surface_commit (layer_surface->wl_surface);
+  g_assert_cmpint (wl_display_roundtrip (globals->display), !=, -1);
+
+  thumbnail = phoc_test_thumbnail_add (globals, toplevel, layer_surface);
+
+  /* Test layer-surface offset */
+  /* Due to the layers-surface offset thumbnail ends up at 265,70 - 365,270 */
+  phoc_test_thumbnail_set_properties (globals, thumbnail, 250, 50, 1.0, 0.0);
+  screenshot = phoc_test_client_capture_output (globals, &globals->output);
+  /* Inside the layer surface */
+  g_assert_cmphex (phoc_test_thumbnail_get_pixel (screenshot, 290, 150), ==, PHOC_TEST_RED);
+  /* Only covered if the thumbnail is offset by the layer surface's y (20) */
+  g_assert_cmphex (phoc_test_thumbnail_get_pixel (screenshot, 290, 260), ==, PHOC_TEST_RED);
+  /* Would only be covered if the thumbnail is not offset by the layer surface's x */
+  g_assert_cmphex (phoc_test_thumbnail_get_pixel (screenshot, 255, 150), ==, PHOC_TEST_BLACK);
+  /* Inside the thumbnail's box but outside of the layer surface -> clipped */
+  g_assert_cmphex (phoc_test_thumbnail_get_pixel (screenshot, 340, 150), ==, PHOC_TEST_BLACK);
+  phoc_test_buffer_free (screenshot);
+
+  /* Test thumbnail move */
+  /* Move to 25,30 - 75,130, fully inside the layer surface */
+  phoc_test_thumbnail_set_properties (globals, thumbnail, 10, 10, 0.5, 0.0);
+  screenshot = phoc_test_client_capture_output (globals, &globals->output);
+  g_assert_cmphex (phoc_test_thumbnail_get_pixel (screenshot, 50, 80), ==, PHOC_TEST_RED);
+  /* old position inside the layer surface */
+  g_assert_cmphex (phoc_test_thumbnail_get_pixel (screenshot, 290, 150), ==, PHOC_TEST_BLACK);
+  /* old position: outside of the layer surface */
+  g_assert_cmphex (phoc_test_thumbnail_get_pixel (screenshot, 340, 150), ==, PHOC_TEST_BLACK);
+  phoc_test_buffer_free (screenshot);
+
+  phosh_private_thumbnail_destroy (thumbnail);
+  g_assert_cmpint (wl_display_roundtrip (globals->display), !=, -1);
+  phoc_test_layer_surface_free (layer_surface);
+  phoc_test_xdg_toplevel_free (toplevel);
+  phoc_assert_screenshot (globals, "empty.png");
+
+  return TRUE;
+}
+
+
+static void
+test_phosh_private_thumbnail_move_damage (void)
+{
+  PhocTestClientIface iface = {
+    .server_prepare = test_client_phosh_private_thumbnail_server_prepare,
+    .client_run = test_client_phosh_private_thumbnail_move_damage,
+    .debug_flags = PHOC_SERVER_DEBUG_FLAG_DISABLE_ANIMATIONS,
+  };
+
+  phoc_test_client_run (TEST_PHOC_CLIENT_TIMEOUT, &iface, NULL);
+}
+
+
 static void
 keyboard_event_handle_grab_failed (void                                *data,
                                    struct phosh_private_keyboard_event *kbevent,
@@ -529,6 +608,7 @@ main (int argc, char *argv[])
   PHOC_TEST_ADD ("/phoc/phosh/thumbnail/view-gone", test_phosh_private_thumbnail_view_gone);
   /* Compositor side rendered add_thumbnail_view / phosh_private_thumbnail interface */
   PHOC_TEST_ADD ("/phoc/phosh/thumbnail/view-damage", test_phosh_private_thumbnail_view_damage);
+  PHOC_TEST_ADD ("/phoc/phosh/thumbnail/move-damage", test_phosh_private_thumbnail_move_damage);
   PHOC_TEST_ADD ("/phoc/phosh/kbevents/simple", test_phosh_private_kbevents_simple);
   PHOC_TEST_ADD ("/phoc/phosh/startup-tracker/simple", test_phosh_private_startup_tracker_simple);
   return g_test_run ();

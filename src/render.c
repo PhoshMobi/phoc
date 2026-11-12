@@ -348,6 +348,7 @@ typedef struct {
   PhocOutput         *output;
   PhocPhoshThumbnail *thumbnail;
   PhocRenderContext  *ctx;
+  struct wlr_box      layer_geo;
   struct wlr_box      geo;
 } ThumbnailRenderData;
 
@@ -373,12 +374,14 @@ render_thumbnail_surface_iterator (struct wlr_surface *surface, int sx, int sy, 
    * offset and scaled relative to it */
   scale = phoc_phosh_thumbnail_get_scale (data->thumbnail);
   struct wlr_box dst_box = {
-    .x = phoc_phosh_thumbnail_get_x (data->thumbnail) + (sx - data->geo.x) * scale,
-    .y = phoc_phosh_thumbnail_get_y (data->thumbnail) + (sy - data->geo.y) * scale,
+    .x = (data->layer_geo.x +
+          phoc_phosh_thumbnail_get_x (data->thumbnail) + (sx - data->geo.x) * scale),
+    .y = (data->layer_geo.y +
+          phoc_phosh_thumbnail_get_y (data->thumbnail) + (sy - data->geo.y) * scale),
     .width = surface->current.width * scale,
     .height = surface->current.height * scale,
   };
-  struct wlr_box clip_box = dst_box;
+  struct wlr_box clip_box = data->layer_geo;
 
   phoc_utils_scale_box (&dst_box, wlr_output->scale);
   phoc_output_transform_box (data->output, &dst_box);
@@ -425,6 +428,7 @@ render_thumbnail_overlay (PhocPhoshThumbnail *thumbnail, PhocRenderContext *ctx)
   ThumbnailRenderData data = {
     .output = output,
     .thumbnail = thumbnail,
+    .layer_geo = phoc_layer_surface_get_geometry (layer_surface),
     .ctx = ctx,
     .geo = geo,
   };
