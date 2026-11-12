@@ -35,7 +35,6 @@ typedef enum {
  * depth/position anchor) at the transform provided by the client.
  */
 typedef struct _PhocPhoshPrivateThumbnail {
-  struct wl_resource *resource;
   PhocView *view;
   PhocLayerSurface   *layer_surface;
 

@@ -648,7 +648,7 @@ thumbnail_resource_destroy (struct wl_resource *resource)
   if (thumbnail == NULL)
     return;
 
-  g_debug ("Destroying thumbnail %p (res %p)", thumbnail, thumbnail->resource);
+  g_debug ("Destroying thumbnail %p (res %p)", thumbnail, resource);
 
   if (thumbnail->view)
     g_signal_handlers_disconnect_by_data (thumbnail->view, thumbnail);
@@ -658,7 +658,6 @@ thumbnail_resource_destroy (struct wl_resource *resource)
     g_signal_handlers_disconnect_by_data (thumbnail->layer_surface, thumbnail);
   }
 
-  wl_resource_set_user_data (thumbnail->resource, NULL);
   g_free (thumbnail);
 }
 
@@ -675,6 +674,7 @@ handle_add_thumbnail_view (struct wl_client   *wl_client,
   struct wlr_layer_surface_v1 *wlr_layer_surface;
   PhocView *view = NULL;
   PhocLayerSurface *layer_surface = NULL;
+  struct wl_resource *resource;
 
   /* Create inert resource when object is already gone */
   toplevel_handle = wl_resource_get_user_data (toplevel_resource);
@@ -691,19 +691,19 @@ handle_add_thumbnail_view (struct wl_client   *wl_client,
   thumbnail->scale = 1.0;
   thumbnail->alpha = 1.0;
 
-  thumbnail->resource = wl_resource_create (wl_client,
-                                            &phosh_private_thumbnail_interface,
-                                            wl_resource_get_version (phosh_private_resource),
-                                            id);
-  if (thumbnail->resource == NULL) {
+  resource = wl_resource_create (wl_client,
+                                 &phosh_private_thumbnail_interface,
+                                 wl_resource_get_version (phosh_private_resource),
+                                 id);
+  if (resource == NULL) {
     g_free (thumbnail);
     wl_client_post_no_memory (wl_client);
     return;
   }
 
   g_debug ("New thumbnail %p (res %p) for view %p on layer surface %p",
-           thumbnail, thumbnail->resource, view, layer_surface);
-  wl_resource_set_implementation (thumbnail->resource,
+           thumbnail, resource, view, layer_surface);
+  wl_resource_set_implementation (resource,
                                   &phoc_phosh_private_thumbnail_impl,
                                   thumbnail,
                                   thumbnail_resource_destroy);
