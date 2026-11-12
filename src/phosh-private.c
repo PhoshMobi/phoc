@@ -581,29 +581,35 @@ thumbnail_handle_set_properties (struct wl_client   *wl_client,
                                  int32_t             x,
                                  int32_t             y,
                                  wl_fixed_t          scale,
-                                 wl_fixed_t          alpha)
+                                 wl_fixed_t          alpha_)
 {
   PhocPhoshThumbnail *thumbnail =
     phoc_phosh_private_thumbnail_from_resource (thumbnail_resource);
   PhocOutput *output;
+  PhocView *view;
+  PhocLayerSurface *layer_surface;
+  float alpha;
 
-  g_return_if_fail (thumbnail);
+  g_assert (PHOC_IS_PHOSH_THUMBNAIL (thumbnail));
 
-  thumbnail->x = x;
-  thumbnail->y = y;
-  thumbnail->scale = MAX (0.0, wl_fixed_to_double (scale));
-  thumbnail->alpha = CLAMP (wl_fixed_to_double (alpha), 0.0, 1.0);
+  alpha = CLAMP (wl_fixed_to_double (alpha_), 0.0, 1.0);
+  phoc_phosh_thumbnail_set_props (thumbnail,
+                                  x, y,
+                                  MAX (0.0, wl_fixed_to_double (scale)),
+                                  alpha);
 
-  if (thumbnail->layer_surface == NULL)
+  layer_surface = phoc_phosh_thumbnail_get_layer_surface (thumbnail);
+  if (layer_surface == NULL)
     return;
 
-  if (thumbnail->view == NULL)
+  view = phoc_phosh_thumbnail_get_view (thumbnail);
+  if (view == NULL)
     return;
 
-  phoc_layer_surface_set_alpha (thumbnail->layer_surface, thumbnail->alpha);
+  phoc_layer_surface_set_alpha (layer_surface, alpha);
 
   /* Damage the whole layer surface region: thumbnail may have moved, alpha changed */
-  output = phoc_layer_surface_get_output (thumbnail->layer_surface);
+  output = phoc_layer_surface_get_output (layer_surface);
   if (output)
     phoc_output_damage_whole (output);
 }
