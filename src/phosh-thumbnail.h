@@ -15,27 +15,6 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE (PhocPhoshThumbnail, phoc_phosh_thumbnail, PHOC, PHOSH_THUMBNAIL, GObject)
 
-/**
- * PhocPhoshThumbnail:
- *
- * A compositor rendered thumbnail of a [type@View] attached to a
- * [type@LayerSurface].
- *
- * The view's content is rendered onto the layer surface (which acts as a
- * depth/position anchor) at the transform provided by the client.
- */
-typedef struct _PhocPhoshThumbnail {
-  GObject           parent;
-
-  PhocView         *view;
-  PhocLayerSurface *layer_surface;
-
-  float x;
-  float y;
-  float scale;
-  float alpha;
-} PhocPhoshThumbnail;
-
 PhocPhoshThumbnail *phoc_phosh_thumbnail_from_layer_surface (PhocLayerSurface *layer_surface);
 
 float               phoc_phosh_thumbnail_get_x (PhocPhoshThumbnail* self);

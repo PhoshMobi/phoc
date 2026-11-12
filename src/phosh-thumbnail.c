@@ -20,6 +20,27 @@ enum {
 };
 static GParamSpec *props[LAST_PROP];
 
+/**
+ * PhocPhoshThumbnail:
+ *
+ * A compositor rendered thumbnail of a [type@View] attached to a
+ * [type@LayerSurface].
+ *
+ * The view's content is rendered onto the layer surface (which acts as a
+ * depth/position anchor) at the transform provided by the client.
+ */
+typedef struct _PhocPhoshThumbnail {
+  GObject   parent;
+
+  PhocView *view;
+  PhocLayerSurface *layer_surface;
+
+  float     x;
+  float     y;
+  float     scale;
+  float     alpha;
+} PhocPhoshThumbnail;
+
 G_DEFINE_TYPE (PhocPhoshThumbnail, phoc_phosh_thumbnail, G_TYPE_OBJECT)
 
 
