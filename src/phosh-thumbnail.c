@@ -55,6 +55,23 @@ on_view_surface_destroy (PhocPhoshThumbnail *self, PhocView *view)
 
 
 static void
+on_view_damage_apply (PhocPhoshThumbnail *self, gboolean whole, PhocView *view)
+{
+  PhocOutput *output;
+
+  if (self->layer_surface == NULL)
+    return;
+
+  output = phoc_layer_surface_get_output (self->layer_surface);
+  if (output == NULL)
+    return;
+
+  /* TODO: We overdamage by a fair amount here, should use iterator to collect damage */
+  phoc_output_damage_from_layer_surface (output, self->layer_surface, TRUE);
+}
+
+
+static void
 set_view (PhocPhoshThumbnail *self, PhocView *view)
 {
   g_assert (self->view == NULL);
@@ -68,6 +85,10 @@ set_view (PhocPhoshThumbnail *self, PhocView *view)
   g_signal_connect_swapped (view,
                             "surface-destroy",
                             G_CALLBACK (on_view_surface_destroy),
+                            self);
+  g_signal_connect_swapped (view,
+                            "apply-damage",
+                            G_CALLBACK (on_view_damage_apply),
                             self);
 }
 
