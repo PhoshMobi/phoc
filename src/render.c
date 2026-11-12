@@ -357,7 +357,7 @@ render_thumbnail_surface_iterator (struct wlr_surface *surface, int sx, int sy, 
   ThumbnailRenderData *data = _data;
   PhocRenderContext *ctx = data->ctx;
   struct wlr_output *wlr_output = data->output->wlr_output;
-  float alpha = 1.0;
+  float scale, alpha = 1.0;
 
   if (!wlr_surface_has_buffer (surface))
     return;
@@ -371,11 +371,12 @@ render_thumbnail_surface_iterator (struct wlr_surface *surface, int sx, int sy, 
 
   /* The view's geometry top-left is mapped to (x, y), everything else is
    * offset and scaled relative to it */
+  scale = phoc_phosh_thumbnail_get_scale (data->thumbnail);
   struct wlr_box dst_box = {
-    .x = data->thumbnail->x + (sx - data->geo.x) * data->thumbnail->scale,
-    .y = data->thumbnail->y + (sy - data->geo.y) * data->thumbnail->scale,
-    .width = surface->current.width * data->thumbnail->scale,
-    .height = surface->current.height * data->thumbnail->scale,
+    .x = phoc_phosh_thumbnail_get_x (data->thumbnail) + (sx - data->geo.x) * scale,
+    .y = phoc_phosh_thumbnail_get_y (data->thumbnail) + (sy - data->geo.y) * scale,
+    .width = surface->current.width * scale,
+    .height = surface->current.height * scale,
   };
   struct wlr_box clip_box = dst_box;
 
@@ -400,18 +401,19 @@ static void
 render_thumbnail_overlay (PhocPhoshThumbnail *thumbnail, PhocRenderContext *ctx)
 {
   PhocOutput *output = ctx->output;
-  PhocView *view = thumbnail->view;
+  PhocView *view = phoc_phosh_thumbnail_get_view (thumbnail);
+  PhocLayerSurface *layer_surface = phoc_phosh_thumbnail_get_layer_surface (thumbnail);
   float fade;
 
   if (view == NULL || view->wlr_surface == NULL)
     return;
 
-  if (thumbnail->layer_surface == NULL)
+  if (layer_surface == NULL)
     return;
 
   /* The fade (a fullscreen black rect) is driven by the layer surface's
    * alpha which is set by the client via set_properties */
-  fade = phoc_layer_surface_get_alpha (thumbnail->layer_surface);
+  fade = phoc_layer_surface_get_alpha (layer_surface);
   wlr_render_pass_add_rect (ctx->render_pass, &(struct wlr_render_rect_options){
     .color = { 0, 0, 0, fade },
     .clip = ctx->damage,
