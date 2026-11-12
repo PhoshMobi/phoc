@@ -10,6 +10,10 @@
 
 G_BEGIN_DECLS
 
+#define PHOC_TYPE_PHOSH_THUMBNAIL (phoc_phosh_thumbnail_get_type ())
+
+G_DECLARE_FINAL_TYPE (PhocPhoshThumbnail, phoc_phosh_thumbnail, PHOC, PHOSH_THUMBNAIL, GObject)
+
 /**
  * PhocPhoshThumbnail:
  *
@@ -20,6 +24,8 @@ G_BEGIN_DECLS
  * depth/position anchor) at the transform provided by the client.
  */
 typedef struct _PhocPhoshThumbnail {
+  GObject           parent;
+
   PhocView         *view;
   PhocLayerSurface *layer_surface;
 
@@ -29,6 +35,7 @@ typedef struct _PhocPhoshThumbnail {
   float alpha;
 } PhocPhoshThumbnail;
 
+PhocPhoshThumbnail *phoc_phosh_thumbnail_new (PhocView *view, PhocLayerSurface *layer_surface);
 PhocPhoshThumbnail *phoc_phosh_thumbnail_from_layer_surface (PhocLayerSurface *layer_surface);
 
 G_END_DECLS

@@ -576,27 +576,6 @@ handle_get_thumbnail (struct wl_client *client,
 
 
 static void
-on_thumbnail_view_surface_destroy (PhocView *view, PhocPhoshThumbnail *thumbnail)
-{
-  g_assert (PHOC_IS_VIEW (view));
-
-  g_signal_handlers_disconnect_by_data (thumbnail->view, thumbnail);
-  thumbnail->view = NULL;
-}
-
-
-static void
-thumbnail_layer_surface_destroy (PhocLayerSurface   *layer_surface,
-                                 PhocPhoshThumbnail *thumbnail)
-{
-  g_debug ("Thumbnail %p: layer surface %p went away", thumbnail, layer_surface);
-
-  g_signal_handlers_disconnect_by_data (layer_surface, thumbnail);
-  thumbnail->layer_surface = NULL;
-}
-
-
-static void
 thumbnail_handle_set_properties (struct wl_client   *wl_client,
                                  struct wl_resource *thumbnail_resource,
                                  int32_t             x,
@@ -654,15 +633,7 @@ thumbnail_resource_destroy (struct wl_resource *resource)
 
   g_debug ("Destroying thumbnail %p (res %p)", thumbnail, resource);
 
-  if (thumbnail->view)
-    g_signal_handlers_disconnect_by_data (thumbnail->view, thumbnail);
-
-  if (thumbnail->layer_surface) {
-    g_object_set_data (G_OBJECT (thumbnail->layer_surface), "phoc-thumbnail", NULL);
-    g_signal_handlers_disconnect_by_data (thumbnail->layer_surface, thumbnail);
-  }
-
-  g_free (thumbnail);
+  g_object_unref (thumbnail);
 }
 
 
@@ -689,18 +660,13 @@ handle_add_thumbnail_view (struct wl_client   *wl_client,
   if (wlr_layer_surface && PHOC_IS_LAYER_SURFACE (wlr_layer_surface->data))
     layer_surface = wlr_layer_surface->data;
 
-  thumbnail = g_new0 (PhocPhoshThumbnail, 1);
-  thumbnail->view = view;
-  thumbnail->layer_surface = layer_surface;
-  thumbnail->scale = 1.0;
-  thumbnail->alpha = 1.0;
-
+  thumbnail = phoc_phosh_thumbnail_new (view, layer_surface);
   resource = wl_resource_create (wl_client,
                                  &phosh_private_thumbnail_interface,
                                  wl_resource_get_version (phosh_private_resource),
                                  id);
   if (resource == NULL) {
-    g_free (thumbnail);
+    g_object_unref (thumbnail);
     wl_client_post_no_memory (wl_client);
     return;
   }
@@ -711,19 +677,6 @@ handle_add_thumbnail_view (struct wl_client   *wl_client,
                                   &phoc_phosh_private_thumbnail_impl,
                                   thumbnail,
                                   thumbnail_resource_destroy);
-
-  if (layer_surface) {
-    g_object_set_data (G_OBJECT (layer_surface), "phoc-thumbnail", thumbnail);
-    g_signal_connect (layer_surface,
-                      "destroy",
-                      G_CALLBACK (thumbnail_layer_surface_destroy),
-                      thumbnail);
-  }
-
-  if (view) {
-    g_signal_connect (view, "surface-destroy", G_CALLBACK (on_thumbnail_view_surface_destroy),
-                      thumbnail);
-  }
 }
 
 
