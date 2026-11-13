@@ -78,7 +78,7 @@ typedef struct _PhocServer {
 
   char                                         *session_exec;
   GPid                                          session_pid;
-  gint                                          exit_status;
+  int                                           exit_status;
   GMainLoop                                    *mainloop;
 
   GStrv                                         dt_compatibles;
@@ -206,7 +206,7 @@ phoc_wayland_init (PhocServer *self)
 
 
 static void
-on_session_exit (GPid pid, gint status, PhocServer *self)
+on_session_exit (GPid pid, int status, PhocServer *self)
 {
   g_autoptr (GError) err = NULL;
 
@@ -280,7 +280,7 @@ phoc_startup_session_in_idle (gpointer data)
 static void
 phoc_startup_session (PhocServer *server)
 {
-  gint id;
+  int id;
 
   id = g_idle_add_once (phoc_startup_session_in_idle, server);
   g_source_set_name_by_id (id, "[phoc] phoc_startup_session");
@@ -774,7 +774,7 @@ phoc_server_setup (PhocServer     *self,
  *
  * Returns: The session's exit status.
  */
-gint
+int
 phoc_server_get_session_exit_status (PhocServer *self)
 {
   g_assert (PHOC_IS_SERVER (self));
