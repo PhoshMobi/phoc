@@ -145,6 +145,8 @@ phoc_toplevel_pidfd_destroy (PhocToplevelPidfd *pidfd)
   pidfd->manager->pidfds = g_slist_remove (pidfd->manager->pidfds, pidfd);
   pidfd->manager = NULL;
   pidfd->toplevel_handle = NULL;
+
+  g_free (pidfd);
 }
 
 
