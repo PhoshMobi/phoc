@@ -6,8 +6,11 @@
  */
 #include "server.h"
 
+#include "ext-foreign-toplevel-list-v1-client-protocol.h"
 #include "gtk-shell-client-protocol.h"
 #include "input-method-unstable-v2-client-protocol.h"
+#include "phoc-foreign-toplevel-identifier-v1-client-protocol.h"
+#include "phoc-foreign-toplevel-pidfd-v1-client-protocol.h"
 #include "phoc-layer-shell-effects-unstable-v1-client-protocol.h"
 #include "wlr-foreign-toplevel-management-unstable-v1-client-protocol.h"
 #include "wlr-layer-shell-unstable-v1-client-protocol.h"
@@ -78,7 +81,11 @@ struct _PhocTestClientGlobals {
   struct zwlr_screencopy_manager_v1       *screencopy_manager;
   struct zwlr_foreign_toplevel_manager_v1 *foreign_toplevel_manager;
   struct zxdg_decoration_manager_v1       *decoration_manager;
-  GSList *foreign_toplevels;
+  GSList *wlr_foreign_toplevels;
+  struct ext_foreign_toplevel_list_v1     *ext_toplevel_list;
+  GSList *ext_foreign_toplevels;
+  struct phoc_foreign_toplevel_pidfd_manager_v1 *toplevel_pidfd_manager;
+  struct phoc_foreign_toplevel_identifier_manager_v1 *toplevel_identifier_manager;
   struct phosh_private                    *phosh;
   struct gtk_shell1                       *gtk_shell1;
   /* TODO: handle multiple outputs */
@@ -89,11 +96,19 @@ struct _PhocTestClientGlobals {
 };
 
 
-typedef struct _PhocTestForeignToplevel {
+typedef struct _PhocTestWlrForeignToplevel {
   char* title;
   struct zwlr_foreign_toplevel_handle_v1 *handle;
   PhocTestClientGlobals *globals;
-} PhocTestForeignToplevel;
+} PhocTestWlrForeignToplevel;
+
+
+typedef struct _PhocTestExtForeignToplevel {
+  char *title;
+  char *identifier;
+  struct ext_foreign_toplevel_handle_v1 *handle;
+  PhocTestClientGlobals *globals;
+} PhocTestExtForeignToplevel;
 
 
 typedef gboolean (* PhocTestServerFunc) (PhocServer *server, gpointer data);
@@ -118,7 +133,7 @@ struct _PhocTestXdgToplevelSurface {
   struct wl_surface *wl_surface;
   struct xdg_surface *xdg_surface;
   struct xdg_toplevel *xdg_toplevel;
-  PhocTestForeignToplevel *foreign_toplevel;
+  PhocTestWlrForeignToplevel *foreign_toplevel;
   char* title;
   PhocTestBuffer buffer;
   guint32 width, height;
@@ -147,8 +162,10 @@ PhocTestBuffer *phoc_test_client_capture_frame (PhocTestClientGlobals *globals,
                                                 struct zwlr_screencopy_frame_v1 *handle);
 PhocTestBuffer *phoc_test_client_capture_output (PhocTestClientGlobals *globals,
                                                  PhocTestOutput *output);
-PhocTestForeignToplevel *phoc_test_client_get_foreign_toplevel_handle (PhocTestClientGlobals *globals,
-                                                                       const char *title);
+PhocTestWlrForeignToplevel *phoc_test_client_get_wlr_foreign_toplevel_handle (PhocTestClientGlobals *globals,
+                                                                              const char *title);
+PhocTestExtForeignToplevel *phoc_test_client_get_ext_foreign_toplevel_handle (PhocTestClientGlobals *globals,
+                                                                              const char *title);
 /* Test surfaces */
 PhocTestXdgToplevelSurface *
                 phoc_test_xdg_toplevel_new (PhocTestClientGlobals *globals,

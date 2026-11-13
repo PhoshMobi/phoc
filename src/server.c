@@ -16,6 +16,7 @@
 #include "seat.h"
 #include "server-private.h"
 #include "surface.h"
+#include "toplevel-identifier.h"
 #include "utils.h"
 #include "xdg-dialog.h"
 #include "xdg-toplevel.h"
@@ -69,45 +70,49 @@ typedef struct _PhocServer {
   PhocInput           *input;
   PhocConfig          *config;
   PhocServerFlags      flags;
-  GStrv                log_domains;
+  GStrv log_domains;
   PhocServerDebugFlags debug_flags;
   PhocDebugControl    *debug_control;
 
   PhocRenderer        *renderer;
   PhocDesktop         *desktop;
 
-  char                *session_exec;
-  GPid                 session_pid;
-  gint                 exit_status;
-  GMainLoop           *mainloop;
+  char                                         *session_exec;
+  GPid                                          session_pid;
+  int                                           exit_status;
+  GMainLoop                                    *mainloop;
 
-  GStrv                dt_compatibles;
+  GStrv                                         dt_compatibles;
 
-  struct rlimit        saved_nofile_rlimit;
+  struct rlimit                                 saved_nofile_rlimit;
 
-  struct wl_display   *wl_display;
-  guint                wl_source;
+  struct wl_display                            *wl_display;
+  guint                                         wl_source;
 
-  struct wlr_compositor    *compositor;
-  struct wlr_subcompositor *subcompositor;
-  struct wlr_backend       *backend;
-  struct wlr_session       *session;
+  struct wlr_compositor                        *compositor;
+  struct wlr_subcompositor                     *subcompositor;
+  struct wlr_backend                           *backend;
+  struct wlr_session                           *session;
 
-  struct wlr_linux_dmabuf_v1     *linux_dmabuf_v1;
-  struct wlr_data_device_manager *data_device_manager;
-  struct wlr_ext_data_control_manager_v1 *ext_data_control_manager_v1;
+  /* Protocols */
+  struct wlr_linux_dmabuf_v1                   *linux_dmabuf_v1;
+  struct wlr_data_device_manager               *data_device_manager;
+  struct wlr_ext_data_control_manager_v1       *ext_data_control_manager_v1;
   struct wlr_ext_image_copy_capture_manager_v1 *ext_image_copy_capture_manager_v1;
-  struct wlr_xdg_decoration_manager_v1 *xdg_decoration_manager;
-  struct wlr_xdg_shell *xdg_shell;
-  struct wlr_xdg_wm_dialog_v1 *xdg_wm_dialog;
+  struct wlr_xdg_decoration_manager_v1         *xdg_decoration_manager;
+  struct wlr_xdg_shell                         *xdg_shell;
+  struct wlr_xdg_wm_dialog_v1                  *xdg_wm_dialog;
+  PhocToplevelIdentifierManager                *toplevel_identifier_manager;
+  PhocToplevelPidfdManager                     *toplevel_pidfd_manager;
+  PhocXxCutoutsManager                         *xx_cutouts_manager;
 
-  struct wl_listener   new_surface;
-  struct wl_listener   xdg_new_dialog;
-  struct wl_listener   xdg_shell_toplevel;
-  struct wl_listener   xdg_toplevel_decoration;
-  struct wl_listener   xdg_toplevel_tag_manager_v1_set_tag;
+  struct wl_listener                            new_surface;
+  struct wl_listener                            xdg_new_dialog;
+  struct wl_listener                            xdg_shell_toplevel;
+  struct wl_listener                            xdg_toplevel_decoration;
+  struct wl_listener                            xdg_toplevel_tag_manager_v1_set_tag;
 
-  GSettings           *settings;
+  GSettings                                    *settings;
 } PhocServer;
 
 static void phoc_server_initable_iface_init (GInitableIface *iface);
@@ -203,7 +208,7 @@ phoc_wayland_init (PhocServer *self)
 
 
 static void
-on_session_exit (GPid pid, gint status, PhocServer *self)
+on_session_exit (GPid pid, int status, PhocServer *self)
 {
   g_autoptr (GError) err = NULL;
 
@@ -277,7 +282,7 @@ phoc_startup_session_in_idle (gpointer data)
 static void
 phoc_startup_session (PhocServer *server)
 {
-  gint id;
+  int id;
 
   id = g_idle_add_once (phoc_startup_session_in_idle, server);
   g_source_set_name_by_id (id, "[phoc] phoc_startup_session");
@@ -371,6 +376,10 @@ phoc_server_init_protocols (PhocServer *self)
   } else {
     g_critical ("Failed to create XDG toplevel tag manager");
   }
+
+  self->toplevel_identifier_manager = phoc_toplevel_identifier_manager_new ();
+  self->toplevel_pidfd_manager = phoc_toplevel_pidfd_manager_new ();
+  self->xx_cutouts_manager = phoc_xx_cutouts_manager_new ();
 }
 
 
@@ -393,6 +402,8 @@ phoc_server_is_privileged_protocol (PhocServer *self, const struct wl_global *gl
     return true;
 
   return
+    global == phoc_toplevel_identifier_manager_get_global (self->toplevel_identifier_manager) ||
+    global == phoc_toplevel_pidfd_manager_get_global (self->toplevel_pidfd_manager) ||
     global == self->ext_data_control_manager_v1->global ||
     global == self->ext_image_copy_capture_manager_v1->global;
 }
@@ -572,6 +583,11 @@ phoc_server_finalize (GObject *object)
   wl_list_remove (&self->xdg_shell_toplevel.link);
   wl_list_remove (&self->xdg_new_dialog.link);
   wl_list_remove (&self->new_surface.link);
+
+  /* Protocols */
+  g_clear_object (&self->xx_cutouts_manager);
+  g_clear_object (&self->toplevel_pidfd_manager);
+  g_clear_object (&self->toplevel_identifier_manager);
 
   g_clear_pointer (&self->dt_compatibles, g_strfreev);
   g_clear_handle_id (&self->wl_source, g_source_remove);
@@ -763,7 +779,7 @@ phoc_server_setup (PhocServer     *self,
  *
  * Returns: The session's exit status.
  */
-gint
+int
 phoc_server_get_session_exit_status (PhocServer *self)
 {
   g_assert (PHOC_IS_SERVER (self));
@@ -1062,4 +1078,20 @@ phoc_server_get_use_focus_frame (PhocServer *self)
   g_assert (PHOC_IS_SERVER (self));
 
   return g_settings_get_boolean (self->settings, "focus-frame");
+}
+
+/**
+ * phoc_server_get_xx_cutouts_manager:
+ * @self: the server
+ *
+ * Get the cutouts manager
+ *
+ * Returns:(transfer none): The cutouts manager
+ */
+PhocXxCutoutsManager *
+phoc_server_get_xx_cutouts_manager (PhocServer *self)
+{
+  g_assert (PHOC_IS_SERVER (self));
+
+  return self->xx_cutouts_manager;
 }

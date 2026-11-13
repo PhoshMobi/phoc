@@ -31,8 +31,10 @@ typedef struct _PhocTestKeyboardEvent {
 
 
 static PhocTestScreencopyFrame *
-phoc_test_get_thumbnail (PhocTestClientGlobals *globals,
-                         guint32 max_width, guint32 max_height, PhocTestForeignToplevel *toplevel)
+phoc_test_get_thumbnail (PhocTestClientGlobals      *globals,
+                         guint32                     max_width,
+                         guint32                     max_height,
+                         PhocTestWlrForeignToplevel *toplevel)
 {
   PhocTestScreencopyFrame *thumbnail = g_malloc0 (sizeof(PhocTestScreencopyFrame));
 
@@ -102,7 +104,7 @@ test_client_phosh_private_thumbnail_view_gone (PhocTestClientGlobals *globals, g
 {
   PhocTestXdgToplevelSurface *toplevel;
   PhocTestLayerSurface *layer_surface;
-  PhocTestForeignToplevel *foreign_toplevel;
+  PhocTestWlrForeignToplevel *foreign_toplevel;
   struct zwlr_foreign_toplevel_handle_v1 *handle;
   struct phosh_private_thumbnail *thumbnail;
   struct wl_event_queue *queue;
@@ -162,7 +164,7 @@ test_client_phosh_private_thumbnail_view_gone (PhocTestClientGlobals *globals, g
   /* Deliver our parked `closed` event: this frees the handle and "proves"
    * that the toplevel was already gone when we sent the request above.*/
   g_assert_cmpint (wl_display_roundtrip_queue (globals->display, queue), !=, -1);
-  g_assert_cmpint (g_slist_index (globals->foreign_toplevels, foreign_toplevel), ==, -1);
+  g_assert_cmpint (g_slist_index (globals->wlr_foreign_toplevels, foreign_toplevel), ==, -1);
   wl_event_queue_destroy (queue);
 
   phoc_test_layer_surface_free (layer_surface);

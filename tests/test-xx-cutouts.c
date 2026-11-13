@@ -216,13 +216,13 @@ handle_cutout_unhandled_configure (void *data, struct xx_cutouts_v1 *xx_cutouts_
   if (info->current.cutouts->len && !info->got_unhandled) {
     /* The compositor runs in a different thread bus since so we need to
      * be careful with data access. */
-    PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
+    PhocServer *server = phoc_server_get_default ();
     PhocXxCutoutsManager *cutouts_manager;
     GSList *server_cutouts;
     PhocXxCutouts *xx_cutouts;
 
-    g_assert (PHOC_IS_DESKTOP (desktop));
-    cutouts_manager = phoc_desktop_get_xx_cutouts_manager (desktop);
+    g_assert (PHOC_IS_SERVER (server));
+    cutouts_manager = phoc_server_get_xx_cutouts_manager (server);
     g_assert (PHOC_IS_XX_CUTOUTS_MANAGER (cutouts_manager));
 
     server_cutouts = phoc_xx_cutouts_manager_get_cutouts (cutouts_manager);
