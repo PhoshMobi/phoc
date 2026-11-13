@@ -220,62 +220,62 @@ static const struct xdg_wm_base_listener wm_base_listener = {
 
 
 static void
-foreign_toplevel_handle_title (void                                   *data,
-                               struct zwlr_foreign_toplevel_handle_v1 *handle,
-                               const char                             *title)
+wlr_foreign_toplevel_handle_title (void                                   *data,
+                                   struct zwlr_foreign_toplevel_handle_v1 *handle,
+                                   const char                             *title)
 {
-  PhocTestForeignToplevel *toplevel = data;
+  PhocTestWlrForeignToplevel *toplevel = data;
   g_set_str (&toplevel->title, title);
   g_debug ("Got toplevel's title: %p %s", toplevel, title);
 }
 
 
 static void
-foreign_toplevel_handle_app_id (void                                   *data,
-                                struct zwlr_foreign_toplevel_handle_v1 *handle,
-                                const char                             *app_id)
+wlr_foreign_toplevel_handle_app_id (void                                   *data,
+                                    struct zwlr_foreign_toplevel_handle_v1 *handle,
+                                    const char                             *app_id)
 {
 }
 
 
 static void
-foreign_toplevel_handle_output_enter (void                                   *data,
-                                      struct zwlr_foreign_toplevel_handle_v1 *handle,
-                                      struct wl_output                       *output)
+wlr_foreign_toplevel_handle_output_enter (void                                   *data,
+                                          struct zwlr_foreign_toplevel_handle_v1 *handle,
+                                          struct wl_output                       *output)
 {
 }
 
 
 static void
-foreign_toplevel_handle_output_leave (void                                   *data,
-                                      struct zwlr_foreign_toplevel_handle_v1 *handle,
-                                      struct wl_output                       *output)
+wlr_foreign_toplevel_handle_output_leave (void                                   *data,
+                                          struct zwlr_foreign_toplevel_handle_v1 *handle,
+                                          struct wl_output                       *output)
 {
 }
 
 
 static void
-foreign_toplevel_handle_state (void                                   *data,
-                               struct zwlr_foreign_toplevel_handle_v1 *handle,
-                               struct wl_array                        *state)
+wlr_foreign_toplevel_handle_state (void                                   *data,
+                                   struct zwlr_foreign_toplevel_handle_v1 *handle,
+                                   struct wl_array                        *state)
 {
 }
 
 
 static void
-foreign_toplevel_handle_done (void                                   *data,
-                              struct zwlr_foreign_toplevel_handle_v1 *handle)
+wlr_foreign_toplevel_handle_done (void                                   *data,
+                                  struct zwlr_foreign_toplevel_handle_v1 *handle)
 {
 }
 
 
 static void
-foreign_toplevel_handle_closed (void                                   *data,
-                                struct zwlr_foreign_toplevel_handle_v1 *handle)
+wlr_foreign_toplevel_handle_closed (void                                   *data,
+                                    struct zwlr_foreign_toplevel_handle_v1 *handle)
 {
-  PhocTestForeignToplevel *toplevel = data;
+  PhocTestWlrForeignToplevel *toplevel = data;
   PhocTestClientGlobals *globals = toplevel->globals;
-  globals->foreign_toplevels = g_slist_remove (globals->foreign_toplevels, toplevel);
+  globals->wlr_foreign_toplevels = g_slist_remove (globals->wlr_foreign_toplevels, toplevel);
 
   g_clear_pointer (&toplevel->handle, zwlr_foreign_toplevel_handle_v1_destroy);
   g_free (toplevel->title);
@@ -284,28 +284,28 @@ foreign_toplevel_handle_closed (void                                   *data,
 
 
 static const struct zwlr_foreign_toplevel_handle_v1_listener foreign_toplevel_handle_listener = {
-  .title = foreign_toplevel_handle_title,
-  .app_id = foreign_toplevel_handle_app_id,
-  .output_enter = foreign_toplevel_handle_output_enter,
-  .output_leave = foreign_toplevel_handle_output_leave,
-  .state = foreign_toplevel_handle_state,
-  .done = foreign_toplevel_handle_done,
-  .closed = foreign_toplevel_handle_closed,
+  .title = wlr_foreign_toplevel_handle_title,
+  .app_id = wlr_foreign_toplevel_handle_app_id,
+  .output_enter = wlr_foreign_toplevel_handle_output_enter,
+  .output_leave = wlr_foreign_toplevel_handle_output_leave,
+  .state = wlr_foreign_toplevel_handle_state,
+  .done = wlr_foreign_toplevel_handle_done,
+  .closed = wlr_foreign_toplevel_handle_closed,
   .parent = NULL
 };
 
 
 static void
-foreign_toplevel_manager_handle_toplevel (void                                    *data,
-                                          struct zwlr_foreign_toplevel_manager_v1 *manager,
-                                          struct zwlr_foreign_toplevel_handle_v1  *handle)
+wlr_foreign_toplevel_manager_handle_toplevel (void                                    *data,
+                                              struct zwlr_foreign_toplevel_manager_v1 *manager,
+                                              struct zwlr_foreign_toplevel_handle_v1  *handle)
 {
   PhocTestClientGlobals *globals = data;
 
-  PhocTestForeignToplevel *toplevel = g_malloc0 (sizeof (PhocTestForeignToplevel));
+  PhocTestWlrForeignToplevel *toplevel = g_new0 (PhocTestWlrForeignToplevel, 1);
   toplevel->handle = handle;
   toplevel->globals = globals;
-  globals->foreign_toplevels = g_slist_append (globals->foreign_toplevels, toplevel);
+  globals->wlr_foreign_toplevels = g_slist_append (globals->wlr_foreign_toplevels, toplevel);
   zwlr_foreign_toplevel_handle_v1_add_listener (handle, &foreign_toplevel_handle_listener,
                                                 toplevel);
   g_debug ("New toplevel: %p", toplevel);
@@ -313,16 +313,116 @@ foreign_toplevel_manager_handle_toplevel (void                                  
 
 
 static void
-foreign_toplevel_manager_handle_finished (void                                    *data,
-                                          struct zwlr_foreign_toplevel_manager_v1 *handle)
+wlr_foreign_toplevel_manager_handle_finished (void                                    *data,
+                                              struct zwlr_foreign_toplevel_manager_v1 *handle)
 {
   g_debug ("wlr_foreign_toplevel_manager_finished");
 }
 
 
 static const struct zwlr_foreign_toplevel_manager_v1_listener foreign_toplevel_manager_listener = {
-  foreign_toplevel_manager_handle_toplevel,
-  foreign_toplevel_manager_handle_finished
+  wlr_foreign_toplevel_manager_handle_toplevel,
+  wlr_foreign_toplevel_manager_handle_finished
+};
+
+
+static void
+phoc_test_ext_foreign_toplevel_free (PhocTestExtForeignToplevel *toplevel)
+{
+  g_clear_pointer (&toplevel->handle, ext_foreign_toplevel_handle_v1_destroy);
+  g_free (toplevel->title);
+  g_free (toplevel->identifier);
+  g_free (toplevel);
+}
+
+
+static void
+ext_foreign_toplevel_handle_closed (void                                  *data,
+                                    struct ext_foreign_toplevel_handle_v1 *handle)
+{
+  PhocTestExtForeignToplevel *toplevel = data;
+  PhocTestClientGlobals *globals = toplevel->globals;
+
+  globals->ext_foreign_toplevels = g_slist_remove (globals->ext_foreign_toplevels, toplevel);
+  phoc_test_ext_foreign_toplevel_free (toplevel);
+}
+
+
+static void
+ext_foreign_toplevel_handle_done (void                                  *data,
+                                  struct ext_foreign_toplevel_handle_v1 *handle)
+{
+}
+
+
+static void
+ext_foreign_toplevel_handle_title (void                                  *data,
+                                   struct ext_foreign_toplevel_handle_v1 *handle,
+                                   const char                            *title)
+{
+  PhocTestExtForeignToplevel *toplevel = data;
+
+  g_set_str (&toplevel->title, title);
+  g_debug ("Got ext toplevel's title: %p %s", toplevel, title);
+}
+
+
+static void
+ext_foreign_toplevel_handle_app_id (void                                  *data,
+                                    struct ext_foreign_toplevel_handle_v1 *handle,
+                                    const char                            *app_id)
+{
+}
+
+
+static void
+ext_foreign_toplevel_handle_identifier (void                                  *data,
+                                        struct ext_foreign_toplevel_handle_v1 *handle,
+                                        const char                            *identifier)
+{
+  PhocTestExtForeignToplevel *toplevel = data;
+
+  g_set_str (&toplevel->identifier, identifier);
+}
+
+
+static const struct ext_foreign_toplevel_handle_v1_listener ext_foreign_toplevel_handle_listener = {
+  .closed = ext_foreign_toplevel_handle_closed,
+  .done = ext_foreign_toplevel_handle_done,
+  .title = ext_foreign_toplevel_handle_title,
+  .app_id = ext_foreign_toplevel_handle_app_id,
+  .identifier = ext_foreign_toplevel_handle_identifier,
+};
+
+
+static void
+ext_foreign_toplevel_list_handle_toplevel (void                                  *data,
+                                           struct ext_foreign_toplevel_list_v1   *list,
+                                           struct ext_foreign_toplevel_handle_v1 *handle)
+{
+  PhocTestClientGlobals *globals = data;
+  PhocTestExtForeignToplevel *toplevel = g_new0 (PhocTestExtForeignToplevel, 1);
+
+  toplevel->handle = handle;
+  toplevel->globals = globals;
+  globals->ext_foreign_toplevels = g_slist_append (globals->ext_foreign_toplevels, toplevel);
+  ext_foreign_toplevel_handle_v1_add_listener (handle, &ext_foreign_toplevel_handle_listener,
+                                               toplevel);
+  g_debug ("New ext toplevel: %p", toplevel);
+}
+
+
+static void
+ext_foreign_toplevel_list_handle_finished (void                                *data,
+                                           struct ext_foreign_toplevel_list_v1 *list)
+{
+  g_debug ("ext_foreign_toplevel_list_finished");
+}
+
+
+static const struct ext_foreign_toplevel_list_v1_listener ext_foreign_toplevel_list_listener = {
+  .toplevel = ext_foreign_toplevel_list_handle_toplevel,
+  .finished = ext_foreign_toplevel_list_handle_finished,
 };
 
 
@@ -382,6 +482,15 @@ registry_handle_global (void               *data,
   } else if (!g_strcmp0 (interface, xx_cutouts_manager_v1_interface.name)) {
     globals->cutouts_manager = wl_registry_bind (registry, name,
                                                  &xx_cutouts_manager_v1_interface, 1);
+  } else if (!g_strcmp0 (interface, ext_foreign_toplevel_list_v1_interface.name)) {
+    globals->ext_toplevel_list = wl_registry_bind (registry, name,
+                                                   &ext_foreign_toplevel_list_v1_interface, 1);
+    ext_foreign_toplevel_list_v1_add_listener (globals->ext_toplevel_list,
+                                               &ext_foreign_toplevel_list_listener, globals);
+  } else if (!g_strcmp0 (interface, phoc_foreign_toplevel_pidfd_manager_v1_interface.name)) {
+    globals->toplevel_pidfd_manager = wl_registry_bind (registry, name,
+                                                        &phoc_foreign_toplevel_pidfd_manager_v1_interface,
+                                                        1);
   }
 }
 
@@ -431,6 +540,10 @@ wl_client_run (GTask *task, gpointer source, gpointer data, GCancellable *cancel
   else
     success = TRUE;
 
+  g_clear_pointer (&globals.toplevel_pidfd_manager, phoc_foreign_toplevel_pidfd_manager_v1_destroy);
+  g_clear_pointer (&globals.ext_toplevel_list, ext_foreign_toplevel_list_v1_destroy);
+  g_slist_free_full (g_steal_pointer (&globals.ext_foreign_toplevels),
+                     (GDestroyNotify)phoc_test_ext_foreign_toplevel_free);
   g_clear_pointer (&globals.cutouts_manager, xx_cutouts_manager_v1_destroy);
   g_clear_pointer (&globals.input_method_manager, zwp_input_method_manager_v2_destroy);
   g_clear_pointer (&globals.seat, wl_seat_destroy);
@@ -623,25 +736,54 @@ phoc_test_client_create_shm_buffer (PhocTestClientGlobals *globals,
 }
 
 static int
-foreign_toplevel_compare (gconstpointer data, gconstpointer title)
+wlr_foreign_toplevel_compare (gconstpointer data, gconstpointer title)
 {
-  const PhocTestForeignToplevel *toplevel = data;
+  const PhocTestWlrForeignToplevel *toplevel = data;
   return g_strcmp0 (toplevel->title, title);
 }
 
 /**
- * phoc_test_client_get_foreign_toplevel_handle:
+ * phoc_test_client_get_wlr_foreign_toplevel_handle:
  *
- * Get the PhocTestForeignToplevel for a toplevel with the given title
+ * Get the `PhocTestWlrForeignToplevel` for a toplevel with the given title
  * using the wlr_foreign_toplevel_management protocol.
  *
  * Returns: (transfer none): The toplevel's handle, or NULL if it doesn't exist.
  */
-PhocTestForeignToplevel *
-phoc_test_client_get_foreign_toplevel_handle (PhocTestClientGlobals *globals,
-                                              const char            *title)
+PhocTestWlrForeignToplevel *
+phoc_test_client_get_wlr_foreign_toplevel_handle (PhocTestClientGlobals *globals,
+                                                  const char            *title)
 {
-  GSList *list = g_slist_find_custom (globals->foreign_toplevels, title, foreign_toplevel_compare);
+  GSList *list = g_slist_find_custom (globals->wlr_foreign_toplevels,
+                                      title,
+                                      wlr_foreign_toplevel_compare);
+  if (!list || !list->data)
+    return NULL;
+
+  return list->data;
+}
+
+static int
+ext_foreign_toplevel_compare (gconstpointer data, gconstpointer title)
+{
+  const PhocTestExtForeignToplevel *toplevel = data;
+  return g_strcmp0 (toplevel->title, title);
+}
+
+/**
+ * phoc_test_client_get_ext_foreign_toplevel_handle:
+ *
+ * Get the PhocTestExtForeignToplevel for a toplevel with the given title
+ * using the ext_foreign_toplevel_list protocol.
+ *
+ * Returns: (transfer none): The toplevel's handle, or NULL if it doesn't exist.
+ */
+PhocTestExtForeignToplevel *
+phoc_test_client_get_ext_foreign_toplevel_handle (PhocTestClientGlobals *globals,
+                                                  const char            *title)
+{
+  GSList *list = g_slist_find_custom (globals->ext_foreign_toplevels, title,
+                                      ext_foreign_toplevel_compare);
   if (!list || !list->data)
     return NULL;
 
@@ -1006,7 +1148,7 @@ phoc_test_xdg_toplevel_new_with_buffer (PhocTestClientGlobals *globals,
   wl_display_roundtrip (globals->display);
 
   if (title) {
-    xs->foreign_toplevel = phoc_test_client_get_foreign_toplevel_handle (globals, title);
+    xs->foreign_toplevel = phoc_test_client_get_wlr_foreign_toplevel_handle (globals, title);
     g_assert_true (xs->foreign_toplevel);
   }
 
