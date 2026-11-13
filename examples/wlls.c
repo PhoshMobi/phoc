@@ -204,8 +204,8 @@ handle_toplevel (void                                  *data,
     phoc_foreign_toplevel_pidfd_manager_v1_get_pidfd (phoc_toplevel_pidfd_manager,
                                                       handle);
   phoc_foreign_toplevel_pidfd_v1_add_listener (toplevel->pidfd_v1,
-                                                   &toplevel_pidfd_listener,
-                                                   toplevel);
+                                               &toplevel_pidfd_listener,
+                                               toplevel);
 }
 
 
