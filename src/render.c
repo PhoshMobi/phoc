@@ -100,8 +100,6 @@ struct render_view_data {
 
 static void render_thumbnail_overlay (PhocPhoshPrivateThumbnail *thumbnail, PhocRenderContext *ctx);
 
-
-
 static void
 recreate_renderer (void *data)
 {
