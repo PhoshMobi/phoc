@@ -27,6 +27,12 @@ G_BEGIN_DECLS
 
 typedef struct _PhocTestClientGlobals PhocTestClientGlobals;
 
+#define PHOC_TEST_BLACK  0x00000000
+#define PHOC_TEST_RED    0x00FF0000
+#define PHOC_TEST_GREEN  0x0000FF00
+#define PHOC_TEST_BLUE   0x000000FF
+#define PHOC_TEST_OPAQUE 0xFF000000
+
 typedef struct _PhocTestBuffer {
   struct wl_buffer *wl_buffer;
   guint8 *shm_data;

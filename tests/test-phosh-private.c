@@ -1,5 +1,7 @@
 /*
  * Copyright (C) 2020 Purism SPC
+ *               2022-2026 Phosh.mobi e.V.
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  * Author: Sebastian Krzyszkowiak <sebastian.krzyszkowiak@puri.sm>
  */
@@ -56,7 +58,10 @@ test_client_phosh_private_thumbnail_simple (PhocTestClientGlobals *globals, gpoi
   PhocTestXdgToplevelSurface *toplevel_green;
   PhocTestScreencopyFrame *green_thumbnail;
 
-  toplevel_green = phoc_test_xdg_toplevel_new_with_buffer (globals, 0, 0, "green", 0xFF00FF00);
+  toplevel_green = phoc_test_xdg_toplevel_new_with_buffer (globals,
+                                                           0, 0,
+                                                           "green",
+                                                           PHOC_TEST_OPAQUE | PHOC_TEST_GREEN);
   g_assert_nonnull (toplevel_green);
   phoc_assert_screenshot (globals, "test-phosh-private-thumbnail-simple-1.png");
 
@@ -108,7 +113,10 @@ test_client_phosh_private_thumbnail_view_gone (PhocTestClientGlobals *globals, g
   g_assert_cmpint (phosh_private_get_version (globals->phosh), >=,
                    PHOSH_PRIVATE_ADD_THUMBNAIL_VIEW_SINCE_VERSION);
 
-  toplevel = phoc_test_xdg_toplevel_new_with_buffer (globals, 0, 0, "gone", 0xFF00FF00);
+  toplevel = phoc_test_xdg_toplevel_new_with_buffer (globals,
+                                                     0, 0,
+                                                     "gone",
+                                                     PHOC_TEST_OPAQUE | PHOC_TEST_GREEN);
   g_assert_nonnull (toplevel);
   foreign_toplevel = toplevel->foreign_toplevel;
   handle = foreign_toplevel->handle;
@@ -171,6 +179,213 @@ test_phosh_private_thumbnail_view_gone (void)
 
   phoc_test_client_run (TEST_PHOC_CLIENT_TIMEOUT, &iface, NULL);
 }
+
+
+static gboolean
+test_client_phosh_private_thumbnail_server_prepare (PhocServer *server, gpointer data)
+{
+  PhocDesktop *desktop = phoc_server_get_desktop (server);
+  g_autoptr (GSettings) settings = g_settings_new ("mobi.phosh.phoc");
+
+  g_assert_nonnull (desktop);
+  /* Make sure position and color around view are predictable */
+  phoc_desktop_set_auto_maximize (desktop, FALSE);
+  g_settings_set_boolean (settings, "focus-frame", FALSE);
+
+  return TRUE;
+}
+
+
+/* Color of the pixel at x, y ignoring alpha */
+static guint32
+phoc_test_thumbnail_get_pixel (PhocTestBuffer *buffer, guint x, guint y)
+{
+  g_assert_cmpuint (x, <, buffer->width);
+  g_assert_cmpuint (y, <, buffer->height);
+
+  return *(guint32 *)(buffer->shm_data + y * buffer->stride + x * 4) & 0x00FFFFFF;
+}
+
+
+static struct phosh_private_thumbnail *
+phoc_test_thumbnail_add (PhocTestClientGlobals      *globals,
+                         PhocTestXdgToplevelSurface *toplevel,
+                         PhocTestLayerSurface       *layer_surface)
+{
+  struct phosh_private_thumbnail *thumbnail;
+
+  g_assert_cmpint (phosh_private_get_version (globals->phosh), >=,
+                   PHOSH_PRIVATE_ADD_THUMBNAIL_VIEW_SINCE_VERSION);
+
+  thumbnail = phosh_private_add_thumbnail_view (globals->phosh,
+                                                toplevel->foreign_toplevel->handle,
+                                                layer_surface->layer_surface);
+  g_assert_nonnull (thumbnail);
+  return thumbnail;
+}
+
+
+static void
+phoc_test_thumbnail_set_properties (PhocTestClientGlobals          *globals,
+                                    struct phosh_private_thumbnail *thumbnail,
+                                    int32_t                         x,
+                                    int32_t                         y,
+                                    double                          scale,
+                                    double                          alpha)
+{
+  phosh_private_thumbnail_set_properties (thumbnail, x, y,
+                                          wl_fixed_from_double (scale),
+                                          wl_fixed_from_double (alpha));
+  g_assert_cmpint (wl_display_roundtrip (globals->display), !=, -1);
+}
+
+/* View is centered, thumbnail is top left so damage doesn't overlap */
+#define THUMBNAIL_TEST_VIEW_WIDTH  100
+#define THUMBNAIL_TEST_VIEW_HEIGHT 200
+
+/* Check if view damage updates the layer surface accordingly */
+static gboolean
+test_client_phosh_private_thumbnail_view_damage (PhocTestClientGlobals *globals, gpointer unused)
+{
+  PhocTestXdgToplevelSurface *toplevel;
+  PhocTestLayerSurface *layer_surface;
+  struct phosh_private_thumbnail *thumbnail;
+  PhocTestBuffer *screenshot;
+
+  toplevel = phoc_test_xdg_toplevel_new_with_buffer (globals,
+                                                     THUMBNAIL_TEST_VIEW_WIDTH,
+                                                     THUMBNAIL_TEST_VIEW_HEIGHT,
+                                                     "thumbnail-damage",
+                                                     PHOC_TEST_OPAQUE | PHOC_TEST_GREEN);
+  g_assert_nonnull (toplevel);
+  g_assert_cmpuint (toplevel->width, ==, THUMBNAIL_TEST_VIEW_WIDTH);
+  g_assert_cmpuint (toplevel->height, ==, THUMBNAIL_TEST_VIEW_HEIGHT);
+
+  layer_surface = phoc_test_layer_surface_new (globals, 0, 0,
+                                               PHOC_TEST_OPAQUE | PHOC_TEST_BLACK,
+                                               ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP |
+                                               ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM |
+                                               ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
+                                               ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT,
+                                               -1);
+  g_assert_nonnull (layer_surface);
+
+  thumbnail = phoc_test_thumbnail_add (globals, toplevel, layer_surface);
+  phoc_test_thumbnail_set_properties (globals, thumbnail, 100, 100, 0.5, 1.0);
+
+  screenshot = phoc_test_client_capture_output (globals, &globals->output);
+  g_assert_cmphex (phoc_test_thumbnail_get_pixel (screenshot, 125, 150), ==, PHOC_TEST_GREEN);
+  g_assert_cmphex (phoc_test_thumbnail_get_pixel (screenshot, 10, 10), ==, PHOC_TEST_BLACK);
+  phoc_test_buffer_free (screenshot);
+
+  /* The view's own damage is far away from the thumbnail */
+  phoc_test_xdg_update_buffer (globals, toplevel, PHOC_TEST_OPAQUE | PHOC_TEST_RED);
+
+  screenshot = phoc_test_client_capture_output (globals, &globals->output);
+  g_assert_cmphex (phoc_test_thumbnail_get_pixel (screenshot, 125, 150), ==, PHOC_TEST_RED);
+  phoc_test_buffer_free (screenshot);
+
+  phosh_private_thumbnail_destroy (thumbnail);
+  g_assert_cmpint (wl_display_roundtrip (globals->display), !=, -1);
+  phoc_test_layer_surface_free (layer_surface);
+  phoc_test_xdg_toplevel_free (toplevel);
+  phoc_assert_screenshot (globals, "empty.png");
+
+  return TRUE;
+}
+
+
+static void
+test_phosh_private_thumbnail_view_damage (void)
+{
+  PhocTestClientIface iface = {
+    .server_prepare = test_client_phosh_private_thumbnail_server_prepare,
+    .client_run = test_client_phosh_private_thumbnail_view_damage,
+    .debug_flags = PHOC_SERVER_DEBUG_FLAG_DISABLE_ANIMATIONS,
+  };
+
+  phoc_test_client_run (TEST_PHOC_CLIENT_TIMEOUT, &iface, NULL);
+}
+
+
+/* Make sure the thumbnail gets clipped to the layersurface */
+static gboolean
+test_client_phosh_private_thumbnail_move_damage (PhocTestClientGlobals *globals, gpointer unused)
+{
+  PhocTestXdgToplevelSurface *toplevel;
+  PhocTestLayerSurface *layer_surface;
+  struct phosh_private_thumbnail *thumbnail;
+  PhocTestBuffer *screenshot;
+
+  toplevel = phoc_test_xdg_toplevel_new_with_buffer (globals,
+                                                     THUMBNAIL_TEST_VIEW_WIDTH,
+                                                     THUMBNAIL_TEST_VIEW_HEIGHT,
+                                                     "thumbnail-move",
+                                                     PHOC_TEST_OPAQUE | PHOC_TEST_RED);
+  g_assert_nonnull (toplevel);
+  g_assert_cmpuint (toplevel->width, ==, THUMBNAIL_TEST_VIEW_WIDTH);
+  g_assert_cmpuint (toplevel->height, ==, THUMBNAIL_TEST_VIEW_HEIGHT);
+
+  layer_surface = phoc_test_layer_surface_new (globals, 300, 300,
+                                               PHOC_TEST_OPAQUE | PHOC_TEST_BLACK,
+                                               (ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP |
+                                                ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT),
+                                               -1);
+  g_assert_nonnull (layer_surface);
+  /* Move to 15,20 to check offset */
+  zwlr_layer_surface_v1_set_margin (layer_surface->layer_surface, 20, 0, 0, 15);
+  wl_surface_commit (layer_surface->wl_surface);
+  g_assert_cmpint (wl_display_roundtrip (globals->display), !=, -1);
+
+  thumbnail = phoc_test_thumbnail_add (globals, toplevel, layer_surface);
+
+  /* Test layer-surface offset */
+  /* Due to the layers-surface offset thumbnail ends up at 265,70 - 365,270 */
+  phoc_test_thumbnail_set_properties (globals, thumbnail, 250, 50, 1.0, 0.0);
+  screenshot = phoc_test_client_capture_output (globals, &globals->output);
+  /* Inside the layer surface */
+  g_assert_cmphex (phoc_test_thumbnail_get_pixel (screenshot, 290, 150), ==, PHOC_TEST_RED);
+  /* Only covered if the thumbnail is offset by the layer surface's y (20) */
+  g_assert_cmphex (phoc_test_thumbnail_get_pixel (screenshot, 290, 260), ==, PHOC_TEST_RED);
+  /* Would only be covered if the thumbnail is not offset by the layer surface's x */
+  g_assert_cmphex (phoc_test_thumbnail_get_pixel (screenshot, 255, 150), ==, PHOC_TEST_BLACK);
+  /* Inside the thumbnail's box but outside of the layer surface -> clipped */
+  g_assert_cmphex (phoc_test_thumbnail_get_pixel (screenshot, 340, 150), ==, PHOC_TEST_BLACK);
+  phoc_test_buffer_free (screenshot);
+
+  /* Test thumbnail move */
+  /* Move to 25,30 - 75,130, fully inside the layer surface */
+  phoc_test_thumbnail_set_properties (globals, thumbnail, 10, 10, 0.5, 0.0);
+  screenshot = phoc_test_client_capture_output (globals, &globals->output);
+  g_assert_cmphex (phoc_test_thumbnail_get_pixel (screenshot, 50, 80), ==, PHOC_TEST_RED);
+  /* old position inside the layer surface */
+  g_assert_cmphex (phoc_test_thumbnail_get_pixel (screenshot, 290, 150), ==, PHOC_TEST_BLACK);
+  /* old position: outside of the layer surface */
+  g_assert_cmphex (phoc_test_thumbnail_get_pixel (screenshot, 340, 150), ==, PHOC_TEST_BLACK);
+  phoc_test_buffer_free (screenshot);
+
+  phosh_private_thumbnail_destroy (thumbnail);
+  g_assert_cmpint (wl_display_roundtrip (globals->display), !=, -1);
+  phoc_test_layer_surface_free (layer_surface);
+  phoc_test_xdg_toplevel_free (toplevel);
+  phoc_assert_screenshot (globals, "empty.png");
+
+  return TRUE;
+}
+
+
+static void
+test_phosh_private_thumbnail_move_damage (void)
+{
+  PhocTestClientIface iface = {
+    .server_prepare = test_client_phosh_private_thumbnail_server_prepare,
+    .client_run = test_client_phosh_private_thumbnail_move_damage,
+    .debug_flags = PHOC_SERVER_DEBUG_FLAG_DISABLE_ANIMATIONS,
+  };
+
+  phoc_test_client_run (TEST_PHOC_CLIENT_TIMEOUT, &iface, NULL);
+}
+
 
 static void
 keyboard_event_handle_grab_failed (void                                *data,
@@ -388,8 +603,12 @@ main (int argc, char *argv[])
 {
   g_test_init (&argc, &argv, NULL);
 
+  /* Client side rendered get_thumbnail interface */
   PHOC_TEST_ADD ("/phoc/phosh/thumbnail/simple", test_phosh_private_thumbnail_simple);
   PHOC_TEST_ADD ("/phoc/phosh/thumbnail/view-gone", test_phosh_private_thumbnail_view_gone);
+  /* Compositor side rendered add_thumbnail_view / phosh_private_thumbnail interface */
+  PHOC_TEST_ADD ("/phoc/phosh/thumbnail/view-damage", test_phosh_private_thumbnail_view_damage);
+  PHOC_TEST_ADD ("/phoc/phosh/thumbnail/move-damage", test_phosh_private_thumbnail_move_damage);
   PHOC_TEST_ADD ("/phoc/phosh/kbevents/simple", test_phosh_private_kbevents_simple);
   PHOC_TEST_ADD ("/phoc/phosh/startup-tracker/simple", test_phosh_private_startup_tracker_simple);
   return g_test_run ();

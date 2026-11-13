@@ -767,3 +767,10 @@ phoc_layer_surface_get_pending_serial (PhocLayerSurface *self)
 
   return self->pending_serial;
 }
+
+
+struct wlr_box
+phoc_layer_surface_get_geometry (PhocLayerSurface *self)
+{
+  return self->geo;
+}

@@ -45,6 +45,7 @@ enum {
   SURFACE_DESTROY,
   POS_CHANGED,
   SIZE_CHANGED,
+  APPLY_DAMAGE,
   N_SIGNALS
 };
 static guint signals[N_SIGNALS] = { 0 };
@@ -1581,6 +1582,8 @@ phoc_view_apply_damage (PhocView *self)
 
   wl_list_for_each (output, &desktop->outputs, link)
     phoc_output_damage_from_view (output, self, false);
+
+  g_signal_emit (self, signals[APPLY_DAMAGE], 0, FALSE);
 }
 
 /**
@@ -1600,6 +1603,8 @@ phoc_view_damage_whole (PhocView *self)
 
   wl_list_for_each (output, &desktop->outputs, link)
     phoc_output_damage_from_view (output, self, true);
+
+  g_signal_emit (self, signals[APPLY_DAMAGE], 0, TRUE);
 }
 
 
@@ -2158,6 +2163,21 @@ phoc_view_class_init (PhocViewClass *klass)
                                         NULL, NULL, NULL,
                                         G_TYPE_NONE,
                                         0);
+  /**
+   * PhocView::apply-damage:
+   * @self: The instance
+   * @whole: Whether the whole view was damaged
+   *
+   * Invoked when the view added its damage to the rendering pass.
+   */
+  signals[APPLY_DAMAGE] = g_signal_new ("apply-damage",
+                                        G_TYPE_FROM_CLASS (object_class),
+                                        G_SIGNAL_RUN_LAST,
+                                        0,
+                                        NULL, NULL, NULL,
+                                        G_TYPE_NONE,
+                                        1,
+                                        G_TYPE_BOOLEAN);
 }
 
 

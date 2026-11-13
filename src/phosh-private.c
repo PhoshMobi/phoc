@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2019,2021 Purism SPC
+ *               2022-2026 Phosh.mobi e.V.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  * Author: Guido Günther <agx@sigxcpu.org>
@@ -8,8 +9,11 @@
 #define G_LOG_DOMAIN "phoc-phosh-private"
 
 #include "phoc-config.h"
+
 #include "phoc-enums.h"
+#include "phosh-thumbnail-private.h"
 #include "phosh-private.h"
+
 
 #include <assert.h>
 #include <stdlib.h>
@@ -85,7 +89,7 @@ static PhocPhoshPrivateScreencopyFrame *  phoc_phosh_private_screencopy_frame_fr
   struct wl_resource *resource);
 static PhocPhoshPrivateStartupTracker *   phoc_phosh_private_startup_tracker_from_resource (
   struct wl_resource *resource);
-static PhocPhoshPrivateThumbnail *        phoc_phosh_private_thumbnail_from_resource (
+static PhocPhoshThumbnail *               phoc_phosh_private_thumbnail_from_resource (
   struct wl_resource *resource);
 
 #define PHOSH_PRIVATE_VERSION 8
@@ -572,57 +576,42 @@ handle_get_thumbnail (struct wl_client *client,
 
 
 static void
-on_thumbnail_view_surface_destroy (PhocView *view, PhocPhoshPrivateThumbnail *thumbnail)
-{
-  g_assert (PHOC_IS_VIEW (view));
-
-  g_signal_handlers_disconnect_by_data (thumbnail->view, thumbnail);
-  thumbnail->view = NULL;
-}
-
-
-static void
-thumbnail_layer_surface_destroy (PhocLayerSurface          *layer_surface,
-                                 PhocPhoshPrivateThumbnail *thumbnail)
-{
-  g_debug ("Thumbnail %p: layer surface %p went away", thumbnail, layer_surface);
-
-  g_signal_handlers_disconnect_by_data (layer_surface, thumbnail);
-  thumbnail->layer_surface = NULL;
-}
-
-
-static void
 thumbnail_handle_set_properties (struct wl_client   *wl_client,
                                  struct wl_resource *thumbnail_resource,
                                  int32_t             x,
                                  int32_t             y,
                                  wl_fixed_t          scale,
-                                 wl_fixed_t          alpha)
+                                 wl_fixed_t          alpha_)
 {
-  PhocPhoshPrivateThumbnail *thumbnail =
+  PhocPhoshThumbnail *thumbnail =
     phoc_phosh_private_thumbnail_from_resource (thumbnail_resource);
   PhocOutput *output;
+  PhocView *view;
+  PhocLayerSurface *layer_surface;
+  float alpha;
 
-  g_return_if_fail (thumbnail);
+  g_assert (PHOC_IS_PHOSH_THUMBNAIL (thumbnail));
 
-  thumbnail->x = x;
-  thumbnail->y = y;
-  thumbnail->scale = MAX (0.0, wl_fixed_to_double (scale));
-  thumbnail->alpha = CLAMP (wl_fixed_to_double (alpha), 0.0, 1.0);
+  alpha = CLAMP (wl_fixed_to_double (alpha_), 0.0, 1.0);
+  phoc_phosh_thumbnail_set_props (thumbnail,
+                                  x, y,
+                                  MAX (0.0, wl_fixed_to_double (scale)),
+                                  alpha);
 
-  if (thumbnail->layer_surface == NULL)
+  layer_surface = phoc_phosh_thumbnail_get_layer_surface (thumbnail);
+  if (layer_surface == NULL)
     return;
 
-  if (thumbnail->view == NULL)
+  view = phoc_phosh_thumbnail_get_view (thumbnail);
+  if (view == NULL)
     return;
 
-  phoc_layer_surface_set_alpha (thumbnail->layer_surface, thumbnail->alpha);
+  phoc_layer_surface_set_alpha (layer_surface, alpha);
 
   /* Damage the whole layer surface region: thumbnail may have moved, alpha changed */
-  output = phoc_layer_surface_get_output (thumbnail->layer_surface);
+  output = phoc_layer_surface_get_output (layer_surface);
   if (output)
-    phoc_output_damage_whole (output);
+    phoc_output_damage_from_layer_surface (output, layer_surface, TRUE);
 }
 
 
@@ -643,23 +632,14 @@ static const struct phosh_private_thumbnail_interface phoc_phosh_private_thumbna
 static void
 thumbnail_resource_destroy (struct wl_resource *resource)
 {
-  PhocPhoshPrivateThumbnail *thumbnail = phoc_phosh_private_thumbnail_from_resource (resource);
+  PhocPhoshThumbnail *thumbnail = phoc_phosh_private_thumbnail_from_resource (resource);
 
   if (thumbnail == NULL)
     return;
 
-  g_debug ("Destroying thumbnail %p (res %p)", thumbnail, thumbnail->resource);
+  g_debug ("Destroying thumbnail %p (res %p)", thumbnail, resource);
 
-  if (thumbnail->view)
-    g_signal_handlers_disconnect_by_data (thumbnail->view, thumbnail);
-
-  if (thumbnail->layer_surface) {
-    g_object_set_data (G_OBJECT (thumbnail->layer_surface), "phoc-thumbnail", NULL);
-    g_signal_handlers_disconnect_by_data (thumbnail->layer_surface, thumbnail);
-  }
-
-  wl_resource_set_user_data (thumbnail->resource, NULL);
-  g_free (thumbnail);
+  g_object_unref (thumbnail);
 }
 
 
@@ -670,11 +650,12 @@ handle_add_thumbnail_view (struct wl_client   *wl_client,
                            struct wl_resource *toplevel_resource,
                            struct wl_resource *layer_surface_resource)
 {
-  PhocPhoshPrivateThumbnail *thumbnail;
+  PhocPhoshThumbnail *thumbnail;
   struct wlr_foreign_toplevel_handle_v1 *toplevel_handle;
   struct wlr_layer_surface_v1 *wlr_layer_surface;
   PhocView *view = NULL;
   PhocLayerSurface *layer_surface = NULL;
+  struct wl_resource *resource;
 
   /* Create inert resource when object is already gone */
   toplevel_handle = wl_resource_get_user_data (toplevel_resource);
@@ -685,41 +666,23 @@ handle_add_thumbnail_view (struct wl_client   *wl_client,
   if (wlr_layer_surface && PHOC_IS_LAYER_SURFACE (wlr_layer_surface->data))
     layer_surface = wlr_layer_surface->data;
 
-  thumbnail = g_new0 (PhocPhoshPrivateThumbnail, 1);
-  thumbnail->view = view;
-  thumbnail->layer_surface = layer_surface;
-  thumbnail->scale = 1.0;
-  thumbnail->alpha = 1.0;
-
-  thumbnail->resource = wl_resource_create (wl_client,
-                                            &phosh_private_thumbnail_interface,
-                                            wl_resource_get_version (phosh_private_resource),
-                                            id);
-  if (thumbnail->resource == NULL) {
-    g_free (thumbnail);
+  thumbnail = phoc_phosh_thumbnail_new (view, layer_surface);
+  resource = wl_resource_create (wl_client,
+                                 &phosh_private_thumbnail_interface,
+                                 wl_resource_get_version (phosh_private_resource),
+                                 id);
+  if (resource == NULL) {
+    g_object_unref (thumbnail);
     wl_client_post_no_memory (wl_client);
     return;
   }
 
   g_debug ("New thumbnail %p (res %p) for view %p on layer surface %p",
-           thumbnail, thumbnail->resource, view, layer_surface);
-  wl_resource_set_implementation (thumbnail->resource,
+           thumbnail, resource, view, layer_surface);
+  wl_resource_set_implementation (resource,
                                   &phoc_phosh_private_thumbnail_impl,
                                   thumbnail,
                                   thumbnail_resource_destroy);
-
-  if (layer_surface) {
-    g_object_set_data (G_OBJECT (layer_surface), "phoc-thumbnail", thumbnail);
-    g_signal_connect (layer_surface,
-                      "destroy",
-                      G_CALLBACK (thumbnail_layer_surface_destroy),
-                      thumbnail);
-  }
-
-  if (view) {
-    g_signal_connect (view, "surface-destroy", G_CALLBACK (on_thumbnail_view_surface_destroy),
-                      thumbnail);
-  }
 }
 
 
@@ -899,29 +862,12 @@ phoc_phosh_private_startup_tracker_from_resource (struct wl_resource *resource)
 }
 
 
-static PhocPhoshPrivateThumbnail *
+static PhocPhoshThumbnail *
 phoc_phosh_private_thumbnail_from_resource (struct wl_resource *resource)
 {
   g_assert (wl_resource_instance_of (resource, &phosh_private_thumbnail_interface,
                                      &phoc_phosh_private_thumbnail_impl));
   return wl_resource_get_user_data (resource);
-}
-
-
-/**
- * phoc_phosh_private_thumbnail_from_layer_surface: (skip)
- * @layer_surface: The layer surface
- *
- * Get the thumbnail attached to the given layer surface.
- *
- * Returns: (transfer none) (nullable): The thumbnail or %NULL if none
- */
-PhocPhoshPrivateThumbnail *
-phoc_phosh_private_thumbnail_from_layer_surface (PhocLayerSurface *layer_surface)
-{
-  g_return_val_if_fail (PHOC_IS_LAYER_SURFACE (layer_surface), NULL);
-
-  return g_object_get_data (G_OBJECT (layer_surface), "phoc-thumbnail");
 }
 
 

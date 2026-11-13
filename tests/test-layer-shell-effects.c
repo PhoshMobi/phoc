@@ -63,7 +63,7 @@ test_client_layer_shell_effects_drag_surface_simple (PhocTestClientGlobals *glob
   static struct zphoc_draggable_layer_surface_v1 *drag_surface;
   DragTestSimple drag_test = { 0 };
 
-  ls_green = phoc_test_layer_surface_new (globals, 0, HEIGHT, 0xFF00FF00,
+  ls_green = phoc_test_layer_surface_new (globals, 0, HEIGHT, PHOC_TEST_OPAQUE | PHOC_TEST_GREEN,
                                           ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP |
                                           ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
                                           ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT,
@@ -102,7 +102,7 @@ test_client_layer_shell_effects_alpha_surface_simple (PhocTestClientGlobals *glo
   PhocTestLayerSurface *ls_green;
   static struct zphoc_alpha_layer_surface_v1 *alpha_surf;
 
-  ls_green = phoc_test_layer_surface_new (globals, 0, HEIGHT, 0xFF00FF00,
+  ls_green = phoc_test_layer_surface_new (globals, 0, HEIGHT, PHOC_TEST_OPAQUE | PHOC_TEST_GREEN,
                                           ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP |
                                           ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
                                           ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT,
@@ -137,12 +137,14 @@ test_client_layer_shell_effects_stack_surface_simple (PhocTestClientGlobals *glo
   PhocTestLayerSurface *ls_green, *ls_red;
   static struct zphoc_stacked_layer_surface_v1 *stacked_surf;
 
-  ls_green = phoc_test_layer_surface_new (globals, WIDTH, HEIGHT, 0xFF00FF00,
+  ls_green = phoc_test_layer_surface_new (globals, WIDTH, HEIGHT,
+                                          PHOC_TEST_OPAQUE | PHOC_TEST_GREEN,
                                           ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP, 0);
   g_assert_nonnull (ls_green);
   phoc_assert_screenshot (globals, "test-layer-shell-anchor-1.png");
 
-  ls_red = phoc_test_layer_surface_new (globals, WIDTH * 2, HEIGHT * 2, 0xFFFF0000,
+  ls_red = phoc_test_layer_surface_new (globals, WIDTH * 2, HEIGHT * 2,
+                                        PHOC_TEST_OPAQUE | PHOC_TEST_RED,
                                         ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM, 0);
   g_assert_nonnull (ls_red);
   phoc_assert_screenshot (globals, "test-layer-shell-anchor-2.png");
