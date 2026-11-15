@@ -86,7 +86,7 @@
       the compositor must not send any more phoc_foreign_toplevel_pidfd_v1.pidfd events.
 
       A pidfd references the toplevel's process identifier (pid) via a file descriptor
-      see pidfd_open(1).
+      see pidfd_open(2).
     </description>
 
     <event name="pidfd">
@@ -113,7 +113,7 @@
     </request>
 
     <enum name="error">
-      <description summary="ext_foreign_toplevel_state_v1 errors">
+      <description summary="ext_foreign_toplevel_pidfd errors">
         These errors are sent in response to phoc_foreign_toplevel_pidfd_v1 requests.
       </description>
       <entry name="orphaned" value="0"

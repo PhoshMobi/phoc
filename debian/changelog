@@ -1,3 +1,87 @@
+phoc (0.59.0) experimental; urgency=medium
+
+  [ Guido Günther ]
+  * workspace: Damage newly added unmanaged views.
+    Inserting views damages so inserting unmanaged should damage too.
+  * workspace: Allow to append views at the bottom.
+    This allows to add a view at the end of the queue so they don't cover existing views.
+  * tests: Add workspace manager tests.
+    Test a bit of the newly added behavior.
+  * layer-surface: Add get_geometry()
+    We had the declaration but didn't add a definition until now
+    Fixes: 28f1107e4 ("layer-surface: Notify transaction about configure events")
+  * phosh-private: Drop resource from thumbnail.
+    We don't use it
+  * phosh-thumbnail: Move to separate file.
+    We'll turn it into an object in follow-up commits. This is the mere
+    code move.
+  * phosh-thumbnail: Turn into a minimal GObject.
+    We move the struct members private once we handle the resource setting
+    as well.
+  * phosh-thumbnail: Add getters and setters.
+    Introduce a private header since only phosh-private should be able
+    to create thumbnails and set values.
+  * phosh-private: Use the setters and type checks
+  * render: Use getters to access thumbnails
+  * phosh-thumbnail: Make struct private.
+    This makes it a proper GObject that can only be modified via the
+    provided methods.
+  * phosh-thumbnail: Reduce the submitted damage.
+    No need to damage the whole output, the layer surface is enough. We
+    know match what the comment says.
+  * view: Allow to listen for damage additions.
+    When a view adds damage, other parts might need adjustment too.
+    Add a signal for that.
+    Would be nice if we would know the effective damage area but
+    that will need to wait for the full rendering tree.
+  * tests: Add and use some simple colors.
+    Avoids lots of constants in the code
+  * phosh-thumbnail: Make sure thumbnail gets damaged when view changes.
+    Changes to the view's content are otherwise not updated until the
+    layer-surface changes.
+    Helps: https://gitlab.gnome.org/World/Phosh/phosh/-/work_items/1349
+  * render: Render thumbnails relative to and clip to the layer-surface.
+    That's what the protocol says.
+  * ci: Give asan tests more time.
+    They run a lot slower so let give them more time.
+  * toplevel-pidfd: Don't leak pidfd
+  * examples: Drop xx_ references.
+    We use a phoc specific protocol
+  * desktop: Remove unused getter
+  * server: Move pidfd protocol here.
+    We want new protocols on the server, not desktop
+  * server: Move cutouts protocol here.
+    We want new protocols on the server, not desktop
+  * server: Use int instead of gint.
+    Spotted by the ci-check
+  * foreign-toplevel-pidfd: Fix protocol references
+  * testlib: Listen to ext-foreign-toplevel and pidfd protocols too.
+    We rename theh wlr-foreign-toplevel accordingly while at that.
+    This will allow us to fade out the wlr-foreign-toplevel protocol
+    bit by bit.
+  * tests: Add test for toplevel-pidfd protocol.
+    Fixes: d74729dae ("phoc-foreign-toplevel-pidfd: Add protocol implementation")
+  * view: Allow to map wlr-foreign-toplevels to ext-foreign-toplevels.
+  * server: Instantiate toplevel-identifier protocol.
+    It's a privileged protocol
+  * examples/wlls: Report toplevel identifier too.
+    We get the identifier from wlr-toplevel (although we could get
+    it directly)
+
+  [ Evangelos Ribeiro Tzaras ]
+  * workspace-manager: Adjust number of workspaces at runtime.
+    Extends PHOC_WORKSPACE_MODE_FIXED to adapt to changes of the
+    'num-workspaces' setting:
+    - If the number of workspaces grows, new workspaces are appended.
+    - If it shrinks, the last workspaces are removed and all their views
+      and unmanaged surfaces are moved to the new last workspace.
+    Views from workspaces that were not visible when removed are put below
+    ones that are already there so they don't cover anything.
+    If the active workspace gets removed, the new last workspace becomes active
+    and the views moved from the old active workspace end up on top.
+
+ -- Guido Günther <agx@sigxcpu.org>  Sat, 14 Nov 2026 12:56:18 +0100
+
 phoc (0.59~rc1) experimental; urgency=medium
 
   [ Sebastian Krzyszkowiak ]

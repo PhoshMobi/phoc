@@ -1,8 +1,12 @@
-phoc 0.59~rc1
--------------
+phoc 0.59.0
+-----------
 Released November 2026
+* New protocol support:
+  * phoc-foreign-topleve-identifier-v1
+* Allow to adjust number of workspaces at runtime
 * Mulitple fixes, including crash fixes.
 * Contributors:
+    * Evangelos Ribeiro Tzaras
     * Guido Günther
     * Sebastian Krzyszkowiak
     * Xu Qianhui
