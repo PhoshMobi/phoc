@@ -691,20 +691,11 @@ phoc_desktop_constructed (GObject *object)
   wl_signal_add (&self->xdg_activation_v1->events.request_activate,
                  &self->xdg_activation_v1_request_activate);
 
-  self->virtual_keyboard = wlr_virtual_keyboard_manager_v1_create (wl_display);
-  wl_signal_add (&self->virtual_keyboard->events.new_virtual_keyboard,
-                 &self->virtual_keyboard_new);
-  self->virtual_keyboard_new.notify = phoc_handle_virtual_keyboard;
-
   self->keyboard_shortcuts_inhibit = wlr_keyboard_shortcuts_inhibit_v1_create (wl_display);
   self->keyboard_shortcuts_inhibit_new_inhibitor.notify =
     phoc_handle_keyboard_shortcuts_inhibit_new_inhibitor;
   wl_signal_add (&self->keyboard_shortcuts_inhibit->events.new_inhibitor,
                  &self->keyboard_shortcuts_inhibit_new_inhibitor);
-
-  self->virtual_pointer = wlr_virtual_pointer_manager_v1_create (wl_display);
-  wl_signal_add (&self->virtual_pointer->events.new_virtual_pointer, &self->virtual_pointer_new);
-  self->virtual_pointer_new.notify = phoc_handle_virtual_pointer;
 
   priv->screencopy_manager_v1 = wlr_screencopy_manager_v1_create (wl_display);
 
@@ -776,9 +767,7 @@ phoc_desktop_finalize (GObject *object)
   wl_list_remove (&priv->gamma_control_set_gamma.link);
   wl_list_remove (&self->layout_change.link);
   wl_list_remove (&self->layer_shell_surface.link);
-  wl_list_remove (&self->virtual_keyboard_new.link);
   wl_list_remove (&self->keyboard_shortcuts_inhibit_new_inhibitor.link);
-  wl_list_remove (&self->virtual_pointer_new.link);
   wl_list_remove (&self->pointer_constraint.link);
   wl_list_remove (&self->output_manager_apply.link);
   wl_list_remove (&self->output_manager_test.link);
@@ -1289,9 +1278,7 @@ phoc_desktop_is_privileged_protocol (PhocDesktop *self, const struct wl_global *
     global == self->layer_shell->global ||
     global == self->output_manager_v1->global ||
     global == self->output_power_manager_v1->global ||
-    global == self->security_context_manager_v1->global ||
-    global == self->virtual_keyboard->global ||
-    global == self->virtual_pointer->global);
+    global == self->security_context_manager_v1->global);
 
   return is_priv;
 }

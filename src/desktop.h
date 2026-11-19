@@ -30,8 +30,6 @@
 #include <wlr/types/wlr_relative_pointer_v1.h>
 #include <wlr/types/wlr_security_context_v1.h>
 #include <wlr/types/wlr_text_input_v3.h>
-#include <wlr/types/wlr_virtual_keyboard_v1.h>
-#include <wlr/types/wlr_virtual_pointer_v1.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/types/wlr_xdg_activation_v1.h>
 
@@ -69,8 +67,6 @@ struct _PhocDesktop {
   struct wlr_server_decoration_manager *server_decoration_manager;
   struct wlr_tablet_manager_v2 *tablet_v2;
   struct wlr_text_input_manager_v3 *text_input;
-  struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard;
-  struct wlr_virtual_pointer_manager_v1 *virtual_pointer;
   struct wlr_xdg_activation_v1 *xdg_activation_v1;
 
   struct wl_listener new_output;
@@ -78,8 +74,6 @@ struct _PhocDesktop {
   struct wl_listener keyboard_shortcuts_inhibit_new_inhibitor;
   struct wl_listener layout_change;
   struct wl_listener layer_shell_surface;
-  struct wl_listener virtual_keyboard_new;
-  struct wl_listener virtual_pointer_new;
   struct wl_listener pointer_constraint;
   struct wl_listener output_manager_apply;
   struct wl_listener output_manager_test;
