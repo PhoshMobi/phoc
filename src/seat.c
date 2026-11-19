@@ -35,6 +35,13 @@
 #include <libinput.h>
 #include <time.h>
 
+/**
+ * PhocSeat:
+ * @im_relay: The input method relay for this seat
+ *
+ * Represents a seat
+ */
+
 enum {
   PROP_0,
   PROP_INPUT,

@@ -27,13 +27,6 @@ G_DECLARE_FINAL_TYPE (PhocSeat, phoc_seat, PHOC, SEAT, GObject)
 
 typedef struct _PhocCursor PhocCursor;
 
-/**
- * PhocSeat:
- * @im_relay: The input method relay for this seat
- *
- * Represents a seat
- */
-
 /* TODO: we keep the struct public due to the list links and
    notifiers but we should avoid other member access */
 typedef struct _PhocSeat {
