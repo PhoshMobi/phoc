@@ -214,7 +214,7 @@ on_switch_toggled (PhocSeat *self, gboolean state, PhocSwitch *switch_)
     g_assert_not_reached ();
   }
 
-  phoc_seat_notify_activity (self);
+  phoc_seat_notify_activity (self, PHOC_SEAT_ACTIVITY_TYPE_SWITCH);
 }
 
 
@@ -231,7 +231,7 @@ handle_touch_down (struct wl_listener *listener, void *data)
              output->wlr_output->name);
     return;
   }
-  phoc_seat_notify_activity (cursor->seat);
+  phoc_seat_notify_activity (cursor->seat, PHOC_SEAT_ACTIVITY_TYPE_TOUCH);
   phoc_cursor_handle_touch_down (cursor, event);
 }
 
@@ -246,7 +246,7 @@ handle_touch_up (struct wl_listener *listener, void *data)
     return;
 
   phoc_cursor_handle_touch_up (cursor, event);
-  phoc_seat_notify_activity (cursor->seat);
+  phoc_seat_notify_activity (cursor->seat, PHOC_SEAT_ACTIVITY_TYPE_TOUCH);
 }
 
 
@@ -260,7 +260,7 @@ handle_touch_motion (struct wl_listener *listener, void *data)
     return;
 
   phoc_cursor_handle_touch_motion (cursor, event);
-  phoc_seat_notify_activity (cursor->seat);
+  phoc_seat_notify_activity (cursor->seat, PHOC_SEAT_ACTIVITY_TYPE_TOUCH);
 }
 
 
@@ -364,7 +364,7 @@ handle_tool_axis (struct wl_listener *listener, void *data)
   if (event->updated_axes & WLR_TABLET_TOOL_AXIS_WHEEL)
     wlr_tablet_v2_tablet_tool_notify_wheel (tool->tablet_v2_tool, event->wheel_delta, 0);
 
-  phoc_seat_notify_activity (cursor->seat);
+  phoc_seat_notify_activity (cursor->seat, PHOC_SEAT_ACTIVITY_TYPE_TABLET_TOOL);
 }
 
 
@@ -382,7 +382,7 @@ handle_tool_tip (struct wl_listener *listener, void *data)
     wlr_tablet_v2_tablet_tool_notify_up (tool->tablet_v2_tool);
   }
 
-  phoc_seat_notify_activity (cursor->seat);
+  phoc_seat_notify_activity (cursor->seat, PHOC_SEAT_ACTIVITY_TYPE_TABLET_TOOL);
 }
 
 
@@ -397,7 +397,7 @@ handle_tool_button (struct wl_listener *listener, void *data)
                                            (enum zwp_tablet_pad_v2_button_state)event->button,
                                            (enum zwp_tablet_pad_v2_button_state)event->state);
 
-  phoc_seat_notify_activity (cursor->seat);
+  phoc_seat_notify_activity (cursor->seat, PHOC_SEAT_ACTIVITY_TYPE_TABLET_TOOL);
 }
 
 
@@ -408,7 +408,7 @@ handle_tool_proximity (struct wl_listener *listener, void *data)
   struct wlr_tablet_tool_proximity_event *event = data;
   struct wlr_tablet_tool *wlr_tool = event->tool;
 
-  phoc_seat_notify_activity (cursor->seat);
+  phoc_seat_notify_activity (cursor->seat, PHOC_SEAT_ACTIVITY_TYPE_TABLET_TOOL);
 
   if (wlr_tool->data == NULL)
     phoc_tablet_tool_new (wlr_tool, cursor->seat);
@@ -828,7 +828,7 @@ on_keyboard_activity (PhocSeat *self, uint32_t keycode, PhocKeyboard *keyboard)
 
   g_debug ("Keycode %d pressed. is_wakeup=%d", keycode, is_wakeup);
 
-  phoc_seat_notify_activity (self);
+  phoc_seat_notify_activity (self, PHOC_SEAT_ACTIVITY_TYPE_KEYBOARD);
 }
 
 
@@ -1969,7 +1969,7 @@ phoc_seat_update_last_button_serial (PhocSeat *self, uint32_t serial)
 
 
 void
-phoc_seat_notify_activity (PhocSeat *self)
+phoc_seat_notify_activity (PhocSeat *self, PhocSeatActivityType type)
 {
   PhocSeatPrivate *priv;
 
