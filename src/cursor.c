@@ -2149,3 +2149,24 @@ phoc_cursor_get_touch_points (PhocCursor *self)
 
   return priv->touch_points;
 }
+
+/**
+ * phoc_cursor_hide:
+ * @self: The cursor
+ *
+ * Hide the cursor until the pointer moves again. Pointer
+ * focus and pointer constraints are unaffected.
+ */
+void
+phoc_cursor_hide (PhocCursor *self)
+{
+  PhocCursorPrivate *priv;
+
+  g_assert (PHOC_IS_CURSOR (self));
+  priv = phoc_cursor_get_instance_private (self);
+
+  /* Make sure we unhide on the next motion event */
+  priv->has_pointer_motion = FALSE;
+
+  wlr_cursor_unset_image (self->cursor);
+}
