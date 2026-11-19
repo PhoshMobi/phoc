@@ -179,9 +179,6 @@ GSList *                phoc_desktop_get_layer_surface_stacks    (PhocDesktop *s
 PhocGtkShell *          phoc_desktop_get_gtk_shell               (PhocDesktop *self);
 PhocPhoshPrivate *      phoc_desktop_get_phosh_private           (PhocDesktop *self);
 
-void                    phoc_desktop_notify_activity             (PhocDesktop *self,
-                                                                  PhocSeat    *seat);
-
 gboolean                phoc_desktop_is_privileged_protocol      (PhocDesktop            *self,
                                                                   const struct wl_global *global);
 void                    phoc_desktop_save_outputs_state          (PhocDesktop *self,

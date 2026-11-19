@@ -30,6 +30,7 @@
 #include <wlr/types/wlr_ext_data_control_v1.h>
 #include <wlr/types/wlr_ext_image_capture_source_v1.h>
 #include <wlr/types/wlr_ext_image_copy_capture_v1.h>
+#include <wlr/types/wlr_idle_notify_v1.h>
 #include <wlr/types/wlr_linux_dmabuf_v1.h>
 #include <wlr/types/wlr_security_context_v1.h>
 #include <wlr/types/wlr_xdg_toplevel_tag_v1.h>
@@ -99,6 +100,7 @@ typedef struct _PhocServer {
   struct wlr_data_device_manager               *data_device_manager;
   struct wlr_ext_data_control_manager_v1       *ext_data_control_manager_v1;
   struct wlr_ext_image_copy_capture_manager_v1 *ext_image_copy_capture_manager_v1;
+  struct wlr_idle_notifier_v1                  *idle_notifier_v1;
   struct wlr_xdg_decoration_manager_v1         *xdg_decoration_manager;
   struct wlr_xdg_shell                         *xdg_shell;
   struct wlr_xdg_wm_dialog_v1                  *xdg_wm_dialog;
@@ -380,6 +382,8 @@ phoc_server_init_protocols (PhocServer *self)
   self->toplevel_identifier_manager = phoc_toplevel_identifier_manager_new ();
   self->toplevel_pidfd_manager = phoc_toplevel_pidfd_manager_new ();
   self->xx_cutouts_manager = phoc_xx_cutouts_manager_new ();
+
+  self->idle_notifier_v1 = wlr_idle_notifier_v1_create (self->wl_display);
 }
 
 
@@ -1094,4 +1098,13 @@ phoc_server_get_xx_cutouts_manager (PhocServer *self)
   g_assert (PHOC_IS_SERVER (self));
 
   return self->xx_cutouts_manager;
+}
+
+
+void
+phoc_server_notify_activity (PhocServer *self, PhocSeat *seat)
+{
+  g_assert (PHOC_IS_SERVER (self));
+
+  wlr_idle_notifier_v1_notify_activity (self->idle_notifier_v1, seat->seat);
 }

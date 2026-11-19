@@ -12,7 +12,6 @@
 #include <wlr/types/wlr_export_dmabuf_v1.h>
 #include <wlr/types/wlr_fractional_scale_v1.h>
 #include <wlr/types/wlr_gamma_control_v1.h>
-#include <wlr/types/wlr_idle_notify_v1.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_output_power_management_v1.h>
@@ -90,7 +89,6 @@ typedef struct _PhocDesktopPrivate {
 
   /* Protocols from wlroots */
   struct wlr_data_control_manager_v1 *data_control_manager_v1;
-  struct wlr_idle_notifier_v1        *idle_notifier_v1;
   struct wlr_screencopy_manager_v1   *screencopy_manager_v1;
   struct wl_listener        gamma_control_set_gamma;
   struct wl_listener        request_set_cursor_shape;
@@ -683,7 +681,6 @@ phoc_desktop_constructed (GObject *object)
   self->input_method = wlr_input_method_manager_v2_create (wl_display);
   self->text_input = wlr_text_input_manager_v3_create (wl_display, PHOC_TEXT_INPUT_VERSION);
 
-  priv->idle_notifier_v1 = wlr_idle_notifier_v1_create (wl_display);
   priv->idle_inhibit = phoc_idle_inhibit_create ();
 
   priv->gtk_shell = phoc_gtk_shell_create (self, wl_display);
@@ -1267,17 +1264,6 @@ phoc_desktop_get_phosh_private (PhocDesktop *self)
   priv = phoc_desktop_get_instance_private (self);
 
   return priv->phosh;
-}
-
-void
-phoc_desktop_notify_activity (PhocDesktop *self, PhocSeat *seat)
-{
-  PhocDesktopPrivate *priv;
-
-  g_assert (PHOC_IS_DESKTOP (self));
-  priv = phoc_desktop_get_instance_private (self);
-
-  wlr_idle_notifier_v1_notify_activity (priv->idle_notifier_v1, seat->seat);
 }
 
 gboolean
