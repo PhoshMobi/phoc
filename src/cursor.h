@@ -142,6 +142,7 @@ PhocCursorMode phoc_cursor_get_mode (PhocCursor *self);
 void        phoc_cursor_set_mode (PhocCursor *self, PhocCursorMode mode);
 void        phoc_cursor_set_xcursor_theme (PhocCursor *self, const char *theme, uint32_t size);
 void        phoc_cursor_configure_xcursor (PhocCursor *self);
+void        phoc_cursor_hide (PhocCursor *self);
 
 GHashTable *phoc_cursor_get_touch_points (PhocCursor *self);
 
