@@ -18,6 +18,7 @@
 #include "surface.h"
 #include "toplevel-identifier.h"
 #include "utils.h"
+#include "virtual.h"
 #include "xdg-dialog.h"
 #include "xdg-toplevel.h"
 #include "xdg-toplevel-decoration.h"
@@ -30,8 +31,11 @@
 #include <wlr/types/wlr_ext_data_control_v1.h>
 #include <wlr/types/wlr_ext_image_capture_source_v1.h>
 #include <wlr/types/wlr_ext_image_copy_capture_v1.h>
+#include <wlr/types/wlr_idle_notify_v1.h>
 #include <wlr/types/wlr_linux_dmabuf_v1.h>
 #include <wlr/types/wlr_security_context_v1.h>
+#include <wlr/types/wlr_virtual_keyboard_v1.h>
+#include <wlr/types/wlr_virtual_pointer_v1.h>
 #include <wlr/types/wlr_xdg_toplevel_tag_v1.h>
 #include <wlr/xwayland.h>
 #include <wlr/xwayland/shell.h>
@@ -99,6 +103,9 @@ typedef struct _PhocServer {
   struct wlr_data_device_manager               *data_device_manager;
   struct wlr_ext_data_control_manager_v1       *ext_data_control_manager_v1;
   struct wlr_ext_image_copy_capture_manager_v1 *ext_image_copy_capture_manager_v1;
+  struct wlr_idle_notifier_v1                  *idle_notifier_v1;
+  struct wlr_virtual_keyboard_manager_v1       *virtual_keyboard;
+  struct wlr_virtual_pointer_manager_v1        *virtual_pointer;
   struct wlr_xdg_decoration_manager_v1         *xdg_decoration_manager;
   struct wlr_xdg_shell                         *xdg_shell;
   struct wlr_xdg_wm_dialog_v1                  *xdg_wm_dialog;
@@ -107,6 +114,8 @@ typedef struct _PhocServer {
   PhocXxCutoutsManager                         *xx_cutouts_manager;
 
   struct wl_listener                            new_surface;
+  struct wl_listener                            new_virtual_keyboard;
+  struct wl_listener                            new_virtual_pointer;
   struct wl_listener                            xdg_new_dialog;
   struct wl_listener                            xdg_shell_toplevel;
   struct wl_listener                            xdg_toplevel_decoration;
@@ -380,6 +389,17 @@ phoc_server_init_protocols (PhocServer *self)
   self->toplevel_identifier_manager = phoc_toplevel_identifier_manager_new ();
   self->toplevel_pidfd_manager = phoc_toplevel_pidfd_manager_new ();
   self->xx_cutouts_manager = phoc_xx_cutouts_manager_new ();
+
+  self->idle_notifier_v1 = wlr_idle_notifier_v1_create (self->wl_display);
+
+  self->virtual_keyboard = wlr_virtual_keyboard_manager_v1_create (self->wl_display);
+  wl_signal_add (&self->virtual_keyboard->events.new_virtual_keyboard,
+                 &self->new_virtual_keyboard);
+  self->new_virtual_keyboard.notify = phoc_handle_virtual_keyboard;
+
+  self->virtual_pointer = wlr_virtual_pointer_manager_v1_create (self->wl_display);
+  wl_signal_add (&self->virtual_pointer->events.new_virtual_pointer, &self->new_virtual_pointer);
+  self->new_virtual_pointer.notify = phoc_handle_virtual_pointer;
 }
 
 
@@ -405,7 +425,9 @@ phoc_server_is_privileged_protocol (PhocServer *self, const struct wl_global *gl
     global == phoc_toplevel_identifier_manager_get_global (self->toplevel_identifier_manager) ||
     global == phoc_toplevel_pidfd_manager_get_global (self->toplevel_pidfd_manager) ||
     global == self->ext_data_control_manager_v1->global ||
-    global == self->ext_image_copy_capture_manager_v1->global;
+    global == self->ext_image_copy_capture_manager_v1->global ||
+    global == self->virtual_keyboard->global ||
+    global == self->virtual_pointer->global;
 }
 
 
@@ -581,6 +603,8 @@ phoc_server_finalize (GObject *object)
   wl_list_remove (&self->xdg_toplevel_tag_manager_v1_set_tag.link);
   wl_list_remove (&self->xdg_toplevel_decoration.link);
   wl_list_remove (&self->xdg_shell_toplevel.link);
+  wl_list_remove (&self->new_virtual_pointer.link);
+  wl_list_remove (&self->new_virtual_keyboard.link);
   wl_list_remove (&self->xdg_new_dialog.link);
   wl_list_remove (&self->new_surface.link);
 
@@ -651,6 +675,8 @@ phoc_server_init (PhocServer *self)
   g_autoptr (GError) err = NULL;
 
   wl_list_init (&self->new_surface.link);
+  wl_list_init (&self->new_virtual_keyboard.link);
+  wl_list_init (&self->new_virtual_pointer.link);
   wl_list_init (&self->xdg_new_dialog.link);
   wl_list_init (&self->xdg_shell_toplevel.link);
   wl_list_init (&self->xdg_toplevel_decoration.link);
@@ -1094,4 +1120,13 @@ phoc_server_get_xx_cutouts_manager (PhocServer *self)
   g_assert (PHOC_IS_SERVER (self));
 
   return self->xx_cutouts_manager;
+}
+
+
+void
+phoc_server_notify_activity (PhocServer *self, PhocSeat *seat)
+{
+  g_assert (PHOC_IS_SERVER (self));
+
+  wlr_idle_notifier_v1_notify_activity (self->idle_notifier_v1, seat->seat);
 }

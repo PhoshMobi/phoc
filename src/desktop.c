@@ -12,7 +12,6 @@
 #include <wlr/types/wlr_export_dmabuf_v1.h>
 #include <wlr/types/wlr_fractional_scale_v1.h>
 #include <wlr/types/wlr_gamma_control_v1.h>
-#include <wlr/types/wlr_idle_notify_v1.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_output_power_management_v1.h>
@@ -90,7 +89,6 @@ typedef struct _PhocDesktopPrivate {
 
   /* Protocols from wlroots */
   struct wlr_data_control_manager_v1 *data_control_manager_v1;
-  struct wlr_idle_notifier_v1        *idle_notifier_v1;
   struct wlr_screencopy_manager_v1   *screencopy_manager_v1;
   struct wl_listener        gamma_control_set_gamma;
   struct wl_listener        request_set_cursor_shape;
@@ -683,7 +681,6 @@ phoc_desktop_constructed (GObject *object)
   self->input_method = wlr_input_method_manager_v2_create (wl_display);
   self->text_input = wlr_text_input_manager_v3_create (wl_display, PHOC_TEXT_INPUT_VERSION);
 
-  priv->idle_notifier_v1 = wlr_idle_notifier_v1_create (wl_display);
   priv->idle_inhibit = phoc_idle_inhibit_create ();
 
   priv->gtk_shell = phoc_gtk_shell_create (self, wl_display);
@@ -694,20 +691,11 @@ phoc_desktop_constructed (GObject *object)
   wl_signal_add (&self->xdg_activation_v1->events.request_activate,
                  &self->xdg_activation_v1_request_activate);
 
-  self->virtual_keyboard = wlr_virtual_keyboard_manager_v1_create (wl_display);
-  wl_signal_add (&self->virtual_keyboard->events.new_virtual_keyboard,
-                 &self->virtual_keyboard_new);
-  self->virtual_keyboard_new.notify = phoc_handle_virtual_keyboard;
-
   self->keyboard_shortcuts_inhibit = wlr_keyboard_shortcuts_inhibit_v1_create (wl_display);
   self->keyboard_shortcuts_inhibit_new_inhibitor.notify =
     phoc_handle_keyboard_shortcuts_inhibit_new_inhibitor;
   wl_signal_add (&self->keyboard_shortcuts_inhibit->events.new_inhibitor,
                  &self->keyboard_shortcuts_inhibit_new_inhibitor);
-
-  self->virtual_pointer = wlr_virtual_pointer_manager_v1_create (wl_display);
-  wl_signal_add (&self->virtual_pointer->events.new_virtual_pointer, &self->virtual_pointer_new);
-  self->virtual_pointer_new.notify = phoc_handle_virtual_pointer;
 
   priv->screencopy_manager_v1 = wlr_screencopy_manager_v1_create (wl_display);
 
@@ -779,9 +767,7 @@ phoc_desktop_finalize (GObject *object)
   wl_list_remove (&priv->gamma_control_set_gamma.link);
   wl_list_remove (&self->layout_change.link);
   wl_list_remove (&self->layer_shell_surface.link);
-  wl_list_remove (&self->virtual_keyboard_new.link);
   wl_list_remove (&self->keyboard_shortcuts_inhibit_new_inhibitor.link);
-  wl_list_remove (&self->virtual_pointer_new.link);
   wl_list_remove (&self->pointer_constraint.link);
   wl_list_remove (&self->output_manager_apply.link);
   wl_list_remove (&self->output_manager_test.link);
@@ -1269,17 +1255,6 @@ phoc_desktop_get_phosh_private (PhocDesktop *self)
   return priv->phosh;
 }
 
-void
-phoc_desktop_notify_activity (PhocDesktop *self, PhocSeat *seat)
-{
-  PhocDesktopPrivate *priv;
-
-  g_assert (PHOC_IS_DESKTOP (self));
-  priv = phoc_desktop_get_instance_private (self);
-
-  wlr_idle_notifier_v1_notify_activity (priv->idle_notifier_v1, seat->seat);
-}
-
 gboolean
 phoc_desktop_is_privileged_protocol (PhocDesktop *self, const struct wl_global *global)
 {
@@ -1303,9 +1278,7 @@ phoc_desktop_is_privileged_protocol (PhocDesktop *self, const struct wl_global *
     global == self->layer_shell->global ||
     global == self->output_manager_v1->global ||
     global == self->output_power_manager_v1->global ||
-    global == self->security_context_manager_v1->global ||
-    global == self->virtual_keyboard->global ||
-    global == self->virtual_pointer->global);
+    global == self->security_context_manager_v1->global);
 
   return is_priv;
 }

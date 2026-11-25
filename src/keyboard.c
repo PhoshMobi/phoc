@@ -28,6 +28,7 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 #include <wlr/backend/libinput.h>
+#include <wlr/types/wlr_virtual_keyboard_v1.h>
 
 #define WAKEUP_KEY_UDEV_PREFIX "GM_WAKEUP_KEY_"
 

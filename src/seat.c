@@ -1964,14 +1964,13 @@ phoc_seat_update_last_button_serial (PhocSeat *self, uint32_t serial)
 void
 phoc_seat_notify_activity (PhocSeat *self)
 {
-  PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
   PhocSeatPrivate *priv;
 
   g_assert (PHOC_IS_SEAT (self));
   priv = phoc_seat_get_instance_private (self);
 
   priv->last_event_ts = g_get_monotonic_time ();
-  phoc_desktop_notify_activity (desktop, self);
+  phoc_server_notify_activity (phoc_server_get_default (), self);
 }
 
 

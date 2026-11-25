@@ -2,11 +2,13 @@
 
 #include "phoc-config.h"
 
-#include <wlr/types/wlr_virtual_keyboard_v1.h>
 #include "cursor.h"
 #include "virtual.h"
 #include "seat.h"
 #include "server.h"
+
+#include <wlr/types/wlr_virtual_keyboard_v1.h>
+#include <wlr/types/wlr_virtual_pointer_v1.h>
 
 
 void
@@ -26,14 +28,12 @@ phoc_handle_virtual_pointer (struct wl_listener *listener, void *data)
 {
   PhocServer *server = phoc_server_get_default ();
   PhocInput *input = phoc_server_get_input (server);
-  PhocDesktop *desktop = wl_container_of (listener, desktop, virtual_pointer_new);
   struct wlr_virtual_pointer_v1_new_pointer_event *event = data;
   struct wlr_virtual_pointer_v1 *pointer = event->new_pointer;
   struct wlr_input_device *device = &pointer->pointer.base;
   char *seat_name = PHOC_CONFIG_DEFAULT_SEAT_NAME;
   PhocSeat*seat;
 
-  g_return_if_fail (PHOC_IS_DESKTOP (desktop));
   g_return_if_fail (PHOC_IS_SERVER (server));
 
   seat = phoc_input_get_seat (input, seat_name);
