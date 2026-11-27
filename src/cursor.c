@@ -1406,7 +1406,7 @@ phoc_cursor_pointer_motion (PhocCursor              *self,
     priv->has_pointer_motion = TRUE;
     phoc_cursor_show (self);
   }
-  phoc_seat_notify_activity (self->seat);
+  phoc_seat_notify_activity (self->seat, PHOC_SEAT_ACTIVITY_TYPE_POINTER);
 
   wlr_relative_pointer_manager_v1_send_relative_motion (desktop->relative_pointer_manager,
                                                         self->seat->seat,
@@ -1485,7 +1485,7 @@ handle_pointer_button (struct wl_listener *listener, void *data)
   PhocEventType type;
   bool is_touch = event->pointer->base.type == WLR_INPUT_DEVICE_TOUCH;
 
-  phoc_seat_notify_activity (self->seat);
+  phoc_seat_notify_activity (self->seat, PHOC_SEAT_ACTIVITY_TYPE_POINTER);
   g_debug ("%s %d is_touch: %d", __func__, __LINE__, is_touch);
   if (!is_touch) {
     type = event->state ? PHOC_EVENT_BUTTON_PRESS : PHOC_EVENT_BUTTON_RELEASE;
@@ -1528,7 +1528,7 @@ handle_pointer_axis (struct wl_listener *listener, void *data)
     priv->has_pointer_motion = TRUE;
     phoc_cursor_show (self);
   }
-  phoc_seat_notify_activity (self->seat);
+  phoc_seat_notify_activity (self->seat, PHOC_SEAT_ACTIVITY_TYPE_POINTER);
 
   send_pointer_axis (self->seat, self->seat->seat->pointer_state.focused_surface, event);
 }
@@ -1539,7 +1539,7 @@ handle_pointer_frame (struct wl_listener *listener, void *data)
 {
   PhocCursor *self = wl_container_of (listener, self, frame);
 
-  phoc_seat_notify_activity (self->seat);
+  phoc_seat_notify_activity (self->seat, PHOC_SEAT_ACTIVITY_TYPE_POINTER);
   wlr_seat_pointer_notify_frame (self->seat->seat);
 
   // make sure to always send frame events when necessary even when bypassing seat grabs
@@ -2148,4 +2148,25 @@ phoc_cursor_get_touch_points (PhocCursor *self)
   priv = phoc_cursor_get_instance_private (self);
 
   return priv->touch_points;
+}
+
+/**
+ * phoc_cursor_hide:
+ * @self: The cursor
+ *
+ * Hide the cursor until the pointer moves again. Pointer
+ * focus and pointer constraints are unaffected.
+ */
+void
+phoc_cursor_hide (PhocCursor *self)
+{
+  PhocCursorPrivate *priv;
+
+  g_assert (PHOC_IS_CURSOR (self));
+  priv = phoc_cursor_get_instance_private (self);
+
+  /* Make sure we unhide on the next motion event */
+  priv->has_pointer_motion = FALSE;
+
+  wlr_cursor_unset_image (self->cursor);
 }

@@ -8,6 +8,15 @@
         window.
       </description>
     </key>
+
+    <key name="hide-cursor-timeout" type="u">
+      <default>0</default>
+      <summary>Hide cursor on inactivity</summary>
+      <description>
+        Hide the cursor after N seconds of inactivity. 0 means
+        don't hide.
+      </description>
+    </key>
   </schema>
 
   <!-- Legacy schema -->

@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2021 Purism SPC
- *               2025 The Phosh Developers
+ *               2025-2026 Phosh.mobi e.V.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -28,11 +28,24 @@ G_DECLARE_FINAL_TYPE (PhocSeat, phoc_seat, PHOC, SEAT, GObject)
 typedef struct _PhocCursor PhocCursor;
 
 /**
- * PhocSeat:
- * @im_relay: The input method relay for this seat
+ * PhocSeatActivityType:
+ * @PHOC_SEAT_ACTIVITY_TYPE_UNKNOWN: Unknown activity
+ * @PHOC_SEAT_ACTIVITY_TYPE_TOUCH: Touch screen activity
+ * @PHOC_SEAT_ACTIVITY_TYPE_POINTER: Pointer activity
+ * @PHOC_SEAT_ACTIVITY_TYPE_KEYBOARD: Keyboard activity
+ * @PHOC_SEAT_ACTIVITY_TYPE_TABLET_TOOL: Tablet tool activity
+ * @PHOC_SEAT_ACTIVITY_TYPE_SWITCH: Switch activity
  *
- * Represents a seat
+ * The kind of user activity on a seat.
  */
+typedef enum _PhocSeatActivityType {
+  PHOC_SEAT_ACTIVITY_TYPE_UNKNOWN = 0,
+  PHOC_SEAT_ACTIVITY_TYPE_TOUCH = 1,
+  PHOC_SEAT_ACTIVITY_TYPE_POINTER = 2,
+  PHOC_SEAT_ACTIVITY_TYPE_KEYBOARD = 3,
+  PHOC_SEAT_ACTIVITY_TYPE_TABLET_TOOL = 4,
+  PHOC_SEAT_ACTIVITY_TYPE_SWITCH = 5,
+} PhocSeatActivityType;
 
 /* TODO: we keep the struct public due to the list links and
    notifiers but we should avoid other member access */
@@ -138,7 +151,7 @@ gboolean           phoc_seat_has_switch   (PhocSeat *self, enum wlr_switch_type 
 void               phoc_seat_update_last_touch_serial (PhocSeat *self, uint32_t serial);
 void               phoc_seat_update_last_button_serial (PhocSeat *self, uint32_t serial);
 uint32_t           phoc_seat_get_last_button_or_touch_serial (PhocSeat *self);
-void               phoc_seat_notify_activity (PhocSeat *self);
+void               phoc_seat_notify_activity (PhocSeat *self, PhocSeatActivityType type);
 gint64             phoc_seat_get_last_event_ts (PhocSeat *self);
 
 gboolean           phoc_seat_shortcuts_inhibited (const PhocSeat *self);

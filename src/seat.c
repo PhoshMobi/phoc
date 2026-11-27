@@ -35,6 +35,16 @@
 #include <libinput.h>
 #include <time.h>
 
+#define PHOC_SETTINGS_SCHEMA "mobi.phosh.phoc"
+#define HIDE_CURSOR_KEY "hide-cursor-timeout"
+
+/**
+ * PhocSeat:
+ * @im_relay: The input method relay for this seat
+ *
+ * Represents a seat
+ */
+
 enum {
   PROP_0,
   PROP_INPUT,
@@ -57,12 +67,18 @@ typedef struct _PhocSeatPrivate {
 
   struct wl_client *exclusive_client;
 
+  GSettings        *settings;
   GHashTable       *input_mapping_settings;
 
   uint32_t          last_button_serial;
   uint32_t          last_touch_serial;
 
   gint64            last_event_ts;
+
+  struct {
+    guint timeout;
+    guint id;
+  } hide_cursor;
 } PhocSeatPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (PhocSeat, phoc_seat, G_TYPE_OBJECT)
@@ -207,7 +223,7 @@ on_switch_toggled (PhocSeat *self, gboolean state, PhocSwitch *switch_)
     g_assert_not_reached ();
   }
 
-  phoc_seat_notify_activity (self);
+  phoc_seat_notify_activity (self, PHOC_SEAT_ACTIVITY_TYPE_SWITCH);
 }
 
 
@@ -224,7 +240,7 @@ handle_touch_down (struct wl_listener *listener, void *data)
              output->wlr_output->name);
     return;
   }
-  phoc_seat_notify_activity (cursor->seat);
+  phoc_seat_notify_activity (cursor->seat, PHOC_SEAT_ACTIVITY_TYPE_TOUCH);
   phoc_cursor_handle_touch_down (cursor, event);
 }
 
@@ -239,7 +255,7 @@ handle_touch_up (struct wl_listener *listener, void *data)
     return;
 
   phoc_cursor_handle_touch_up (cursor, event);
-  phoc_seat_notify_activity (cursor->seat);
+  phoc_seat_notify_activity (cursor->seat, PHOC_SEAT_ACTIVITY_TYPE_TOUCH);
 }
 
 
@@ -253,7 +269,7 @@ handle_touch_motion (struct wl_listener *listener, void *data)
     return;
 
   phoc_cursor_handle_touch_motion (cursor, event);
-  phoc_seat_notify_activity (cursor->seat);
+  phoc_seat_notify_activity (cursor->seat, PHOC_SEAT_ACTIVITY_TYPE_TOUCH);
 }
 
 
@@ -357,7 +373,7 @@ handle_tool_axis (struct wl_listener *listener, void *data)
   if (event->updated_axes & WLR_TABLET_TOOL_AXIS_WHEEL)
     wlr_tablet_v2_tablet_tool_notify_wheel (tool->tablet_v2_tool, event->wheel_delta, 0);
 
-  phoc_seat_notify_activity (cursor->seat);
+  phoc_seat_notify_activity (cursor->seat, PHOC_SEAT_ACTIVITY_TYPE_TABLET_TOOL);
 }
 
 
@@ -375,7 +391,7 @@ handle_tool_tip (struct wl_listener *listener, void *data)
     wlr_tablet_v2_tablet_tool_notify_up (tool->tablet_v2_tool);
   }
 
-  phoc_seat_notify_activity (cursor->seat);
+  phoc_seat_notify_activity (cursor->seat, PHOC_SEAT_ACTIVITY_TYPE_TABLET_TOOL);
 }
 
 
@@ -390,7 +406,7 @@ handle_tool_button (struct wl_listener *listener, void *data)
                                            (enum zwp_tablet_pad_v2_button_state)event->button,
                                            (enum zwp_tablet_pad_v2_button_state)event->state);
 
-  phoc_seat_notify_activity (cursor->seat);
+  phoc_seat_notify_activity (cursor->seat, PHOC_SEAT_ACTIVITY_TYPE_TABLET_TOOL);
 }
 
 
@@ -401,7 +417,7 @@ handle_tool_proximity (struct wl_listener *listener, void *data)
   struct wlr_tablet_tool_proximity_event *event = data;
   struct wlr_tablet_tool *wlr_tool = event->tool;
 
-  phoc_seat_notify_activity (cursor->seat);
+  phoc_seat_notify_activity (cursor->seat, PHOC_SEAT_ACTIVITY_TYPE_TABLET_TOOL);
 
   if (wlr_tool->data == NULL)
     phoc_tablet_tool_new (wlr_tool, cursor->seat);
@@ -821,7 +837,7 @@ on_keyboard_activity (PhocSeat *self, uint32_t keycode, PhocKeyboard *keyboard)
 
   g_debug ("Keycode %d pressed. is_wakeup=%d", keycode, is_wakeup);
 
-  phoc_seat_notify_activity (self);
+  phoc_seat_notify_activity (self, PHOC_SEAT_ACTIVITY_TYPE_KEYBOARD);
 }
 
 
@@ -1697,6 +1713,49 @@ phoc_seat_end_compositor_grab (PhocSeat *seat)
   phoc_cursor_update_focus (seat->cursor);
 }
 
+
+static void
+on_hide_timeout (gpointer user_data)
+{
+  PhocSeat *self = user_data;
+  PhocSeatPrivate *priv = phoc_seat_get_instance_private (self);
+
+  priv->hide_cursor.id = 0;
+
+  g_debug ("Cursor is idle for %u seconds, hiding", priv->hide_cursor.timeout);
+  phoc_cursor_hide (self->cursor);
+}
+
+
+static void
+rearm_hide_cursor_timeout (PhocSeat *self)
+{
+  PhocSeatPrivate *priv = phoc_seat_get_instance_private (self);
+
+  g_clear_handle_id (&priv->hide_cursor.id, g_source_remove);
+  if (priv->hide_cursor.timeout == 0)
+    return;
+
+  priv->hide_cursor.id = g_timeout_add_seconds_once (priv->hide_cursor.timeout,
+                                                     on_hide_timeout,
+                                                     self);
+}
+
+
+static void
+on_hide_cursor_timeout_changed (PhocSeat *self)
+{
+  PhocSeatPrivate *priv = phoc_seat_get_instance_private (self);
+  guint timeout = g_settings_get_uint (priv->settings, HIDE_CURSOR_KEY);
+
+  if (priv->hide_cursor.timeout == timeout)
+    return;
+
+  priv->hide_cursor.timeout = timeout;
+  rearm_hide_cursor_timeout (self);
+}
+
+
 /**
  * phoc_seat_get_cursor:
  * @self: a PhocSeat
@@ -1758,9 +1817,12 @@ phoc_seat_dispose (GObject *object)
   PhocSeat *self = PHOC_SEAT (object);
   PhocSeatPrivate *priv = phoc_seat_get_instance_private (self);
 
+  g_clear_handle_id (&priv->hide_cursor.id, g_source_remove);
+
   phoc_seat_seat_views_destroy (self);
   g_clear_object (&priv->device_state);
   g_clear_object (&self->cursor);
+  g_clear_object (&priv->settings);
 
   G_OBJECT_CLASS (phoc_seat_parent_class)->dispose (object);
 }
@@ -1838,6 +1900,14 @@ phoc_seat_init (PhocSeat *self)
                                                         g_direct_equal,
                                                         NULL,
                                                         g_object_unref);
+
+  priv->settings = g_settings_new (PHOC_SETTINGS_SCHEMA);
+  g_signal_connect_swapped (priv->settings,
+                            "changed::"
+                            HIDE_CURSOR_KEY,
+                            G_CALLBACK (on_hide_cursor_timeout_changed),
+                            self);
+  on_hide_cursor_timeout_changed (self);
 }
 
 
@@ -1962,7 +2032,7 @@ phoc_seat_update_last_button_serial (PhocSeat *self, uint32_t serial)
 
 
 void
-phoc_seat_notify_activity (PhocSeat *self)
+phoc_seat_notify_activity (PhocSeat *self, PhocSeatActivityType type)
 {
   PhocSeatPrivate *priv;
 
@@ -1971,6 +2041,9 @@ phoc_seat_notify_activity (PhocSeat *self)
 
   priv->last_event_ts = g_get_monotonic_time ();
   phoc_server_notify_activity (phoc_server_get_default (), self);
+
+  if (type == PHOC_SEAT_ACTIVITY_TYPE_POINTER)
+    rearm_hide_cursor_timeout (self);
 }
 
 

@@ -29,6 +29,7 @@ These gsettings are used by ``phoc``:
 - `mobi.phosh.phoc`:
 
     - `focus-frame`: Whether to show a focus frame around focused toplevels
+    - `hide-cursor-timeout`: When to hide the cursor on inactivity
 
 - Input sources: `org.gnome.desktop.input-sources`
 

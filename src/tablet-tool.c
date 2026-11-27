@@ -33,7 +33,7 @@ handle_tablet_tool_set_cursor (struct wl_listener *listener, void *data)
   struct wl_client *focused_client = NULL;
   gboolean has_focused = focused_surface != NULL && focused_surface->resource != NULL;
 
-  phoc_seat_notify_activity (self->seat);
+  phoc_seat_notify_activity (self->seat, PHOC_SEAT_ACTIVITY_TYPE_TABLET_TOOL);
 
   if (has_focused)
     focused_client = wl_resource_get_client (focused_surface->resource);
